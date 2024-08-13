@@ -556,3 +556,84 @@ def get_parametrized_circuit(self):
             print(maj_exc_par)
 
             return cirq
+
+
+        def double_exc_layer():
+            def inv(i):
+                pauli = self.tt.branch_transposition(2*i, 1, 2*i + 1, 1)
+                cirq.pauli(pauli)  
+            def append_maj(first, second, ancilla_cirq):
+                ls = sorted([self.tt[first][0].num, self.tt[first][1].num,
+                                self.tt[second][0].num, self.tt[second][1].num])
+                return int(append_maj_exc(ancilla_cirq, self.tt, tuple(ls)))
+
+            k = 1
+            parities = [0 for _ in range(n//2)]
+            while k < n//2:
+                i = 0
+                while i < n//2:
+                    for _ in range(k):
+                        if i < n//2 and parities[i] == 0:
+                            inv(i)
+                            parities[i] = 1
+                        i += 1
+                    for _ in range(k):
+                        if i < n//2 and parities[i] == 1:
+                            inv(i)
+                            parities[i] = 0 
+                        i += 1
+
+                zero_pos = [0 for _ in range(n//2)]
+                one_pos = [0 for _ in range(n//2)]
+                for _ in range(2):
+                    i = 0
+                    j = 0
+                    for index, par in enumerate(parities):
+                        if par == 0:
+                            zero_pos[i] = index
+                            i += 1
+                        else:
+                            one_pos[j] = index
+                            j += 1  
+                    for dist in range(n//4):
+                        ancilla_cirq = MyCirq(n)
+                        counts = 0
+                        for r in range(n//2):
+                            first = 2*one_pos[r % j]
+                            second = 2*zero_pos[(r + dist) % (i)]
+                            counts += append_maj(first, second, ancilla_cirq)
+                            counts += append_maj(first + 1, second + 1, ancilla_cirq)
+                            counts += append_maj(first, second + 1, ancilla_cirq)
+                            counts += append_maj(first + 1, second, ancilla_cirq)
+
+                        ancilla_cirq.name = str(counts) + " 2-gate"
+                        if counts > 0:
+                            cirq.compose(ancilla_cirq, inplace=True, wrap=True)
+                    for i in range(n//2):
+                        inv(i)
+                        parities[i] = (parities[i] + 1) % 2
+
+                    i += 1
+                k = k * 2
+            for i in range(n//2):
+                if parities[i] != 0:
+                    inv(i)
+        init_state()
+        single_prep()
+        # print("init_state", self.tt)
+        for k in range(number_of_layers):
+            maj_exc_par = copy.deepcopy(self.get_excitations(name="t" + str(k) + "_"))
+            single_exc()
+            single_anti_prep()
+            # print("before_double", self.tt)
+
+            double_exc_tree()
+            double_exc_layer()
+            print(maj_exc_par)
+            if k < number_of_layers-1:
+                double_exc_tree()
+                single_anti_prep()
+
+            # print("after_double", self.tt)
+            # print("------------------", maj_exc_par)
+            # single_anti_prep()

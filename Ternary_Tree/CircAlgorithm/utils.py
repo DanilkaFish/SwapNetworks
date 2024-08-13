@@ -1,11 +1,11 @@
 import itertools
-
+from .paulistring import PauliStringSign
 
 def single_exc(op) -> tuple[tuple[int, int], int]:
     if op[1] != op[0]:
         if len(set(op)) != 1:
-            yield tuple([2 * op[0] + 1, 2 * op[1] + 1]), 1j
-            yield tuple([2 * op[0] + 2, 2 * op[1] + 2]), -1j
+            yield tuple([2 * op[0] + 1, 2 * op[1] + 1]), 1
+            yield tuple([2 * op[0] + 2, 2 * op[1] + 2]), 1
 
 
 def double_exc(op) -> tuple[tuple[int, int, int, int], int]:
@@ -16,16 +16,7 @@ def double_exc(op) -> tuple[tuple[int, int, int, int], int]:
             coef *= (dcoef[i][elems[i] - 1])
         if coef.imag == 0:
             j = [2 * op[i] + elems[i] for i in range(4)]
-
-            d = {}
-            for el in op:
-                d[el] = d.get(el, 0) + 1
-            flag = False
-            for key in d:
-                if d[key]%2 != 0:
-                    flag = True
-
-            if flag:
+            if any(op.count(x) % 2 for x in set(op)):
                 yield tuple(j), coef.real
 
 def _parity(t: tuple):
@@ -70,4 +61,5 @@ def _get_double_excitations(self):
     ab = list(itertools.product(beta_unocc, alpha_unocc, beta_occ, alpha_occ))
 
     return aa + bb + ab
+
 

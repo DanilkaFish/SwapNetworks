@@ -15,7 +15,7 @@ from qiskit_nature.second_q.circuit.library.ansatzes import UCCSD
 from Ternary_Tree.OpenFermionSQ.Ternary_Tree_mapper import TernaryTreeMapper
 basis="6-311g"
 basis="6-31G"
-basis='STO-3G'
+# basis='STO-3G'
 names = 'H 0 0 0; H 0 0 '
 active_orbitals = [0,1]
 # basis="6-311g"
@@ -42,7 +42,7 @@ def tt_mapping():
     return qubit_tt_op
 
 def vqe():
-    qc = ucc.get_parametrized_circuit(2)
+    qc = ucc.get_parametrized_circuit(1)
     ham = tt_mapping()
     estimator = Estimator()
     optimizer = partial(minimize, method="L-BFGS-B")
@@ -75,6 +75,7 @@ def jw_full_vqe():
     
 def evolution():
     qc = ucc.get_parametrized_circuit()
+    print(qc)
     ham = tt_mapping()
     qc = qc[:]
     qc = QuantumCircuit.from_instructions(qc)
@@ -97,7 +98,6 @@ def test(k=0):
     from numpy.random import random
     from qiskit import transpile
     qc = ucc.get_parametrized_circuit()
-
     ham = tt_mapping()
     qc = QuantumCircuit.from_instructions(qc)
     # print(qc.draw(output='latex_source'))
@@ -160,12 +160,12 @@ for k in range(N):
     init(dist=R[0])
     # GE4_JW[n] = jw_full_vqe()
 
-    # GE4[n] = vqe()
+    # GE4[k] = vqe()
 
     # print(GE4[n])
     # init(dist=R[n]) 
     evolution()
-    # test(k)
+    # test(k)12
     E_CCSD[k], E_HF[k], E_CISD[k] = energy_classic(R[k], "H", basis=basis)
     # print("E_HF = ", E_HF[n])
 print(f"pair_UCC: {GE4[0]}")

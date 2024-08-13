@@ -24,13 +24,14 @@ from Paulihedral_v2.Paulihedral_new import synthesis_FT
 from qiskit_aer.noise import (NoiseModel, QuantumError, ReadoutError,
     pauli_error, depolarizing_error, thermal_relaxation_error)
 
+from qiskit.circuit.library.standard_gates import IGate, XGate, ZGate
 
 seed = 172
 algorithm_globals.random_seed = seed
 basis_gates = ["u3", "cx"]
 basis = '6-31G'
-geometry='H 0 0 0; H 0 0 0.7349'
-active_orbitals=[0, 1, 2, 3]
+geometry='H 0 0 0; H 0 0 0.739'
+active_orbitals=[0, 1]
 num_electrons=(1, 1)
 
 
@@ -42,10 +43,13 @@ def my_generation(al,be,do, **kwargs):
     for el in be:
         ls1.append(((el[1],), (el[0],)))
     for el in do:
-        if el[0] > el[2]:
+        if el[0] < el[2]:
             ls2.append(((el[3],el[2]), (el[1],el[0])))
-    return ls1 + ls2
+    return ls2
+    return ls2 + ls1
 
+def my_gen(self, **kwargs):
+    return my_generation(self.al, self.be, self.do, **kwargs)
 
 class CircuitProvider:
     def __init__(self,
@@ -57,13 +61,15 @@ class CircuitProvider:
                  basis_gates=basis_gates):
         self.reps = reps
         self.ucc = UpUCCSDG(geometry=geometry, basis=basis, active_orbitals=active_orbitals, num_electrons=num_electrons)
+        self.num_electrons = num_electrons
         self.fermionic_op = self.ucc.mol.hamiltonian.second_q_op()
         self.dynamic_circ = self.ucc.get_parametrized_circuit(reps)
-        self.jw_opt_map = self.ucc.tt
+        self.dynamic_map = self.ucc.tt
+        self.jw_opt_map = self.ucc.get_jw_opt()
         self.basis_gates = basis_gates
-        self.al =self.ucc.get_alpha_excitations()
-        self.be =self.ucc.get_beta_excitations()
-        self.do =self.ucc.get_double_excitations()
+        self.al = self.ucc.get_alpha_excitations()
+        self.be = self.ucc.get_beta_excitations()
+        self.do = self.ucc.get_double_excitations()
         # self.kwargs = {"num_spatial_orbitals"}
 
     def my_gen(self, **kwargs):
@@ -90,37 +96,44 @@ class CircuitProvider:
         #                 qubit_mapper=qubit_mapper, 
         #                 )
         if init:
-            return UCC(self.ucc.num_spatial_orbitals, 
+            qc = UCC(self.ucc.num_spatial_orbitals, 
                  (self.ucc.num_alpha, self.ucc.num_beta), 
                  excitations=self.my_gen, 
                  qubit_mapper=qubit_mapper, 
                  initial_state=HartreeFock(self.ucc.num_spatial_orbitals, 
                                            (self.ucc.num_alpha, self.ucc.num_beta), 
-                                           qubit_mapper))
+                                           qubit_mapper))            
         else:
-            return UCC(self.ucc.num_spatial_orbitals, 
+            qc = UCC(self.ucc.num_spatial_orbitals, 
                         (self.ucc.num_alpha, self.ucc.num_beta), 
                         excitations=self.my_gen, 
                         qubit_mapper=qubit_mapper, 
                         )
-        
 
-    def get_circ_with_mapping(self, qubit_mapper, lexic=False):
+        n = qc.num_qubits
+        k = n//2
+        # theta = ParameterVector("θ", qc.num_parameters - k*(k-1)//2)
+        # params = [theta[i - k*(k-1)//2] for i in range(k*(k-1), 3*k*(k-1)//2)] +\
+        #      [theta[i] for i in range(k*(k-1)//2)] + [theta[i] for i in range(k*(k-1)//2)] 
+        # qc.assign_parameters(params, inplace=True)
+        return qc
+
+    def get_circ_with_mapping(self, qubit_mapper, lexic=False, init=True):
         if not lexic:
-            qc = self.get_ucc(qubit_mapper, init=True)
+            qc = self.get_ucc(qubit_mapper, init=init)
+            
             for i in range(self.reps-1):
                 new_ucc = self.get_ucc(qubit_mapper, init=False)
                 theta = ParameterVector("θ" + str(i), new_ucc.num_parameters)
                 new_ucc.assign_parameters(theta, inplace=True)
                 qc = qc.compose(new_ucc)
-            return qc
-            ansatz = transpile(qc, basis_gates=self.basis_gates, optimization_level=3)
-            print(ansatz.count_ops())
-            return ansatz
         else:
-            qc = self.get_ucc(qubit_mapper)
-            qc = HartreeFock(self.ucc.num_spatial_orbitals, (self.ucc.num_alpha, self.ucc.num_beta), qubit_mapper)
-            qc._build()
+            qc = self.get_ucc(qubit_mapper,init=init)
+            if init:
+                qc = HartreeFock(self.ucc.num_spatial_orbitals, (self.ucc.num_alpha, self.ucc.num_beta), qubit_mapper)
+                qc._build()
+            else:
+                qc = QuantumCircuit(self.ucc.n_qubits)
             
             for i in range(self.reps):
                 new_ucc = self.get_ucc(qubit_mapper)
@@ -137,17 +150,15 @@ class CircuitProvider:
                     for gate in new_ucc.decompose(reps=2):
                         if gate.operation.name[-1-self.ucc.n_qubits:-1] == str(pauli[0][0]):
                             qc = qc.compose(gate[0])
-            return qc
-            ansatz = transpile(qc, basis_gates=basis_gates, optimization_level=3)
-            print(ansatz.count_ops())
-            
-            return ansatz
+        ansatz = transpile(qc, basis_gates=basis_gates, optimization_level=3)
+        # ansatz = qc
+        print(ansatz.count_ops())
+        return ansatz
 
 
     def get_jw(self):
         qubit_mapper=JordanWignerMapper()
         circ = self.get_circ_with_mapping(qubit_mapper)
-        # print(circ.decompose(reps=2))
         return circ
     
 
@@ -165,6 +176,31 @@ class CircuitProvider:
         qubit_mapper=BravyiKitaevMapper()
         return self.get_circ_with_mapping(qubit_mapper, lexic=True)
 
+    def get_jw_opt_ansatz(self):
+        qubit_mapper=TernaryTreeMapper(self.jw_opt_map)
+        qc = QuantumCircuit(self.dynamic_circ.num_qubits)
+        num_electrons = self.num_electrons[0]    
+        for i in range(self.dynamic_circ.num_qubits):
+            if (self.jw_opt_map[i][0].num <= 2*num_electrons) or (self.ucc.num_spatial_orbitals*2 + 1<= 
+                    self.jw_opt_map[i][0].num <= 2*self.ucc.num_spatial_orbitals + 2*num_electrons):
+                qc.x(i)
+            else:
+                qc.id(i)
+        qc = qc.compose(self.get_circ_with_mapping(qubit_mapper, lexic=False, init=False))
+        return qc
+
+    def get_jw_opt_lexic_ansatz(self):
+        qubit_mapper = TernaryTreeMapper(self.jw_opt_map)
+        qc = QuantumCircuit(self.dynamic_circ.num_qubits)
+        num_electrons = self.num_electrons[0]    
+        for i in range(self.dynamic_circ.num_qubits):
+            if (self.jw_opt_map[i][0].num <= 2*num_electrons) or (self.ucc.num_spatial_orbitals*2 + 1<= 
+                    self.jw_opt_map[i][0].num <= 2*self.ucc.num_spatial_orbitals + 2*num_electrons):
+                qc.x(i)
+            else:
+                qc.id(i)
+        qc = qc.compose(self.get_circ_with_mapping(qubit_mapper, lexic=True, init=False))
+        return qc
 
 def jw_ham(fermionic_op):
     mapper = JordanWignerMapper()
@@ -183,35 +219,41 @@ def ucc_ham(fermionic_op, tree_map):
     qubit_tt_op = mapper.map(fermionic_op)
     return qubit_tt_op
 
-def create_noise(n_qubits, coupling_map):
+def create_noise(n_qubits, coupling_map, prob=0.9999):
     noise_model = NoiseModel(basis_gates=basis_gates)
 
     error1 = depolarizing_error(0.0001, 1)
-    for i in range(n_qubits):
-        noise_model.add_quantum_error(error1, ['u3'], [i])
-    error2 = depolarizing_error(0.001, 2)
-    for x,y in coupling_map:
-        noise_model.add_quantum_error(error2, ["cx"], [x,y])
+    noise_ops = [(IGate(), prob), (XGate(), 1 - prob)]
+    error1 = QuantumError(noise_ops)
+    # for i in range(n_qubits):
+    #     noise_model.add_quantum_error(error1, ['u3'], [i])
+    # error2 = depolarizing_error(0.0001, 2)
+    # for x,y in coupling_map:
+    #     noise_model.add_quantum_error(error2, ["cx"], [x,y])
+    # noise_model.add_all_qubit_quantum_error(error2, ['cx'])
+    noise_model.add_all_qubit_quantum_error(error1, ['u3'])
 
     # Print noise model info
     return noise_model
 
-def get_device_noise_estimator(n_qubits):
-    coupling_map = [(x,y) for x in range(n_qubits) for y in range(n_qubits) if x < y]
+def get_device_noise_estimator(n_qubits, prob=0.9999):
+    coupling_map = [(x,y) for x in range(n_qubits) for y in range(n_qubits) if x != y]
+
     # device = GenericBackendV2(num_qubits=n_qubits, seed=50)
 
     # noise_model = NoiseModel.from_backend(device)
-    noise_model = create_noise(n_qubits, coupling_map)
+    noise_model = create_noise(n_qubits, coupling_map, prob)
     noisy_estimator = AerEstimator(
         backend_options={
             "method": "density_matrix",
-            "coupling_map": coupling_map,
+            # "coupling_map": coupling_map,
             "noise_model": noise_model,
         },
         run_options={"shots": None},
         # transpile_options={"seed_transpiler": seed},
         approximation=True
     )
+    print(noise_model)
     return noisy_estimator
 
 
@@ -225,7 +267,7 @@ def numpy_energy(fermionic_op, ucc):
     return ref_value 
 
 
-def ideal_energy(ansatz, op, ref_value, optimizer, init_point, en_hf):
+def ideal_energy(ansatz, op, ref_value, optimizer, init_point, en_hf=None):
     counts, values, params = [], [], []
     def store_intermediate_result(eval_count, parameters, mean, std):
         counts.append(eval_count)
