@@ -1,0 +1,4 @@
+{
+    "python.defaultInterpreterPath": "~/python_venvs/quantum/bin/python3",
+    "editor.mouseWheelScrollSensitivity": 3,
+}

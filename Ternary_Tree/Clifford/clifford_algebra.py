@@ -180,7 +180,7 @@ from tqdm import tqdm
 
 if __name__ == "__main__":
     n = 5
-    gen_dict = {0 : ["XXXY", -1],1: ["XXYX", -1],2: ["XYXX", 1], 3: ["YXXX", 1], 4: ["YYYX", 1], 5: ["YYXY", 1], 6: ["YXYY", -1], 7: ["XYYY", -1]}
+    gen_dict = {0 : ["XXXY", 1],1: ["XXYX", 1],2: ["XYXX", 1], 3: ["YXXX", 1], 4: ["YYYX", 1], 5: ["YYXY", 1], 6: ["YXYY", 1], 7: ["XYYY", 1]}
     cg = clifford_generator(n, gen_dict)
     print(cg)
 
@@ -206,3 +206,29 @@ if __name__ == "__main__":
     cg.transform_maj("cx", (2,3))
     print(cg)
 
+    # cg.transform_maj(get_pauli("Y", 1))
+    # # # cg.transform_maj(get_pauli("Y", 2))
+    # # # cg.transform_maj(get_pauli("Y", 3))
+    # cg.transform_maj("cx", (2,1))
+    # # print(cg)
+    # cg.transform_maj(get_pauli("X", 0))
+    # # cg.transform_maj(get_pauli("Z", 1))
+    # cg.transform_maj(get_pauli("Y", 2))    
+    # cg.transform_maj(get_pauli("X", 3))
+    # print(cg)
+    # cg.transform_maj("cx", (1,3))
+    # cg.transform_maj("cx", (2,0))
+    # print(cg)
+    # cg.transform_maj(get_pauli("Z", 0), coef=-1)
+    # cg.transform_maj(get_pauli("Y", 1), coef=1)
+    # cg.transform_maj(get_pauli("Y", 2), coef=1)
+    # cg.transform_maj(get_pauli("Z", 3), coef=-1)
+
+    # cg.transform_maj("cx", (1,3))
+    # cg.transform_maj("cx", (2,0))
+    # cg.transform_maj(get_pauli("X", 0), coef=1)
+    # cg.transform_maj(get_pauli("Y", 2), coef=-1)
+    # cg.transform_maj(get_pauli("X", 3), coef=-1)
+    # cg.transform_maj("cx", (2,1))
+    # cg.transform_maj(get_pauli("Y", 1), coef=1)
+    # print(cg)

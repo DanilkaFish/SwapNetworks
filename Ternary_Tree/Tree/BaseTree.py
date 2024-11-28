@@ -3,11 +3,13 @@ from __future__ import annotations
 import warnings
 
 from .Nodes import BranchNum, QubitNum, LostNum, NodeContacts, ROOT
-from .tree_builder import _build_alphabeta_tree, _build_full_tt, _build_jw_tree, _build_bk_tree
+from .tree_builder import _build_alphabeta_tree, _build_full_tt, _build_jw_tree, _build_bk_tree, _build_jw_zyx_tree
 from .TreeErrors import TreeStructureError
 
-gate_name_to_number = {'X': 0, 'Y': 1, 'Z': 2}
-gate_number_to_name = {0: 'X', 1: 'Y', 2: 'Z'}
+# self.gate_number_to_name = {2: 'X', 0: 'Y', 1: 'Z'}
+# self.gate_name_to_number = {'X': 2, 'Y': 0, 'Z': 1}
+# self.gate_name_to_number = {'X': 1, 'Y': 2, 'Z': 0}
+# self.gate_number_to_name = {1: 'X', 2: 'Y', 0: 'Z'}
 
 dict_prod = {"II": "I", "XX": "I", "YY": "I", "ZZ": "I",
              "XY": 'Z', "YX": 'Z', "XZ": 'Y', "ZX": 'Y', "YZ": 'X', "ZY": 'X',
@@ -39,6 +41,8 @@ class BaseTernaryTree:
             self.root: QubitNum -- root of the tree
             self.nodes: {QubitNum : NodeContacts} -- dict of the tree's nodes
         """
+        self.gate_name_to_number = {'X': 0, 'Y': 1, 'Z': 2}
+        self.gate_number_to_name = {0: 'X', 1: 'Y', 2: 'Z'}
         self.root = None
         self._nodes = {}
         if nodes is not None:
@@ -49,6 +53,9 @@ class BaseTernaryTree:
     def build_full_tt(self, n_qubits):
         _build_full_tt(self, n_qubits)
 
+    def build_jw_zyx_tree(self, n_qubits):
+        _build_jw_zyx_tree(self, n_qubits)
+        
     def build_jw_tree(self, n_qubits):
         _build_jw_tree(self, n_qubits)
 
@@ -223,8 +230,8 @@ class BaseTernaryTree:
         def do_before(parent, child, index, branch, branches):
 
             if isinstance(child, BranchNum):
-                branches[child] = branch + [(parent, gate_number_to_name[index])]
-            branch.append((parent, gate_number_to_name[index]))
+                branches[child] = branch + [(parent, self.gate_number_to_name[index])]
+            branch.append((parent, self.gate_number_to_name[index]))
 
         def do_after(node, branch, **kwargs):
             if branch:

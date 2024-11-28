@@ -3,8 +3,7 @@ from typing import Dict
 from .BaseTree import BaseTernaryTree, TreeStructureError
 from .Nodes import QubitNum, BranchNum, LostNum, NodeNum
 
-gate_name = {0: 'X', 1: 'Y', 2: 'Z'}
-gate_index = {'X': 0, 'Y': 1, 'Z': 2}
+
 dict_prod = {"II": "I", "XX": "I", "YY": "I", "ZZ": "I",
              "XY": 'Z', "YX": 'Z', "XZ": 'Y', "ZX": 'Y', "YZ": 'X', "ZY": 'X',
              "IX": "X", "XI": "X", "YI": "Y", "IY": "Y", "IZ": "Z", "ZI": "Z"}
@@ -17,7 +16,6 @@ dict_prod_coef = {"II" : ["I",1] , "XX" :  ["I",1] , "YY" :  ["I",1] ,"ZZ" :  ["
 def sign_prod(pauli1, pauli2, coef1=1):
     coefpr1 = 1j
     coefpr2 = 1j
-
     for qubit in pauli1:
         if qubit in pauli2:
             coefpr1 = coefpr1 * (dict_prod_coef[pauli1[qubit] + pauli2[qubit]][1])
@@ -37,11 +35,11 @@ class TernaryTree(BaseTernaryTree):
         base = QubitNum(base)
         maj = {}
         while not self.is_root(base):
-            maj[base.num] = gate_name[index]
+            maj[base.num] = self.gate_number_to_name[index]
             child = base
             base = self.parent(base)
             index = self[base].child_index(child)
-        maj[base.num] = gate_name[index]
+        maj[base.num] = self.gate_number_to_name[index]
         return maj
 
     def find_branch_node(self, maj_num: int|NodeNum) -> tuple[QubitNum, int, int]:
@@ -72,7 +70,8 @@ class TernaryTree(BaseTernaryTree):
             node1: QubitNum | int,
             edge1: int,
             node2: QubitNum | int,
-            edge2: int
+            edge2: int,
+            unsigned=False
     ) -> Dict[int, str]:
         """
         Transpose subtrees or branches  with nodes numeration's preserving.
@@ -103,16 +102,16 @@ class TernaryTree(BaseTernaryTree):
 
         gamma1 = self.tree_up_operator(node1, edge1)
         gamma2 = self.tree_up_operator(node2, edge2)
-        if ((gamma2.get(node1) == gate_name[edge1]) or
-            (gamma1.get(node2) == gate_name[edge2])):
+        if ((gamma2.get(node1) == self.gate_number_to_name[edge1]) or
+            (gamma1.get(node2) == self.gate_number_to_name[edge2])):
             raise KeyError("Impossible transposition")
 
         gamma = unsigned_prod(gamma1, gamma2)
-
-        for node in self.nodes:
-            for child in self[node].childs:
-                if isinstance(child,BranchNum):
-                    child.sign = sign_prod(gamma, *self.get_majorana(child))
+        if not unsigned:
+            for node in self.nodes:
+                for child in self[node].childs:
+                    if isinstance(child,BranchNum):
+                        child.sign = sign_prod(gamma, *self.get_majorana(child))
 
         # Tree transposition
         aux_node = self[_node1][_edge1]
@@ -180,8 +179,8 @@ class TernaryTree(BaseTernaryTree):
 
             node1, edge1 = branches[num[2 * i + 1]][1][-1]
             node2, edge2 = branches[num[2 * i + 2]][1][-1]
-            edge1 = gate_index[edge1]
-            edge2 = gate_index[edge2]
+            edge1 = self.gate_name_to_number[edge1]
+            edge2 = self.gate_name_to_number[edge2]
 
             node1, edge1 = rise_before_not_z(node1, edge1)
             node1, edge1 = descent_before_not_z(node1, edge1)
@@ -190,34 +189,3 @@ class TernaryTree(BaseTernaryTree):
             if len(r) > 0:
                 s.append(r)
         return s
-
-
-def prod_pauli_strings(pauli1: list[tuple[int, str]],
-                       pauli2: list[tuple[int, str]]) -> tuple[list[tuple[int, str]], int]:
-    if not isinstance(pauli1, dict):
-        pauli1 = {gate[0]: gate[1] for gate in pauli1}
-    if not isinstance(pauli2, dict):
-        pauli2 = {gate[0]: gate[1] for gate in pauli2}
-    pauli = {}
-    coef = 1
-    for qubit in set(list(pauli1.keys()) + list(pauli2.keys())):
-        pauli[qubit], sign = dict_prod_coef[pauli1.get(qubit, "I") + pauli2.get(qubit, "I")]
-        coef = coef * sign
-    return list(pauli.items()), coef
-
-
-def pauli_weight(tt: TernaryTree, indexes: list[int]) -> float:
-    branches = tt.branches()
-    d = {}
-    for i in indexes:
-        d[i] = d.get(i, 0) + 1
-
-    indexes = [key for key in d if d[key] % 2 == 1]
-    if len(indexes) > 0:
-        branches = [branch[1] for branch in branches if branch[0] in indexes]
-        prod = branches[0]
-        for pauli in branches[1:]:
-            prod, _ = prod_pauli_strings(prod, pauli)
-        # print(indexes,":  ", len([p for p in prod if p[1] != "I"]))
-        return len([p for p in prod if p[1] != "I"])
-    return 0.

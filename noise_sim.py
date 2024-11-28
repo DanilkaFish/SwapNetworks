@@ -1,10 +1,17 @@
 from qiskit_algorithms.optimizers import SPSA ,CG, SLSQP, L_BFGS_B ,COBYLA
 from qiskit.quantum_info import Statevector
 from qiskit import QuantumCircuit
+from qiskit.quantum_info.operators import SparsePauliOp
+from qiskit.circuit.library.standard_gates import IGate, XGate, ZGate, YGate
 
 from Ternary_Tree.optimizer.soap import SOAP
 
 from utils import *
+
+def f(*args, **kwargs):
+    return None
+# SPSA ,CG, SLSQP, L_BFGS_B ,COBYLA = [f for _ in range(5)]
+# SOAP = f
 
 # a0=0.07
 # af=0.07
@@ -45,9 +52,9 @@ def call(*args, **kwargs):
 # choice of optimizer
 optimizer = SLSQP(maxiter=5000)
 optimizer = CG(maxiter=500, eps=0.0001, gtol=0.000000001)
-optimizer = L_BFGS_B(maxiter=300, eps=0.00001,ftol=0.000)
+# optimizer = L_BFGS_B(maxiter=300, eps=0.00001,ftol=0.000)
 
-optimizer = SPSA(maxiter=800, learning_rate=a, perturbation=b,  callback=call)
+# optimizer = SPSA(maxiter=800, learning_rate=a, perturbation=b,  callback=call)
 # optimizer = SLSQP(maxiter=50, ftol=0)
 # optimizer = COBYLA(maxiter=1000, tol=0)
 # optimizer = SOAP(500)  
@@ -57,62 +64,13 @@ number_of_reps = 1
 # circ_prov = CircuitProvider(reps=number_of_reps, active_orbitals=[0,1,2,3])
 
 
-def hf(ansatz, op):
-    par = ansatz.parameters
-    qc = ansatz.assign_parameters({el: 0 for el in par})
-    state = [0]*2**qc.num_qubits
-    state[0] = 1
-    state = Statevector(state)
-    state = state.evolve(qc)
-    energy = state.expectation_value(op)
-    print("nulpar = ", energy)
-    return energy
 
-def get_circs_and_ops(**kwargs):
-    circ_prov = CircuitProvider(reps=number_of_reps, **kwargs)
-    thebest_qc = circ_prov.get_dynamic()
-    # init_point[0] =  0.07
-    jw_qc = circ_prov.get_jw()
-    from numpy.random import uniform
-    init_point = [0 for _ in jw_qc.parameters]
-    # init_point = [uniform(-0.1, 0.1, 1) for _ in jw_qc.parameters]
-    # init_point = None
-    jw_lexic_qc = circ_prov.get_jw_lexic()
-    bk_qc = circ_prov.get_bk()
-    bk_lexic_qc = circ_prov.get_bk_lexic()
-    # jw_qc = None
-    # jw_lexic_qc = None
-    # bk_qc = None
-    # bk_lexic_qc = None
-    jw_opt_qc = circ_prov.get_jw_opt_ansatz()
-    jw_opt_lexic_qc = circ_prov.get_jw_opt_lexic_ansatz()
-    # jw_opt_qc = None
-    # jw_opt_lexic_qc = None
-    en_hf = hf(thebest_qc, ucc_ham(circ_prov.fermionic_op, circ_prov.dynamic_map))
-    circs = [thebest_qc, jw_qc, jw_lexic_qc, bk_qc, bk_lexic_qc, jw_opt_qc, jw_opt_lexic_qc]
-    ops = [ucc_ham(circ_prov.fermionic_op, circ_prov.dynamic_map), jw_ham(circ_prov.fermionic_op), jw_ham(circ_prov.fermionic_op), bk_ham(circ_prov.fermionic_op), 
-        bk_ham(circ_prov.fermionic_op), ucc_ham(circ_prov.fermionic_op, circ_prov.jw_opt_map), ucc_ham(circ_prov.fermionic_op, circ_prov.jw_opt_map)]
-    ref_value = numpy_energy(circ_prov.fermionic_op, circ_prov.ucc)
-    return circs, ops, ref_value, init_point, en_hf
-
-# circs, ops, ref_value, init_point,en_hf = get_circs_and_ops()
-
-def hf(ansatz, op):
-    par = ansatz.parameters
-    qc = ansatz.assign_parameters({el: 0 for el in par})
-    state = [0]*2**qc.num_qubits
-    state[0] = 1
-    state = Statevector(state)
-    state = state.evolve(qc)
-    energy = state.expectation_value(op)
-    print("nulpar = ", energy)
-    return energy
 
 # en_hf = hf(thebest_qc)
 id_ener = []
 noise_ener = []
 k = 0
-n = 7
+n = 7+3
 
 id_ener = [[] for i in range(n)]
 noise_ener = [[] for i in range(n)]
@@ -127,100 +85,146 @@ geometry='H 0 0 0; Li 0 0 0.7349'
 active_orbitals=[0, 1]
 num_electrons=(1, 1)
 # SPSA(maxiter=3000, learning_rate=a, perturbation=b, callback=call, perturbation_dims=10),
-optimizers = [(SLSQP(maxiter=200, ftol=0), 'SLSQP'), 
-                (COBYLA(maxiter=500, tol=0), 'COBYLA'),
-                (SPSA(maxiter=500, learning_rate=a, perturbation=b,  callback=call), 'SPSA'),
-                (SOAP(4000), "SOAP")]
+optimizers = [(SLSQP(maxiter=400, ftol=0), 'SLSQP')]
+            #   (SLSQP(maxiter=800, ftol=0), 'SLSQP'), 
+                # ]
+                # (COBYLA(maxiter=1000, tol=0), 'COBYLA'),
+                # (SPSA(maxiter=500, learning_rate=a, perturbation=b,  callback=call), 'SPSA'),
+                # (SOAP(4000), "SOAP")]
 
 # optimizers = [(SPSA(maxiter=500, learning_rate=a, perturbation=b,  callback=call), 'SPSA')]
-optimizers = [(SOAP(1000), "SOAP")]
+# optimizers = [(SOAP(4000), "SOAP")]
+# optimizers = [(L_BFGS_B(maxiter=1000, eps=0.0000001,ftol=0.0000000001), "LBFGSB")]
+# optimizers = [(SLSQP(maxiter=500, ftol=0), 'SLSQP')]
+
 
 molecules = [['H 0 0 0; H 0 0 0.7349', (1,1), [0,1], basises[0]], ['H 0 0 0; H 0 0 0.7349', (1,1), [0,1,2,3], basises[1]], 
                 ['H 0 0 0; Li 0 0 1.5459', (2,2), [0,1,2,5], basises[0]]]
-molecules = [('H 0 0 0; H 0 0 0.7349', (1,1), [0,1], basises[0])] 
+molecules = [('H 0 0 0; H 0 0 0.7349', (1,1), [0,1], basises[1]), ('H 0 0 0; H 0 0 0.7349', (1,1), [0,1,2,3], basises[1])]
+# molecules = [('H 0 0 0; Li 0 0 1.5459', (2,2), [0,1,2,5], basises[0])]
+reps = [1, 2, 3]
+reps = [1]
+
 
 def write_data():
     data = []
-    import json 
+    import json
     id_en = [None]*n
-    with open('numbers.json', 'w') as file:
-        for mol in molecules[:]:
-            # for basis in basises[:]:
+    with open('data/SimParD8.json', 'w') as file:
+        for mol in molecules[1:]:
             for opt in optimizers[:]:
-                # for orb in active_orbitals[:]:
-                iter_num = [None]*n
-                # print("herheehr")
-                circs, ops, ref_value, init_point, en_hf = get_circs_and_ops(active_orbitals=mol[2], num_electrons=mol[1], geometry=mol[0], basis=mol[3])
-                for index, obj in enumerate(zip(circs[:], ops[:])):
-                    circ, op = obj
-                    print(circ.count_ops())
-                    print(init_point)
-                    if index == 0: 
-                        id_en[index], _, values, _ = VQE_energy_with_noise(circ, op, ref_value, opt[0], init_point[:1],  en_hf)
-                    else: 
-                        id_en[index], _, values, _ = VQE_energy_with_noise(circ, op, ref_value, opt[0], init_point,  en_hf)
+                for rep in reps:
+                    iter_num = [None]*n
+                    # circs, ops, ref_value, init_point, en_hf, circ_prov = get_circs_and_ops(get_cp=True, reps=rep, active_orbitals=mol[2], num_electrons=mol[1], geometry=mol[0], basis=mol[3])
+                    circ_prov = CircuitProvider(reps=rep, active_orbitals=mol[2], num_electrons=mol[1], geometry=mol[0], basis=mol[3])
+                    ref_value = numpy_energy(circ_prov.fermionic_op, circ_prov.ucc)
+                    # circs.append(circ_prov.get_yordan_dynamic())
+                    # ops.append(ops[0])
+                    # circs.append(circ_prov.get_zyx_yordan_dynamic())
+                    # ops.append(ops[1])
+                    index = 0
+                    for name, circ, op in circ_prov.__iter__(circ_order()):
+                        for prob in np.flip(np.geomspace(0.000005, (0.005), 5)):
+                            # init_point = 
+                            circs = CircSim(circ, op, True, 1 - prob, 'D', q2_noise=True)
 
-                    # id_en[index], _, values, _ = ideal_energy(circ, op, ref_value, opt[0], init_point, en_hf)
-                    for index2, val in enumerate(values):
-                        if abs(val - ref_value) < 0.00016:
-                            iter_num[index] = index2 
-                            break
-                data.append({"mol": mol, "opt": opt[1], "act_orb": mol[2], "hf": en_hf.real, "ref_ener": ref_value, "energy": id_en[:], "iter_num": iter_num})
+                            energy, _, values, parameters = circs.run_qiskit_vqe(opt[0])
+                            # data.append({"mol": mol, "act_orb": mol[2], "ref_ener": ref_value, "energy": id_en[index], "iter_num": iter_num, "param" : parameters[-1]})
+                            data.append({"name": name, "ref_ener": ref_value, "energy": energy, "param" : parameters[-1], "optimizer": opt[1], "prob": prob})
+                        index += 1
         json.dump(data, file, indent=4)
 
-X = np.linspace(0, 1, 500)
-E = []
-toto = []
-for mol in molecules[:]:
-    for opt in optimizers[:]:
-        iter_num = [None]*n
-        circs, ops, ref_value, init_point, en_hf = get_circs_and_ops(active_orbitals=mol[2], num_electrons=mol[1], geometry=mol[0], basis=mol[3])
-        par = circs[0].parameters
-        circ = circs[0]
-        op = ops[0]
-        a,b,c,d = ideal_energy(circ, op, ref_value, opt[0], init_point,  en_hf)
-        print(a,c[-1],d[-1])
 
-        for prob in [0.9, 0.99,0.999,0.9999, 0.99999, 0.999999]:
-            est = get_device_noise_estimator(4,prob)
-            x = 0.11174828549146505
-            ansatz = circs[0].assign_parameters({el: x for el in par})
-            energy = est.run(ansatz, ops[0]).result()
-            E.append(energy.values[0])
-            # E = []
-            # for x in X:
-            #     ansatz = circs[0].assign_parameters({el: x for el in par})
-            #     energy = est.run(ansatz, ops[0]).result()
-            #     # print("nulpar = ", energy)
-                # E.append(energy.values[0])
+write_data()
 
-print(E)
-import pylab    
-pylab.xlabel("error")
-pylab.ylabel("Energy")
-# pylab.title("Convergence with no noise")
-# pylab.ylim(bottom=-1.90, top=-1.30)
-# pylab.rcParams["figure.figsize"] = (12, 4)
+# Noise_ops = [(None, "D"), (ZGate(), "Z"), (XGate(), "X"), (YGate(),"Y")]
+Noise_ops = [(None, "D")]
 
-def print_last_data(counts, values, name="hello"):
-    pylab.plot(counts, values, label=name)
+# def test():
+    # import numpy as np
+    # from qiskit import QuantumCircuit, transpile
+    # import json
+
+    # f = open('./numbers.json')
+    # data_ideal = json.load(f)
+    # # for d in data_ideal:
+    # #     print(d)
+    # # print(data_ideal)
+    # print(len(data_ideal))
+    # X = np.linspace(0, 1, 500)
+    # E = []
+    # toto = []
+    # l = 0
+    # EE = {} 
+
+    # for mol in molecules[:]:
+    #     for opt in optimizers[:]:
+    #         for rep in reps:
+    #             iter_num = [None]*n
+    #             circs, ops, ref_value, init_point, en_hf, circ_prov = get_circs_and_ops(get_cp=True, reps=rep, active_orbitals=mol[2], num_electrons=mol[1], geometry=mol[0], basis=mol[3])
+    #             circs.append(circ_prov.get_yordan_dynamic())
+    #             ops.append(ops[0])
+    #             # a,b,c,d = ideal_energy(circ, op, ref_value, opt[0], init_point,  en_hf)
+    #             # print(a,c[-1],d[-1])
+    #             # print(circ)
+    #             k = 0
+    #             for circ, op in zip(circs[0:1], ops[0:1]):
+    #                 k += 1
+    #                 id_par = data_ideal[l]['param']
+    #                 par = circ.parameters
+    #                 for noise_op, name in Noise_ops:
+    #                     E = []
+    #                     ansatz = circ.assign_parameters({el: id_par[i] for i, el in enumerate(par)})
+    #                     print(ansatz)
+    #                     print(op)
+    #                     # energy, _, values, paramters = ideal_energy(circ, op, ref_value, opt[0], init_point,  en_hf)
+    #                     for prob in [0.99, 0.999,0.9999, 0.99999, 0.999999, 0.9999999]:
+    #                     # for prob in [0.99999, 0.999999, 0.9999999]:
+    #                         est = get_device_noise_estimator(8, noise_op=noise_op, prob=prob)
+
+    #                         # x = 0.11174828549146505
+    #                         # print({el: id_par[i] for i, el in enumerate(par)})
+    #                         energy = est.run(ansatz, op).result()
+    #                         E.append(energy.values[0])
+
+    #                         # energy, _, values, _ = VQE_energy_with_noise(circ, op, ref_value, opt[0], init_point,  en_hf, est)
+    #                         # E.append(energy)
+    #                     EE[name + "_" + str(k)] = E
+    #                 l += 1
+
+    #             for key in EE:
+    #                 print(key, ": ", EE[key])
+
+    # return EE
+
+# EE = test()
+# print(EE)
+# import pylab    
+# pylab.xlabel("error")
+# pylab.ylabel("Energy")
+# # pylab.title("Convergence with no noise")
+# # pylab.ylim(bottom=-1.90, top=-1.30)
+# # pylab.rcParams["figure.figsize"] = (12, 4)
+
+# def print_last_data(counts, values, name="hello"):
+#     pylab.plot(counts, values, label=name)
     
-# print_last_data(X, E, name=str(i))
-# print(min(E))
+# # print_last_data(X, E, name=str(i))
+# # print(min(E))
+# # pylab.legend()
+# # pylab.savefig("toto2")
+
+
+# a = [[-1.0031434741388943, -1.6905585840512296, -1.8393852284472576, -1.855560165924037, -1.8571912570353855],
+#     [-1.444400023964278, -1.803600922873114, -1.8517715150181235, -1.856809923221062, -1.8573163472207639],
+#     [-1.003119841516724, -1.690559509101338, -1.839385656780147, -1.855560541931011, -1.8571916277828961]]
+# probs = [1 - prob for prob in  [0.9, 0.99,0.999,0.9999, 0.99999]]
+# labels = ["12 gates", "38 gates", "fixed parms"]
+# for i in range(3):
+#     pylab.plot(probs[1:], a[i][1:], label=labels[i])
+# pylab.xscale('log')
 # pylab.legend()
-# pylab.savefig("toto2")
-
-
-a = [[-1.0031434741388943, -1.6905585840512296, -1.8393852284472576, -1.855560165924037, -1.8571912570353855],
-    [-1.444400023964278, -1.803600922873114, -1.8517715150181235, -1.856809923221062, -1.8573163472207639],
-    [-1.003119841516724, -1.690559509101338, -1.839385656780147, -1.855560541931011, -1.8571916277828961]]
-probs = [1 - prob for prob in  [0.9, 0.99,0.999,0.9999, 0.99999]]
-labels = ["12 gates", "38 gates", "fixed parms"]
-for i in range(3):
-    pylab.plot(probs[1:], a[i][1:], label=labels[i])
-pylab.xscale('log')
-pylab.legend()
-pylab.savefig("toto3")
+# pylab.savefig("toto3")
 
 
 

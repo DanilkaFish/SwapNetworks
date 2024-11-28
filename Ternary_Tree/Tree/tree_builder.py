@@ -75,6 +75,7 @@ def _build_full_tt(self, n_qubits):
 
 
 def _build_jw_tree(self, n_qubits):
+    self._nodes = {}
     if n_qubits > 0:
         self.root = QubitNum(0)
         self._nodes[self.root] = NodeContacts(parent=ROOT,
@@ -86,10 +87,23 @@ def _build_jw_tree(self, n_qubits):
         self.update_branchnum()
         self[QubitNum(n_qubits - 1)][2] = LostNum()
         self.check_branch_numeration()
-    else:
-        self._nodes = {}
 
 
+def _build_jw_zyx_tree(self, n_qubits):
+    self._nodes = {}
+    if n_qubits > 0:
+        self.root = QubitNum(0)
+        self._nodes[self.root] = NodeContacts(parent=ROOT,
+                                              childs=[1, BranchNum(2), BranchNum(1)])
+        for i in range(1, n_qubits):
+            self.nodes[QubitNum(i)] = NodeContacts(parent=i-1,
+                                                   childs=[i+1, BranchNum(2*i+2), BranchNum(2*i+1)])
+        self._nodes[QubitNum(n_qubits - 1)][0] = LostNum()
+        # self.update_branchnum()
+        # self[QubitNum(n_qubits - 1)][2] = LostNum()
+        # self.check_branch_numeration()
+
+        
 def _build_bk_tree(self, n_qubits):
     # TODO
     def down(_branches, node, edge = None):

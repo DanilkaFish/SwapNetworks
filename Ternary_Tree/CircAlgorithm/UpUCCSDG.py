@@ -13,10 +13,10 @@ from .paulistring import prod_pauli_strings, PauliStringSign
 
 dict_prods = {(1, 1, 1, 2) : 1j, (1,1,2,1): 1j, (1,2,1,1): -1j, (2,1,1,1): -1j, (1,2,2,2): 1j, (2,1,2,2): 1j, (2,2,1,2): -1j,  (2,2,2,1): -1j}
 
+
 class UpUCCSDG(AbstractUCC):
     def __init__(self,  **kwargs):
         super().__init__(**kwargs)
-        self.tt = TernaryTree(self.num_spin_orbitals)
 
     def get_alpha_excitations(self) -> list[tuple[int, int]]:
         """
@@ -46,7 +46,7 @@ class UpUCCSDG(AbstractUCC):
               for a in alpha for b in alpha if a < b]
         return ab
 
-    def get_parametrized_circuit(self, number_of_layers=1):
+    def get_parametrized_circuit(self, number_of_layers=1, type=0):
         single_ladder_alpha_exc = self.get_alpha_excitations()
         single_ladder_beta_exc = self.get_beta_excitations()
         single_ladder_exc = single_ladder_alpha_exc + single_ladder_beta_exc
@@ -55,12 +55,13 @@ class UpUCCSDG(AbstractUCC):
         n = self.n_qubits
         qr = QuantumRegister(n)
         cirq = MyCirq(qr)
-        self.tt = TernaryTree(n) # JW tree
-        self.tt = self.get_jw_opt()
+            
+        self.tt = self.get_jw_opt(type)
+        
         def append_maj_single_exc(cirq, tt, ls: tuple) -> bool:
             try:
                 psss = [PauliStringSign(*tt.get_majorana(i)) for i in ls]
-                cirq.zz_rotation(reduce(prod_pauli_strings, psss), sp_maj_exc.pop(ls))
+                cirq.rotation(reduce(prod_pauli_strings, psss), sp_maj_exc.pop(ls))
                 return True
             except KeyError:
                 return False
@@ -71,6 +72,10 @@ class UpUCCSDG(AbstractUCC):
             init_orb = min(maj_nums) // 2
             fin_orb = (max(maj_nums) - n - 1) // 2 
             list_signs = {"XXXY": 1, "XXYX": 1, "XYXX": 1, "YXXX": 1, "YYYX": 1, "YYXY": 1, "YXYY": 1, "XYYY": 1}
+            if type in {2}:
+                list_signs = {"ZZZY": -1, "ZZYZ": -1, "ZYZZ": 1, "YZZZ": 1, "YYYZ": -1, "YYZY": -1, "YZYY": 1, "ZYYY": 1}
+            if type in {3}:
+                list_signs = {"ZZZY": -1, "ZZYZ": 1, "ZYZZ": 1, "YZZZ": -1, "YYYZ": 1, "YYZY": -1, "YZYY": -1, "ZYYY": 1}
             try:
                 for key in dict_prods:
                     psss = [PauliStringSign(*tt.get_majorana(j1 + j2)) for j1,j2 in zip(key, (2*init_orb, n + 2*init_orb, 2*fin_orb, n + 2*fin_orb))]
@@ -81,8 +86,18 @@ class UpUCCSDG(AbstractUCC):
                         list_signs[pauli] = (list_signs[pauli]*dict_prods[key]*pss.sign*(-1j)).real
                     else:
                         return False
-                cirq.double_ex_opt(qubits, dp_lad_exc.pop((init_orb + n//2, init_orb, fin_orb + n//2, fin_orb)), list_signs)
+                if type==1:
+                    qubits = [i, i + 1, i + 2, i + 3]
+                    cirq.double_ex_yordan(qubits, dp_lad_exc.pop((init_orb + n//2, init_orb, fin_orb + n//2, fin_orb)), list_signs)
+                if type==0:
+                    cirq.double_ex_opt(qubits, dp_lad_exc.pop((init_orb + n//2, init_orb, fin_orb + n//2, fin_orb)), list_signs)
+                if type==2:
+                    cirq.double_ex_zyx_opt(qubits, dp_lad_exc.pop((init_orb + n//2, init_orb, fin_orb + n//2, fin_orb)), list_signs)
+                if type==3:
+                    print(list_signs)
+                    cirq.double_ex_zyx_yordan(qubits, dp_lad_exc.pop((init_orb + n//2, init_orb, fin_orb + n//2, fin_orb)), list_signs)
             except KeyError:
+                print("HERERERE")
                 return False
 
 
@@ -107,14 +122,19 @@ class UpUCCSDG(AbstractUCC):
             # _ = [cirq.id(i) for i in range(n)]
             # _ = [cirq.x(i) if ((i < self.num_alpha) or (0 <= (i - n//2)< self.num_beta)) 
             #                 else cirq.id(i) for i in range(n)]
-            
+
             num_electrons = self.num_alpha  
             for i in range(self.n_qubits):
                 if (self.tt[i][0].num <= 2*num_electrons) or (self.num_spatial_orbitals * 2 + 1<= 
                         self.tt[i][0].num <= 2*self.num_spatial_orbitals + 2*num_electrons):
                     cirq.x(i)
+                    # TODO
                 else:
                     cirq.id(i)
+            if type in {2,3}:
+                for i in range(self.n_qubits):
+                    cirq.h(i)
+                    cirq.z(i)
         def single_prep(cirq):
             res, disp = 0, 0
             for i in range(0, n//2):
@@ -138,10 +158,11 @@ class UpUCCSDG(AbstractUCC):
                 _ = _maj()
             # cirq.barrier()
             _maj()
+            # change
             for block in range(4):
-                _ = [ferm_trans(j + block*n//4, j + block*n//4 + 1) for i in range(n//4 - 1) 
+                _ = [ferm_trans(j + block*n//4, j + block*n//4 + 1) for i in range(n//4)
                         for j in range(i % 2, n//4 - 1, 2)]
-                _ = [last_ferm_trans(j + block*n//4, j + block*n//4 + 1) for j in range((n//4-1) % 2, n//4 - 1, 2)]
+                # _ = [last_ferm_trans(j + block*n//4, j + block*n//4 + 1) for j in range((n//4-1) % 2, n//4 - 1, 2)]
         
         def single_anti_prep():
             res, disp = 1, n//4 - 1
@@ -181,42 +202,42 @@ class UpUCCSDG(AbstractUCC):
                 layer(2)
         
 
-        k = ''
+        k = 0
+        init_state()
         # sp_maj_exc = copy.deepcopy(self.to_par_maj_excitations(single_ladder_exc, name="t" + str(k) + "_"))
         dp_lad_exc = copy.deepcopy(self.to_par_ladder_exciations(double_ladder_exc, name="t" + str(k) + "_"))
         sp_maj_exc = self.to_par_maj_exitations_comp(
-            copy.deepcopy(self.to_par_maj_excitations(single_ladder_alpha_exc)),
+            copy.deepcopy(self.to_par_maj_excitations(single_ladder_alpha_exc, name="t" + str(k) + "_")),
             n
         )
-        
-        init_state()
-
-
         double_exc_layer()
-        # double_anti_exc_tree()
-        # single_prep(cirq)
+        double_anti_exc_tree()
+        single_prep(cirq)
         # cirq.barrier()
-        # single_exc()
-        # single_anti_prep()
-        # double_exc_tree()
+        single_exc()
+        for k in range(1, number_of_layers):
+            dp_lad_exc = copy.deepcopy(self.to_par_ladder_exciations(double_ladder_exc, name="t" + str(k) + "_"))
+            sp_maj_exc = self.to_par_maj_exitations_comp(
+                copy.deepcopy(self.to_par_maj_excitations(single_ladder_alpha_exc, name="t" + str(k) + "_")),
+                n
+            )
+            single_anti_prep()
+            double_exc_tree()
+            double_exc_layer()
+            double_anti_exc_tree()
+            single_prep(cirq)
+            single_exc()
 
-        # print(cirq)
-
-        
-        
-
-        print(sp_maj_exc, dp_lad_exc)
-
-        # print(cirq)
-
-            # print("after_double", self.tt)
-            # print("------------------", maj_exc_par)
-            # single_anti_prep()
+        # print(sp_maj_exc, dp_lad_exc)
         return cirq
 
-    def get_jw_opt(self):
+    def get_jw_opt(self, type=0):
         n = self.n_qubits
         tt = TernaryTree(n)
+        if type in {2,3}:
+            tt.gate_name_to_number = {'Z': 0, "Y": 1, 'X': 2}
+            tt.gate_number_to_name = {0: 'Z', 1: 'Y', 2: 'X'}
+            
         def fswap(fq):
             list_trans = [(fq, 0, fq + 1, 0), (fq, 1, fq + 1, 1)]
             _ = [tt.branch_transposition(*el, unsigned=True) for el in list_trans] 
@@ -224,5 +245,4 @@ class UpUCCSDG(AbstractUCC):
         def double_exc_tree():
             _ = [fswap(n//2 - l + 2*i - 1) for l in range(n // 2 - 1) for i in range(l + 1)]
         double_exc_tree()
-
         return tt

@@ -10,10 +10,7 @@ def _pauli_table_TT(tt: TernaryTree):
     """
     This function is used by InitstateTTInfo for vacuum preparation.
     """
-
-
     n_qubits = tt.n_qubits
-    branches = tt.branches()
 
     def majorana_to_str(num):
         pauli_list = ["I"] * n_qubits
@@ -41,7 +38,6 @@ def pauli_table_TT(**kwargs):
     pauli_table_str, coefs = _pauli_table_TT(**kwargs)
     for i in range(len(pauli_table_str)):
         pauli_table.append(((Pauli(pauli_table_str[i][0][::-1]), Pauli(pauli_table_str[i][1][::-1])), coefs[i]))
-    
     return pauli_table
 
 

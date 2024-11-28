@@ -66,7 +66,7 @@ class SOAP(Optimizer):
         offset_list = []
         diff_list = []
 
-        scale = 0.01
+        scale = 0.5
 
         while nfev < self.maxiter:
             if len(vec_list) != 0:
@@ -134,7 +134,7 @@ class SOAP(Optimizer):
             diff_list.append(e_list[-1] - e_list[-2])
 
             if callback is not None:
-                callback(np.copy(x0))
+                callback(np.copy(trajectory[-1]))
 
             nit += 1
 

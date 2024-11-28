@@ -69,10 +69,10 @@ class AbstractUCC(ABC):
         maj_exc_par = simplification(maj_exc_par)
         return maj_exc_par
 
-    def to_par_maj_exitations_comp(self, maj_alpha_par_exc, n, name="t_", ):
+    def to_par_maj_exitations_comp(self, maj_alpha_par_exc, n_qubits):
         toto = deepcopy(maj_alpha_par_exc)
         for key in maj_alpha_par_exc:
-            toto[(key[0] + n, key[1] + n)] = toto[key]
+            toto[(key[0] + n_qubits, key[1] + n_qubits)] = toto[key]
         return toto      
 
     def to_par_ladder_exciations(self, ladder_exciations, name="t_" ):
