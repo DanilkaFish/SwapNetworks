@@ -6,15 +6,18 @@ from qiskit.primitives import Estimator
 
 from qiskit import transpile, QuantumCircuit
 from qiskit.circuit.parametervector import ParameterVector
+from qiskit_aer import AerSimulator
 from qiskit_aer.noise import NoiseModel
-from qiskit_aer.primitives import Estimator as AerEstimator
+from qiskit_aer.primitives import EstimatorV2 as Estimator
 # from qiskit_algorithms.utils import algorithm_globals
 from qiskit_algorithms import VQE, NumPyMinimumEigensolver
+from qiskit.circuit.library import TwoLocal
 
 from numpy.random import shuffle
 from copy import copy
 from Ternary_Tree.OpenFermionSQ.Ternary_Tree_mapper import TernaryTreeMapper
 from Ternary_Tree.CircAlgorithm.UpUCCSDG import UpUCCSDG
+from Ternary_Tree.CircAlgorithm.optUpCCGSD import UpUCCSDG_opt
 from Paulihedral_v2.Paulihedral_new.benchmark.mypauli import *
 from Paulihedral_v2.Paulihedral_new.parallel_bl import depth_oriented_scheduling, gate_count_oriented_scheduling
 from Paulihedral_v2.Paulihedral_new.tools import *
@@ -29,10 +32,10 @@ from qiskit.circuit.library.standard_gates import IGate, XGate, ZGate, YGate
 
 seed = 172
 # algorithm_globals.random_seed = seed
-basis_gates = ["u3", "cx"]
+basis_gates = ["u", "cx"]
 # basis_gates1 = [ "h","rz","cx"]
 # basis_gates1 = basis_gates
-# basis_gates2 = ["u3", 'cx']
+# basis_gates2 = ["u", 'cx']
 
 basis = '6-31G'
 geometry='H 0 0 0; H 0 0 0.739'
@@ -52,7 +55,10 @@ def ucc_parts(al,be,do, **kwargs):
     return ls2 + ls1
 
 def circ_order():
-    return ["swap_sh", "swap_sh_inv", "jw", "jw_lex", "bk", "bk_lex", "jw_opt", "jw_opt_lexic", "swap_yo", "swap_yo_inv"]
+    # return ["swap gen"]
+    # return ["swap gen yor", "swap gen short"]
+    return ["jw", "bk",  "jw_opt", "swap 2xn", "swap gen yor", "swap gen short"]
+    # return ["swap_sh", "swap_sh_inv", "jw", "jw_lex", "bk", "bk_lex", "jw_opt", "jw_opt_lexic", "swap_yo", "swap_yo_inv", "swap gen"]
 
 def get_ucc_ops(self, **kwargs):
     return ucc_parts(self.al, self.be, self.do, **kwargs)
@@ -70,9 +76,15 @@ class CircuitProvider:
                  noise_probs=[0.999]):
         self.reps = reps
         self.ucc = UpUCCSDG(geometry=geometry, basis=basis, active_orbitals=active_orbitals, num_electrons=num_electrons)
+        self.ucc_opt = UpUCCSDG_opt(geometry=geometry, basis=basis, active_orbitals=active_orbitals, num_electrons=num_electrons)
         self.num_electrons = num_electrons
         self.fermionic_op = self.ucc.mol.hamiltonian.second_q_op()
         self.dynamic_circ = self.ucc.get_parametrized_circuit(reps)
+        self.swap2xn = self.ucc_opt.get_parametrized_circuit(reps)
+        self.ucc_opt_tt = self.ucc_opt.tt
+        self.swapgen_yordan = self.ucc_opt.get_paramaetrized_circuit_generalized(reps, type=1)
+        self.swapgen_short = self.ucc_opt.get_paramaetrized_circuit_generalized(reps, type=0)
+        self.ucc_gen_tt = self.ucc_opt.tt
         self.ucc.get_parametrized_circuit(reps)
 
         self.dynamic_map = self.ucc.tt
@@ -89,7 +101,22 @@ class CircuitProvider:
     def get_ucc_ops(self, **kwargs):
         return ucc_parts(self.al, self.be, self.do, **kwargs)
 
+    def get_swap_2xn(self):
+        ansatz = transpile(self.swap2xn, basis_gates=self.basis_gates, optimization_level=3)
+        print(ansatz.count_ops())
+        print(ansatz.depth())
+        return ansatz
+    
+    def get_swap_gen(self, type):
+        if (type == 0):
+            ansatz = transpile(self.swapgen_yordan, basis_gates=self.basis_gates, optimization_level=3)
+        else:
+            ansatz = transpile(self.swapgen_short, basis_gates=self.basis_gates, optimization_level=3)
 
+        print(ansatz.count_ops())
+        print(ansatz.depth())
+        return ansatz
+    
     def get_dynamic(self):
         # ansatz = transpile(self.dynamic_circ, basis_gates=basis_gates1, optimization_level=3)
         ansatz = transpile(self.dynamic_circ, basis_gates=self.basis_gates, optimization_level=3)
@@ -162,16 +189,27 @@ class CircuitProvider:
                 theta = ParameterVector("θ" + str(i), new_ucc.num_parameters)
                 new_ucc.assign_parameters(theta, inplace=True)
                 parr = []
-                for gate in new_ucc.decompose(reps=2):
-                    parr.append([pauliString(gate.operation.name[-1-self.ucc.n_qubits:-1], 1.0)])
-                    shuffle(parr)
-                    nq = len(parr[0][0])
-                    # length = nq//2 # `length' is a hyperparameter, and can be adjusted for best performance
-                    a1 = gate_count_oriented_scheduling(parr)
-                for pauli in a1:
-                    for gate in new_ucc.decompose(reps=2):
-                        if gate.operation.name[-1-self.ucc.n_qubits:-1] == str(pauli[0][0]):
-                            qc = qc.compose(gate[0])
+                print(new_ucc)
+                cir = new_ucc.decompose(reps=1)
+                print(cir[0].operation.operator.paulis)
+                # print(cir[0].decompose())
+                names = []
+                for gate in new_ucc.decompose(reps=1):
+                    # parr.append([pauliString(gate.operation.name[-1-self.ucc.n_qubits:-1], 1.0)])
+                    for pauli in gate.operation.operator.paulis:
+                        parr.append([pauliString(pauli.__str__(), 1.0)])
+                        names.append(pauli.__str__())
+                        # print(parr)
+                        # nq = len(parr[0][0])
+                        # length = nq//2 # `length' is a hyperparameter, and can be adjusted for best performance
+                print(names)
+                shuffle(parr)
+                a1 = gate_count_oriented_scheduling(parr)
+                print(a1)
+                # for pauli in a1:
+                #     for gate in new_ucc.decompose(reps=2):
+                #         if gate.operation.name[-1-self.ucc.n_qubits:-1] == str(pauli[0][0]):
+                #             qc = qc.compose(gate[0])
         qc = transpile(qc, basis_gates=self.basis_gates, optimization_level=3)
         ansatz = qc.decompose(reps=3)
         print(ansatz.count_ops())
@@ -255,17 +293,28 @@ class CircuitProvider:
                 return (self.get_yordan_dynamic(), ucc_ham(self.fermionic_op, self.dynamic_map))
             case "swap_yo_inv":
                 return (self.get_zyx_yordan_dynamic(), ucc_ham(self.fermionic_op, self.jw_zyx_map))
-    
+            case "swap 2xn":
+                return (self.get_swap_2xn(), ucc_ham(self.fermionic_op, self.ucc_opt_tt))
+            case "swap gen yor":
+                return (self.get_swap_gen(0), ucc_ham(self.fermionic_op, self.ucc_gen_tt))
+            case "swap gen short":
+                return (self.get_swap_gen(1), ucc_ham(self.fermionic_op, self.ucc_gen_tt))
+
     def __iter__(self, name_list=circ_order()):
         for name in name_list:
             yield name, *self.get_circ_op(name)
 
+
 class CircSim:
-    def __init__(self, circ, op, is_noise=False, noise_par=0.999, noise_type="D", q1_noise=False, q2_noise=True):
+    def __init__(self, circ, op, is_noise=False, noise_par=0.999, noise_type="D", q1_noise=False, q2_noise=True, init_point=None):
         self.circ = circ
         self.op = op
+        
         self.hf = hf(circ, op)
-        self.init_point = [0 for _ in circ.parameters]
+        if init_point is None:
+            self.init_point = [0 for _ in circ.parameters]
+        else:
+            self.init_point = init_point
         self.is_noise = is_noise
         self.noise_par = noise_par
         self.noise_type = noise_type
@@ -281,8 +330,9 @@ class CircSim:
             # print(parameters)
         # optimizer = SLSQP(maxiter=200, ftol=0)
         if not self.is_noise:
-            est = AerEstimator(approximation=True, 
-                            run_options={"shots": None})
+            est = Estimator()
+            est.options.run_options={"shots": None}
+            # print(self.circ)
             vqe = VQE(est, self.circ, optimizer=optimizer, callback=store_intermediate_result, initial_point=self.init_point)
             result = vqe.compute_minimum_eigenvalue(operator=self.op)
             print(f"VQE on Aer qasm simulatfrom qiskit.quantum_info import Statevector (no noise): {result.eigenvalue.real:.5f}")
@@ -303,6 +353,7 @@ class CircSim:
         
     def run_qulacs_sim(parameters):
         pass
+
 def jw_ham(fermionic_op):
     mapper = JordanWignerMapper()
     qubit_jw_op = mapper.map(fermionic_op)
@@ -321,7 +372,7 @@ def ucc_ham(fermionic_op, tree_map):
     return qubit_tt_op
 
     
-noise_dict_qiskit = {"X":XGate(), "Y": YGate(), "Z": ZGate()}
+noise_dict_qiskit = {"I": IGate(),"X":XGate(), "Y": YGate(), "Z": ZGate()}
 
 def get_qiskit_device_noise_estimator(n_qubits, noise_op, q1, q2, prob):
     # coupling_map = [(x,y) for x in range(n_qubits) for y in range(n_qubits) if x != y]
@@ -330,25 +381,43 @@ def get_qiskit_device_noise_estimator(n_qubits, noise_op, q1, q2, prob):
         error1 = depolarizing_error(1 - prob, 1)
         error2 = depolarizing_error(1 - prob, 2)
     else:
-        error1 = QuantumError([(noise_dict_qiskit("I"), prob), (noise_dict_qiskit(noise_op), 1 - prob)])
-        error2 = QuantumError([(noise_dict_qiskit("I"), prob), (noise_dict_qiskit(noise_op), 1 - prob)])
+        error1 = QuantumError([(noise_dict_qiskit["I"], prob), (noise_dict_qiskit[noise_op], 1 - prob)])
+        error2 = error1.tensor(error1)
     if q1:
         for i in range(n_qubits):
-            noise_model.add_quantum_error(error1, ['u3'], [i])
+            noise_model.add_quantum_error(error1, ['u'], [i])
     if q2:
+        # noise_model.add_quantum_error(error1, ['u'], [i])
         noise_model.add_all_qubit_quantum_error(error2, ['cx'])
 
 
-    noisy_estimator = AerEstimator(
-        backend_options={
-            "method": "density_matrix",
-            # "coupling_map": coupling_map,
+    # noisy_estimator = AerSimulator(
+    #         noise_model=noise_model,
+    #         basis_gates=["u","cx"],
+    #         # backend_options = {
+    #         method="density_matrix",
+    #         shots=None
+    #         # "coupling_map": coupling_map,
+    #         # "noise_model": noise_model,
+    #         # }
+    # )
+    noisy_estimator = Estimator(options={"backend_options":{
             "noise_model": noise_model,
-        },
-        run_options={"shots": None},
+            "basis_gates": ["u","cx"],
+            "method": "density_matrix",
+            }
+            }
+            )
+    # noisy_estimator.options.backend_options = {
+    #         # "method": "density_matrix",
+    #         # "coupling_map": coupling_map,
+    #         "noise_model": noise_model,
+    # }
+    
+    noisy_estimator.options.run_options={"shots": None,}
         # transpile_options={"seed_transpiler": seed},
-        approximation=True
-    )
+    # noisy_estimator.options.
+    print(noisy_estimator.options)
     return noisy_estimator
 
 
@@ -371,7 +440,7 @@ def ideal_energy(ansatz, op, ref_value, optimizer, init_point, en_hf=None):
         # print(parameters)
     est = AerEstimator(approximation=True, 
                        run_options={"shots": None})
-
+    est.options.run_options={"shots": None}
     vqe = VQE(est, ansatz, optimizer=optimizer, callback=store_intermediate_result, initial_point=init_point)
     result = vqe.compute_minimum_eigenvalue(operator=op)
     print(f"VQE on Aer qasm simulatfrom qiskit.quantum_info import Statevector (no noise): {result.eigenvalue.real:.5f}")

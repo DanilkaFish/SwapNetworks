@@ -75,12 +75,19 @@ class AbstractUCC(ABC):
             toto[(key[0] + n_qubits, key[1] + n_qubits)] = toto[key]
         return toto      
 
-    def to_par_ladder_exciations(self, ladder_exciations, name="t_" ):
+    def to_par_ladder_exciations(self, ladder_excitations, name="t_" ):
         ladder_exc_par = {}
-        for op in ladder_exciations:
+        for op in ladder_excitations:
             ladder_exc_par[op] = Parameter(name + ','.join([str(i) for i in op]))
         return ladder_exc_par
 
+    def to_sab_together_ladder_excitations(self, ladder_excitations, name="t_"):
+        ladder_exc_par = {}
+        for op in ladder_excitations:
+            ladder_exc_par[op] = Parameter(name + ','.join([str(i) for i in op]))
+            ladder_exc_par[(op[0] + self.n_qubits//2, op[1] + self.n_qubits//2)] = ladder_exc_par[op]
+        return ladder_exc_par
+    
     
     def get_excitations(self, name='t_') -> {(int, int) | (int, int)}:
         """

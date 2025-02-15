@@ -205,16 +205,20 @@ if __name__ == "__main__":
     # gen_dict = {0 : "XIII",1: "YIII",2: "ZXII", 3: "ZYII", 4: "ZZXI", 5: "ZZYI", 6: "ZZZX", 7: "ZZZY", 8: "ZZZZ"}
     # gen_dict = {0 : "YZXI",1: "XZYI",2: "IYZX", 3: "IXZY"}
     # gen_dict = {0 : "YZXI",1: "XZYI",2: "IYZX", 3: "IXZY"}
-
+    # gen_dict = {0:"XX", 1: "YY"}
+    
     # gen_dict = {0 : "YZZXII",1: "XZZYII",2: "IYZZXI", 3: "IXZZYI", 4: "IIXZZY", 5: "IIYZZX"}
 
     cg = clifford_generator(n, gen_dict)
     print(cg)
-    
+    # cg.transform_maj("z", (0,))
+    # cg.transform_maj("z", (1,))
+    # cg.transform_maj("cx", (0,1))
     # cg.transform_maj('h', (0,))
     # cg.transform_maj('h', (1,))
     # cg.transform_maj('h', (2,))
     # cg.transform_maj('h', (3,))
+    # ---------------------------------------------
     cg.transform_maj("cx", (2,3))
     cg.transform_maj("cx", (0,1))
     cg.transform_maj('x', (3,))
@@ -249,12 +253,13 @@ if __name__ == "__main__":
     cg.transform_maj('x', (1,))
     cg.transform_maj("cx", (2,3))
     cg.transform_maj("cx", (0,1))
-    # cg.transform_maj('h', (0,))
-    # cg.transform_maj('h', (1,))
-    # cg.transform_maj('h', (2,))
-    # cg.transform_maj('h', (3,))
-
     print(cg)
+    # # ---------------------------------------------
+    # # cg.transform_maj('h', (0,))
+    # # cg.transform_maj('h', (1,))
+    # # cg.transform_maj('h', (2,))
+    # # cg.transform_maj('h', (3,))
+
     # cg.transform_maj(get_pauli("Y", 1))
     # # cg.transform_maj(get_pauli("Y", 2))
     # # cg.transform_maj(get_pauli("Y", 3))

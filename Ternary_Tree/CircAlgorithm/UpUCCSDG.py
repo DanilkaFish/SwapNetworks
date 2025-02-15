@@ -135,6 +135,8 @@ class UpUCCSDG(AbstractUCC):
                 for i in range(self.n_qubits):
                     cirq.h(i)
                     cirq.z(i)
+
+                    
         def single_prep(cirq):
             res, disp = 0, 0
             for i in range(0, n//2):

@@ -55,8 +55,20 @@ class MyCirq(QuantumCircuit):
         circ.name = "fswap"
         self.compose(circ, qubits=qubits, inplace=True, wrap=True)
 
+    def single_ex(self, qubits, parameter, list_signs):
+        q0, q1 = 0,1
+        circ = QuantumCircuit(2)
+        circ.ry(pi/2, q0)
+        circ.cx(q0,q1)
+        circ.ry(-parameter*list_signs["XY"]*0.5, q0)
+        circ.ry(parameter*list_signs["YX"]*0.5, q1)
+        circ.cx(q0,q1)
+        circ.ry(-pi/2, q0)
+        self.compose(circ, qubits=qubits, inplace=True, wrap=True)
+
+        
     def double_ex_opt(self, qubits, parameter, list_signs):
-        q0, q1, q2, q3 = 1,0,2,3
+        q0, q1, q2, q3 = 0,1,2,3
         circ = QuantumCircuit(4)
         circ.cx(q1, q0)
         circ.cx(q2, q3)
@@ -123,21 +135,21 @@ class MyCirq(QuantumCircuit):
         circ.cx(q0, q1), circ.cx(q2, q3)
         circ.x(q1), circ.x(q3)
         circ.cx(q0, q2)
-        circ.h(q1), circ.ry(parameter*0.25, q0)
+        circ.h(q1), circ.ry(list_signs["YXXX"]*parameter*0.25, q0)
         circ.cx(q0, q1)
-        circ.h(q3), circ.ry(-parameter*0.25, q0)
+        circ.h(q3), circ.ry(-list_signs["XYXX"]*parameter*0.25, q0)
         circ.cx(q0, q3)
-        circ.ry(parameter*0.25, q0)
+        circ.ry(-list_signs["XYYY"]*parameter*0.25, q0)
         circ.cx(q0, q1)
-        circ.h(q2), circ.ry(-parameter*0.25, q0)
+        circ.h(q2), circ.ry(list_signs["YXYY"]*parameter*0.25, q0)
         circ.cx(q0, q2)
-        circ.ry(parameter*0.25, q0)
+        circ.ry(-list_signs["XXXY"]*parameter*0.25, q0)
         circ.cx(q0, q1)
-        circ.ry(-parameter*0.25, q0)
+        circ.ry(-list_signs["YYXY"]*parameter*0.25, q0)
         circ.cx(q0, q3)
-        circ.h(q3), circ.ry(parameter*0.25, q0)
+        circ.h(q3), circ.ry(list_signs["YYYX"]*parameter*0.25, q0)
         circ.cx(q0, q1)
-        circ.h(q1), circ.ry(-parameter*0.25, q0)
+        circ.h(q1), circ.ry(list_signs["XXYX"]*parameter*0.25, q0)
         circ.rz(pi/2, q2)
         circ.cx(q0, q2)
         # circ.h(q2)
@@ -181,7 +193,37 @@ class MyCirq(QuantumCircuit):
         circ.name = parameter.name
         self.compose(circ, qubits=qubits, inplace=True, wrap=True)
         
-        
+    def double_ex_12cnot(self, qubits, parameter, list_signs):
+        circ = QuantumCircuit(4)
+        q0, q1, q2, q3 = 0,1,2,3
+        circ.ry(pi/2, q2)
+        circ.rz(pi/2, q3)
+        circ.rz(pi/2, q0)
+        circ.ry(pi/2, q0)
+        circ.cx(q1, q2)
+        circ.cx(q0, q1), circ.cx(q2, q3)
+        # list_signs = {"YYIZ": 1,"XXIZ": 1,"YYZI": 1,"XXZI": 1,"IZYY": -1,"IZXX": -1,"ZIYY": -1,"ZIXX": -1}
+
+        circ.ry(parameter*list_signs["XXZI"]*0.25, q0)
+        circ.ry(parameter*list_signs["YYZI"]*0.25, q1)
+        circ.ry(parameter*list_signs["IZYY"]*0.25, q2)
+        circ.ry(parameter*list_signs["IZXX"]*0.25, q3)
+        circ.cx(q0, q1), circ.cx(q2, q3)
+        circ.cx(q1, q2), circ.cx(q3, q0)
+        circ.cx(q0, q1), circ.cx(q2, q3)
+        circ.ry(parameter*list_signs["XXIZ"]*0.25, q0)
+        circ.ry(parameter*list_signs["YYIZ"]*0.25, q1)
+        circ.ry(parameter*list_signs["ZIYY"]*0.25, q2)
+        circ.ry(parameter*list_signs["ZIXX"]*0.25, q3)
+        circ.cx(q0, q1), circ.cx(q2, q3)
+        circ.cx(q3, q0)
+        circ.ry(-pi/2, q2)
+        circ.ry(-pi/2, q0)
+        circ.rz(-pi/2, q3)
+        circ.rz(-pi/2, q0)
+        circ.name = parameter.name
+        self.compose(circ, qubits=qubits, inplace=True, wrap=True)
+
     def fermionic_2swap(self, qubits):
         """
         Implements the 2-fermionic swap gate.

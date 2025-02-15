@@ -5,8 +5,23 @@ dict_prod_coef = {"II" : ["I",1] , "XX" :  ["I",1] , "YY" :  ["I",1] ,"ZZ" :  ["
              "XY" :  ["Z",1j] ,"YX" : ["Z",-1j],"XZ" : ["Y",-1j], "ZX" : ["Y",1j],"YZ" : ["X",1j],"ZY" : ["X",-1j],
             "IX" : ["X",1], "XI" : ["X",1], "YI" : ["Y",1],"IY" : ["Y",1],"IZ" : ["Z",1],"ZI" : ["Z",1]}
 
-dict_cx_trans = {"II": ["II", 1], "IX": ["IX", 1],"ZI": ["ZI", 1],"ZX": ["ZX", 1],"XI": ["XX", 1],"XX": ["XI", 1],"IZ": ["ZZ", 1],"ZZ": ["IZ", 1],"YI": ["YX", 1],"YX": ["YI", 1],"XZ": ["YY", -1],"YY": ["XZ", -1],
-                 "XY": ["YZ", 1],"YZ": ["XY", 1],"ZY": ["IY", 1],"IY": ["ZY", 1]}
+dict_cx_trans = {"II": ["II", 1], 
+                 "IX": ["IX", 1],
+                 "IY": ["ZY", 1],
+                 "IZ": ["ZZ", 1],
+                 "XI": ["XX", 1],
+                 "YI": ["YX", 1],
+                 "ZI": ["ZI", 1],
+                 "XX": ["XI", 1],
+                 "ZZ": ["IZ", 1],
+                 "ZY": ["IY", 1],
+                 "YX": ["YI", 1],
+                 "XY": ["YZ", 1],
+                 "YZ": ["XY", 1],
+                 "XZ": ["YY", -1],
+                 "YY": ["XZ", -1],
+                 "ZX": ["ZX", 1],
+                 }
 
 dict_cz_trans = {"II": ["II", 1],"IZ": ["IZ", 1],"ZI": ["ZI", 1],"ZZ": ["ZZ", 1],"XX": ["YY", 1],"YY": ["XX", 1],"XY": ["YX", 1],"YX": ["XY", 1],"XZ": ["XI", 1],"XI": ["XZ", 1],"ZX": ["IX", 1],"IX": ["ZX", 1],
                  "YI": ["YZ", 1],"YZ": ["YI", 1],"ZY": ["IY", 1],"IY": ["ZY", 1]}
@@ -180,31 +195,42 @@ from tqdm import tqdm
 
 if __name__ == "__main__":
     n = 5
-    gen_dict = {0 : ["XXXY", 1],1: ["XXYX", 1],2: ["XYXX", 1], 3: ["YXXX", 1], 4: ["YYYX", 1], 5: ["YYXY", 1], 6: ["YXYY", 1], 7: ["XYYY", 1]}
+    gen_dict = {0 : ["YXIZ", -1],1: ["XYIZ", 1],2: ["YXZI", -1], 3: ["XYZI", 1], 4: ["IZYX", -1], 5: ["IZXY", 1], 6: ["ZIYX", -1], 7: ["ZIXY", 1]}
+    gen_dict = {0 : ["YYIZ", 1],1: ["XXIZ", 1],2: ["YYZI", 1], 3: ["XXZI", 1], 4: ["IZYY", 1], 5: ["IZXX", 1], 6: ["ZIYY", 1], 7: ["ZIXX", 1]}
+    # gen_dict = {0 : ["XXXY", 1],1: ["XXYX", 1],2: ["XYXX", 1], 3: ["YXXX", 1], 4: ["YYYX", 1], 5: ["YYXY", 1], 6: ["YXYY", 1], 7: ["XYYY", 1]}
+    gen_dict = {0:"XY", 1: "YX"}
+    
+    # gen_dict = {0 : "YZZXII",1: "XZZYII",2: "IYZZXI", 3: "IXZZYI", 4: "IIXZZY", 5: "IIYZZX"}
+
     cg = clifford_generator(n, gen_dict)
     print(cg)
-
-    cg.transform_maj("cx", (1,0))
-    cg.transform_maj("cx", (2,3))
-    cg.transform_maj(get_pauli("Y",2))
-    cg.transform_maj("cx", (2,1))
-    cg.transform_maj("cx", (0,1))
-    cg.transform_maj("cx", (3,2))
+    cg.transform_maj(get_pauli("Y", 0))
+    # cg.transform_maj(get_pauli("X", 1))
     print(cg)
-    cg.transform_maj("cx", (3,1))
-    cg.transform_maj("cx", (0,2))
-    print(cg)
-    cg.transform_maj("cx", (3,2))
     cg.transform_maj("cx", (0,1))
     print(cg)
-    cg.transform_maj("cx", (0,2))
-    cg.transform_maj("cx", (3,1))
-    print(cg)
-    cg.transform_maj("cx", (2,1))
-    cg.transform_maj(get_pauli("Y",2), coef=-1)
-    cg.transform_maj("cx", (1,0))
-    cg.transform_maj("cx", (2,3))
-    print(cg)
+    # cg.transform_maj("cx", (1,0))
+    # cg.transform_maj("cx", (2,3))
+    # print(cg)
+    # cg.transform_maj(get_pauli("Y",2))
+    # cg.transform_maj("cx", (2,1))
+    # cg.transform_maj("cx", (0,1))
+    # cg.transform_maj("cx", (3,2))
+    # print(cg)
+    # cg.transform_maj("cx", (3,1))
+    # cg.transform_maj("cx", (0,2))
+    # print(cg)
+    # cg.transform_maj("cx", (3,2))
+    # cg.transform_maj("cx", (0,1))
+    # print(cg)
+    # cg.transform_maj("cx", (0,2))
+    # cg.transform_maj("cx", (3,1))
+    # print(cg)
+    # cg.transform_maj("cx", (2,1))
+    # cg.transform_maj(get_pauli("Y",2), coef=-1)
+    # cg.transform_maj("cx", (1,0))
+    # cg.transform_maj("cx", (2,3))
+    # print(cg)
 
     # cg.transform_maj(get_pauli("Y", 1))
     # # # cg.transform_maj(get_pauli("Y", 2))
@@ -232,3 +258,87 @@ if __name__ == "__main__":
     # cg.transform_maj("cx", (2,1))
     # cg.transform_maj(get_pauli("Y", 1), coef=1)
     # print(cg)
+# ------------------------------------------
+    # cg.transform_maj(get_pauli("Z",0))
+    # cg.transform_maj(get_pauli("Y",0))
+    # # cg.transform_maj(get_pauli("X",1))
+    # cg.transform_maj(get_pauli("Y",2))
+    # cg.transform_maj(get_pauli("Z",3))
+    # cg.transform_maj("cx", (1,2))
+    # print(cg)
+    # cg.transform_maj("cx", (0,1))
+    # cg.transform_maj("cx", (2,3))
+    # print(cg)
+    # cg.transform_maj("cx", (0,1))
+    # cg.transform_maj("cx", (2,3))
+    # cg.transform_maj("cx", (1,2))
+    # # # cg.transform_maj(get_pauli("Y",1))
+    # print(cg)
+    # cg.transform_maj("cx", (3,0))
+    # cg.transform_maj("cx", (0,1))
+    # cg.transform_maj("cx", (2,3))
+    # print(cg)
+    # --------------------------------------------------
+    # # cg.transform_maj(get_pauli("Y",0))
+    # # cg.transform_maj(get_pauli("Z",1))
+    # # cg.transform_maj(get_pauli("Y",2))
+    # cg.transform_maj("cx", (3,0))
+    # cg.transform_maj("cx", (0,1))
+    # cg.transform_maj("cx", (2,3))
+    # print(cg)
+    # cg.transform_maj("cx", (1,0))
+    # cg.transform_maj("cx", (2,1))
+    # cg.transform_maj(get_pauli("Y",2))
+    # cg.transform_maj("cx", (0,1))
+    # cg.transform_maj("cx", (3,2))
+    # cg.transform_maj(get_pauli("X",2))
+    # cg.transform_maj(get_pauli("Z",1))
+    # cg.transform_maj(get_pauli("X",0))
+    # cg.transform_maj(get_pauli("Z",3))
+    # cg.transform_maj("cx", (1,2))
+    # print(cg)
+    # cg.transform_maj("cx", (1,0))
+    # cg.transform_maj("cx", (3,2))
+    # print(cg)
+    # cg.transform_maj("cx", (0,1))
+    # cg.transform_maj("cx", (2,3))
+    # print(cg)
+    # cg.transform_maj(get_pauli("Y",1))
+    # cg.transform_maj("cx", (1,2))
+    # cg.transform_maj("cx", (0,1))
+    # cg.transform_maj("cx", (3,2))
+    # cg.transform_maj("cx", (1,0))
+    # cg.transform_maj("cx", (2,3))
+    # cg.transform_maj("cx", (2,1))
+    # print(cg)
+    # cg.transform_maj("cx", (2,3))
+    # cg.transform_maj("cx", (1,0))
+    # # cg.transform_maj(get_pauli("X",1))
+    # cg.transform_maj(get_pauli("Y",2))
+    # # cg.transform_maj("cx", (1,2))
+    # cg.transform_maj("cx", (2,1))
+    # print(cg)
+    # cg.transform_maj("cx", (1,2))
+    # print(cg)
+    # cg.transform_maj("cx", (2,3))
+    # cg.transform_maj("cx", (0,1))
+    # cg.transform_maj(get_pauli("Y",2))
+
+    # cg.transform_maj("cx", (0,1))
+    # cg.transform_maj("cx", (2,3))
+    # cg.transform_maj("cx", (1,0))
+    # cg.transform_maj("cx", (3,2))
+    # cg.transform_maj("cx", (0,1))
+    # cg.transform_maj("cx", (2,3))
+    # cg.transform_maj("cx", (2,3))
+    # cg.transform_maj("cx", (2,1))
+    # print(cg)
+    # cg.transform_maj("cx", (0,1))
+
+    # cg.transform_maj(get_pauli("Y",0))
+    # print(cg)
+    # # cg.transform_maj("cx", (0,1))
+    # cg.transform_maj(get_pauli("Z",3))
+    # cg.transform_maj("cx", (3,1))
+    # cg.transform_maj("cx", (2,3))
+

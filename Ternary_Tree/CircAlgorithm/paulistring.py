@@ -38,6 +38,11 @@ class PauliStringSign:
     def qubits(self):
         return list(self.ps.keys())
 
+    @property    
+    def pauli_str(self):
+        return "".join(list(self.ps.values()))
+    
+    
 def prod_pauli_strings(pss1: PauliStringSign,
                        pss2: PauliStringSign) -> PauliStringSign:
 
