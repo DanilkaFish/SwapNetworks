@@ -1,3 +1,7 @@
+from __future__ import annotations
+from typing import Tuple 
+
+
 from qiskit_nature.second_q.mappers import JordanWignerMapper, BravyiKitaevMapper
 from qiskit_nature.second_q.circuit.library.ansatzes import UCC, UCCSD
 from qiskit_nature.second_q.circuit.library import HartreeFock
@@ -11,13 +15,11 @@ from qiskit_aer.noise import NoiseModel
 from qiskit_aer.primitives import EstimatorV2 as Estimator
 # from qiskit_algorithms.utils import algorithm_globals
 from qiskit_algorithms import VQE, NumPyMinimumEigensolver
-from qiskit.circuit.library import TwoLocal
 
 from numpy.random import shuffle
-from copy import copy
-from Ternary_Tree.OpenFermionSQ.Ternary_Tree_mapper import TernaryTreeMapper
-from Ternary_Tree.CircAlgorithm.UpUCCSDG import UpUCCSDG
-from Ternary_Tree.CircAlgorithm.optUpCCGSD import UpUCCSDG_opt
+# from Ternary_Tree.UCC.UpGCCSD import UpUCCSDG
+from Ternary_Tree.UCC.AbstractUCC import Molecule
+from Ternary_Tree.UCC.UpGCCSDopt import UpUCCSDG, LadExcNames
 from Paulihedral_v2.Paulihedral_new.benchmark.mypauli import *
 from Paulihedral_v2.Paulihedral_new.parallel_bl import depth_oriented_scheduling, gate_count_oriented_scheduling
 from Paulihedral_v2.Paulihedral_new.tools import *
@@ -31,11 +33,7 @@ from qiskit_aer.noise import (NoiseModel, QuantumError, ReadoutError,
 from qiskit.circuit.library.standard_gates import IGate, XGate, ZGate, YGate
 
 seed = 172
-# algorithm_globals.random_seed = seed
 basis_gates = ["u", "cx"]
-# basis_gates1 = [ "h","rz","cx"]
-# basis_gates1 = basis_gates
-# basis_gates2 = ["u", 'cx']
 
 basis = '6-31G'
 geometry='H 0 0 0; H 0 0 0.739'
@@ -54,10 +52,13 @@ def ucc_parts(al,be,do, **kwargs):
             ls2.append(((el[3],el[2]), (el[1],el[0])))
     return ls2 + ls1
 
+class SwapCircNames:
+    SWAP2XN = ("swap2xn", LadExcNames.CNOT12())
+    SWAPGENYORDAN = ("swap_gen", LadExcNames.YORDAN())
+    SWAPGENSHORT = ("swap_gen", LadExcNames.SHORT())
+        
 def circ_order():
-    # return ["swap gen"]
-    # return ["swap gen yor", "swap gen short"]
-    return ["jw", "bk",  "jw_opt", "swap 2xn", "swap gen yor", "swap gen short"]
+    return ["jw", "bk",   "swap 2xn", "swap gen yor", "swap gen short"]
     # return ["swap_sh", "swap_sh_inv", "jw", "jw_lex", "bk", "bk_lex", "jw_opt", "jw_opt_lexic", "swap_yo", "swap_yo_inv", "swap gen"]
 
 def get_ucc_ops(self, **kwargs):
@@ -67,125 +68,85 @@ def get_ucc_ops(self, **kwargs):
 class CircuitProvider:
     def __init__(self,
                  reps=1,
-                 geometry=geometry, 
-                 basis=basis, 
-                 active_orbitals=active_orbitals, 
-                 num_electrons=num_electrons,
-                 basis_gates=basis_gates,
-                 noise_type='D',
-                 noise_probs=[0.999]):
+                 molecule: Molecule=Molecule(),
+                 basis_gates=basis_gates
+                 ):
         self.reps = reps
-        self.ucc = UpUCCSDG(geometry=geometry, basis=basis, active_orbitals=active_orbitals, num_electrons=num_electrons)
-        self.ucc_opt = UpUCCSDG_opt(geometry=geometry, basis=basis, active_orbitals=active_orbitals, num_electrons=num_electrons)
         self.num_electrons = num_electrons
-        self.fermionic_op = self.ucc.mol.hamiltonian.second_q_op()
-        self.dynamic_circ = self.ucc.get_parametrized_circuit(reps)
-        self.swap2xn = self.ucc_opt.get_parametrized_circuit(reps)
-        self.ucc_opt_tt = self.ucc_opt.tt
-        self.swapgen_yordan = self.ucc_opt.get_paramaetrized_circuit_generalized(reps, type=1)
-        self.swapgen_short = self.ucc_opt.get_paramaetrized_circuit_generalized(reps, type=0)
-        self.ucc_gen_tt = self.ucc_opt.tt
-        self.ucc.get_parametrized_circuit(reps)
-
-        self.dynamic_map = self.ucc.tt
-        self.jw_opt_map = self.ucc.get_jw_opt()
-        self.jw_zyx_map = None
         self.basis_gates = basis_gates
+
+        self.ucc = UpUCCSDG(molecule=molecule)
         self.al = self.ucc.get_alpha_excitations()
         self.be = self.ucc.get_beta_excitations()
         self.do = self.ucc.get_double_excitations()
-        self.noise_type=noise_type
-        self.noise_probs=noise_probs
+        self.fermionic_op = self.ucc.mol.hamiltonian.second_q_op()
+        # self.swap2xn = self.ucc_opt.get_parametrized_circuit(reps)
+        # self.ucc_opt_tt = self.ucc_opt.mtoq
+        # self.swapgen_yordan = self.ucc_opt.get_paramaetrized_circuit_generalized(reps, type=1)
+        # self.swapgen_short = self.ucc_opt.get_paramaetrized_circuit_generalized(reps, type=0)
+        # self.ucc_gen_tt = self.ucc_opt.mtoq
+        # self.ucc.swap2xn(reps)
+
+        # self.dynamic_map = self.ucc.tt
+        # self.jw_opt_map = self.ucc.get_jw_opt()
+        # self.jw_zyx_map = None
+        # self.noise_type=noise_type
+        # self.noise_probs=noise_probs
         # self.kwargs = {"num_spatial_orbitals"}
 
     def get_ucc_ops(self, **kwargs):
         return ucc_parts(self.al, self.be, self.do, **kwargs)
 
-    def get_swap_2xn(self):
-        ansatz = transpile(self.swap2xn, basis_gates=self.basis_gates, optimization_level=3)
+    def swap_circuit(self, name: Tuple[str,str]) -> Tuple[QuantumCircuit, None]:
+        method, double = name
+        cirq, mtoq = getattr(self.ucc, method)(self.reps, double)
+        ansatz = transpile(cirq, basis_gates=self.basis_gates, optimization_level=3)
         print(ansatz.count_ops())
         print(ansatz.depth())
-        return ansatz
+        return ansatz, mtoq
     
-    def get_swap_gen(self, type):
-        if (type == 0):
-            ansatz = transpile(self.swapgen_yordan, basis_gates=self.basis_gates, optimization_level=3)
-        else:
-            ansatz = transpile(self.swapgen_short, basis_gates=self.basis_gates, optimization_level=3)
-
-        print(ansatz.count_ops())
-        print(ansatz.depth())
-        return ansatz
-    
-    def get_dynamic(self):
-        # ansatz = transpile(self.dynamic_circ, basis_gates=basis_gates1, optimization_level=3)
-        ansatz = transpile(self.dynamic_circ, basis_gates=self.basis_gates, optimization_level=3)
-        print(ansatz.count_ops())
-        print(ansatz.depth())
-        return ansatz
-
-    def get_yordan_dynamic(self):
-        ansatz = transpile(self.ucc.get_parametrized_circuit(self.reps, type=1), basis_gates=self.basis_gates, optimization_level=3)
-        print(ansatz.count_ops())
-        print(ansatz.depth())
-        return ansatz
-
-    def get_zyx_dynamic(self):
-        ansatz = transpile(self.ucc.get_parametrized_circuit(self.reps, type=2), basis_gates=self.basis_gates, optimization_level=3)
-        self.jw_zyx_map = self.ucc.tt
-        print(ansatz.count_ops())
-        print(ansatz.depth())
-        return ansatz
-    
-    def get_zyx_yordan_dynamic(self):
-        ansatz = transpile(self.ucc.get_parametrized_circuit(self.reps, type=3), basis_gates=self.basis_gates, optimization_level=3)
-        self.jw_zyx_map = self.ucc.tt
-        print(ansatz.count_ops())
-        print(ansatz.depth())
-        return ansatz
-    
-    def get_ucc(self, qubit_mapper, init=False):
+    def qiskit_ucc(self, qubit_mapper, init=False):
         if init:
-            qc = UCC(self.ucc.num_spatial_orbitals, 
-                 (self.ucc.num_alpha, self.ucc.num_beta), 
+            qc = UCC(self.ucc.n_spatial, 
+                 (self.ucc.n_alpha, self.ucc.n_beta), 
                  excitations=self.get_ucc_ops, 
                  qubit_mapper=qubit_mapper, 
-                 initial_state=HartreeFock(self.ucc.num_spatial_orbitals, 
-                                           (self.ucc.num_alpha, self.ucc.num_beta), 
+                 initial_state=HartreeFock(self.ucc.n_spatial, 
+                                           (self.ucc.n_alpha, self.ucc.n_beta), 
                                            qubit_mapper))            
         else:
-            qc = UCC(self.ucc.num_spatial_orbitals, 
-                        (self.ucc.num_alpha, self.ucc.num_beta), 
+            qc = UCC(self.ucc.n_spatial, 
+                        (self.ucc.n_alpha, self.ucc.n_beta), 
                         excitations=self.get_ucc_ops, 
                         qubit_mapper=qubit_mapper, 
                         )
 
-        n = qc.num_qubits
-        k = n//2
-        theta = ParameterVector("θ", qc.num_parameters - k*(k-1)//2)
-        params = [theta[i - k*(k-1)//2] for i in range(k*(k-1), 3*k*(k-1)//2)] +\
-             [theta[i] for i in range(k*(k-1)//2)] + [theta[i] for i in range(k*(k-1)//2)] 
-        qc.assign_parameters(params, inplace=True)
+        # n = qc.num_qubits
+        # k = n//2
+        # theta = ParameterVector("θ", qc.num_parameters - k*(k-1)//2)
+        # params = [theta[i - k*(k-1)//2] for i in range(k*(k-1), 3*k*(k-1)//2)] +\
+        #      [theta[i] for i in range(k*(k-1)//2)] + [theta[i] for i in range(k*(k-1)//2)] 
+        # qc.assign_parameters(params, inplace=True)
         return qc
 
     def get_circ_with_mapping(self, qubit_mapper, lexic=False, init=True):
         if not lexic:
-            qc = self.get_ucc(qubit_mapper, init=init)
+            qc = self.qiskit_ucc(qubit_mapper, init=init)
             
             for i in range(self.reps-1):
-                new_ucc = self.get_ucc(qubit_mapper, init=False)
+                new_ucc = self.qiskit_ucc(qubit_mapper, init=False)
                 theta = ParameterVector("θ" + str(i), new_ucc.num_parameters)
                 new_ucc.assign_parameters(theta, inplace=True)
                 qc = qc.compose(new_ucc)
         else:
-            qc = self.get_ucc(qubit_mapper,init=init)
+            qc = self.qiskit_ucc(qubit_mapper,init=init)
             if init:
-                qc = HartreeFock(self.ucc.num_spatial_orbitals, (self.ucc.num_alpha, self.ucc.num_beta), qubit_mapper)
+                qc = HartreeFock(self.ucc.n_spatial, (self.ucc.n_alpha, self.ucc.n_beta), qubit_mapper)
                 qc._build()
             else:
                 qc = QuantumCircuit(self.ucc.n_qubits)
             for i in range(self.reps):
-                new_ucc = self.get_ucc(qubit_mapper)
+                new_ucc = self.qiskit_ucc(qubit_mapper)
                 theta = ParameterVector("θ" + str(i), new_ucc.num_parameters)
                 new_ucc.assign_parameters(theta, inplace=True)
                 parr = []
@@ -195,21 +156,13 @@ class CircuitProvider:
                 # print(cir[0].decompose())
                 names = []
                 for gate in new_ucc.decompose(reps=1):
-                    # parr.append([pauliString(gate.operation.name[-1-self.ucc.n_qubits:-1], 1.0)])
                     for pauli in gate.operation.operator.paulis:
                         parr.append([pauliString(pauli.__str__(), 1.0)])
                         names.append(pauli.__str__())
-                        # print(parr)
-                        # nq = len(parr[0][0])
-                        # length = nq//2 # `length' is a hyperparameter, and can be adjusted for best performance
                 print(names)
                 shuffle(parr)
                 a1 = gate_count_oriented_scheduling(parr)
                 print(a1)
-                # for pauli in a1:
-                #     for gate in new_ucc.decompose(reps=2):
-                #         if gate.operation.name[-1-self.ucc.n_qubits:-1] == str(pauli[0][0]):
-                #             qc = qc.compose(gate[0])
         qc = transpile(qc, basis_gates=self.basis_gates, optimization_level=3)
         ansatz = qc.decompose(reps=3)
         print(ansatz.count_ops())
@@ -222,61 +175,51 @@ class CircuitProvider:
         circ = self.get_circ_with_mapping(qubit_mapper)
         return circ
     
-
     def get_bk(self):
         qubit_mapper=BravyiKitaevMapper()
         return self.get_circ_with_mapping(qubit_mapper)
-
 
     def get_jw_lexic(self):
         qubit_mapper=JordanWignerMapper()
         return self.get_circ_with_mapping(qubit_mapper, lexic=True)
 
-
     def get_bk_lexic(self):
         qubit_mapper=BravyiKitaevMapper()
         return self.get_circ_with_mapping(qubit_mapper, lexic=True)
 
-    def get_jw_opt_ansatz(self):
-        qubit_mapper=TernaryTreeMapper(self.jw_opt_map)
-        qc = QuantumCircuit(self.dynamic_circ.num_qubits)
-        num_electrons = self.num_electrons[0]    
-        for i in range(self.dynamic_circ.num_qubits):
-            if (self.jw_opt_map[i][0].num <= 2*num_electrons) or (self.ucc.num_spatial_orbitals*2 + 1<= 
-                    self.jw_opt_map[i][0].num <= 2*self.ucc.num_spatial_orbitals + 2*num_electrons):
-                # qc.h(i)
-                # qc.s(i)
-                # qc.z(i)
-                qc.x(i)
-            else:
-                qc.id(i)
-                # qc.h(i)
-                # qc.s(i)
-        ansatz = qc.compose(self.get_circ_with_mapping(qubit_mapper, lexic=False, init=False))
-        ansatz = transpile(ansatz, basis_gates=basis_gates, optimization_level=3)
-        return ansatz.decompose(reps=1)
+    #TODO
+    # def get_jw_opt_ansatz(self):
+    #     qubit_mapper=TernaryTreeMapper(self.jw_opt_map)
+    #     qc = QuantumCircuit(self.dynamic_circ.num_qubits)
+    #     num_electrons = self.num_electrons[0]    
+    #     for i in range(self.dynamic_circ.num_qubits):
+    #         if (self.jw_opt_map[i][0].num <= 2*num_electrons) or (self.ucc.n_spatial*2 + 1<= 
+    #                 self.jw_opt_map[i][0].num <= 2*self.ucc.n_spatial + 2*num_electrons):
+    #             qc.x(i)
+    #         else:
+    #             qc.id(i)
+    #     ansatz = qc.compose(self.get_circ_with_mapping(qubit_mapper, lexic=False, init=False))
+    #     ansatz = transpile(ansatz, basis_gates=basis_gates, optimization_level=3)
+    #     return ansatz.decompose(reps=1)
 
 
-    def get_jw_opt_lexic_ansatz(self):
-        qubit_mapper = TernaryTreeMapper(self.jw_opt_map)
-        qc = QuantumCircuit(self.dynamic_circ.num_qubits)
-        num_electrons = self.num_electrons[0]    
-        for i in range(self.dynamic_circ.num_qubits):
-            if (self.jw_opt_map[i][0].num <= 2*num_electrons) or (self.ucc.num_spatial_orbitals*2 + 1<= 
-                    self.jw_opt_map[i][0].num <= 2*self.ucc.num_spatial_orbitals + 2*num_electrons):
-                qc.x(i)
-            else:
-                qc.id(i)
-        qc = qc.compose(self.get_circ_with_mapping(qubit_mapper, lexic=True, init=False))
-        ansatz = transpile(qc, basis_gates=basis_gates, optimization_level=3)
-        return ansatz
+    #TODO
+    # def get_jw_opt_lexic_ansatz(self):
+    #     qubit_mapper = TernaryTreeMapper(self.jw_opt_map)
+    #     qc = QuantumCircuit(self.dynamic_circ.num_qubits)
+    #     num_electrons = self.num_electrons[0]    
+    #     for i in range(self.dynamic_circ.num_qubits):
+    #         if (self.jw_opt_map[i][0].num <= 2*num_electrons) or (self.ucc.n_spatial*2 + 1<= 
+    #                 self.jw_opt_map[i][0].num <= 2*self.ucc.n_spatial + 2*num_electrons):
+    #             qc.x(i)
+    #         else:
+    #             qc.id(i)
+    #     qc = qc.compose(self.get_circ_with_mapping(qubit_mapper, lexic=True, init=False))
+    #     ansatz = transpile(qc, basis_gates=basis_gates, optimization_level=3)
+    #     return ansatz
 
     def get_circ_op(self, name):
         match name:
-            case "swap_sh":
-                return (self.get_dynamic(), ucc_ham(self.fermionic_op, self.dynamic_map))
-            case "swap_sh_inv":
-                return (self.get_zyx_dynamic(), ucc_ham(self.fermionic_op, self.jw_zyx_map))
             case "jw":
                 return (self.get_jw(), jw_ham(self.fermionic_op))
             case "jw_lex":
@@ -285,20 +228,16 @@ class CircuitProvider:
                 return (self.get_bk(), bk_ham(self.fermionic_op))
             case "bk_lex":
                 return (self.get_bk_lexic(), bk_ham(self.fermionic_op))
-            case "jw_opt":
-                return (self.get_jw_opt_ansatz(), ucc_ham(self.fermionic_op, self.jw_opt_map))
-            case "jw_opt_lexic":
-                return (self.get_jw_opt_lexic_ansatz(), ucc_ham(self.fermionic_op, self.jw_opt_map))
-            case "swap_yo":
-                return (self.get_yordan_dynamic(), ucc_ham(self.fermionic_op, self.dynamic_map))
-            case "swap_yo_inv":
-                return (self.get_zyx_yordan_dynamic(), ucc_ham(self.fermionic_op, self.jw_zyx_map))
+            # case "jw_opt":
+            #     return (self.get_jw_opt_ansatz(), ucc_ham(self.fermionic_op, self.jw_opt_map))
+            # case "jw_opt_lexic":
+            #     return (self.get_jw_opt_lexic_ansatz(), ucc_ham(self.fermionic_op, self.jw_opt_map))
             case "swap 2xn":
-                return (self.get_swap_2xn(), ucc_ham(self.fermionic_op, self.ucc_opt_tt))
+                return self.swap_circuit(SwapCircNames.SWAP2XN)
             case "swap gen yor":
-                return (self.get_swap_gen(0), ucc_ham(self.fermionic_op, self.ucc_gen_tt))
+                return self.swap_circuit(SwapCircNames.SWAP2XN)
             case "swap gen short":
-                return (self.get_swap_gen(1), ucc_ham(self.fermionic_op, self.ucc_gen_tt))
+                return self.swap_circuit(SwapCircNames.SWAP2XN)
 
     def __iter__(self, name_list=circ_order()):
         for name in name_list:
@@ -327,8 +266,6 @@ class CircSim:
             counts.append(eval_count)
             values.append(mean)
             params.append(parameters)
-            # print(parameters)
-        # optimizer = SLSQP(maxiter=200, ftol=0)
         if not self.is_noise:
             est = Estimator()
             est.options.run_options={"shots": None}
@@ -349,7 +286,7 @@ class CircSim:
             result = vqe.compute_minimum_eigenvalue(operator=self.op)
             print(f"VQE on Aer qasm simulator (with noise): {result.eigenvalue.real:.5f}")
             print(f"Delta from hf is {(result.eigenvalue.real - self.hf):.5f}")
-            return result.eigenvalue.real, counts, values, params
+            return result.eigenvalue.real, params
         
     def run_qulacs_sim(parameters):
         pass
@@ -366,10 +303,10 @@ def bk_ham(fermionic_op):
     return qubit_bk_op
 
 
-def ucc_ham(fermionic_op, tree_map):
-    mapper = TernaryTreeMapper(tree_map)
-    qubit_tt_op = mapper.map(fermionic_op)
-    return qubit_tt_op
+# def ucc_ham(fermionic_op, tree_map):
+#     mapper = TernaryTreeMapper(tree_map)
+#     qubit_tt_op = mapper.map(fermionic_op)
+#     return qubit_tt_op
 
     
 noise_dict_qiskit = {"I": IGate(),"X":XGate(), "Y": YGate(), "Z": ZGate()}
@@ -438,7 +375,7 @@ def ideal_energy(ansatz, op, ref_value, optimizer, init_point, en_hf=None):
         values.append(mean)
         params.append(parameters)
         # print(parameters)
-    est = AerEstimator(approximation=True, 
+    est = Estimator(approximation=True, 
                        run_options={"shots": None})
     est.options.run_options={"shots": None}
     vqe = VQE(est, ansatz, optimizer=optimizer, callback=store_intermediate_result, initial_point=init_point)

@@ -25,6 +25,7 @@ dict_cx_trans = {"II": ["II", 1],
 
 dict_cz_trans = {"II": ["II", 1],"IZ": ["IZ", 1],"ZI": ["ZI", 1],"ZZ": ["ZZ", 1],"XX": ["YY", 1],"YY": ["XX", 1],"XY": ["YX", 1],"YX": ["XY", 1],"XZ": ["XI", 1],"XI": ["XZ", 1],"ZX": ["IX", 1],"IX": ["ZX", 1],
                  "YI": ["YZ", 1],"YZ": ["YI", 1],"ZY": ["IY", 1],"IY": ["ZY", 1]}
+                 
 def prod(pauli1, pauli2):
     ops = ""
     coeff = 1j
@@ -41,7 +42,7 @@ def weight(pauli: str):
             i += 1
     return i
 
-class clifford_generator:
+class CliffordGenerator:
     def __init__(self,
                  n=1,
                  gen_dict=None):
@@ -153,7 +154,7 @@ def check_anticom(pauli1, pauli2):
 
 
 def num_basis(n):
-    cg = clifford_generator(n)
+    cg = CliffordGenerator(n)
     pauli = cg.get_full_clifford_basis()
     counts = 0
     for item in combinations(pauli, 2*n):
@@ -166,7 +167,7 @@ def num_basis(n):
             print(item)
     print(counts)
 def num_anticom(n):
-    cg = clifford_generator(n)
+    cg = CliffordGenerator(n)
     pauli = cg.get_full_clifford_basis()
     pauli_0  = (0,1,2,3)
     counts = 0
@@ -195,20 +196,22 @@ from tqdm import tqdm
 
 if __name__ == "__main__":
     n = 5
-    gen_dict = {0 : ["YXIZ", -1],1: ["XYIZ", 1],2: ["YXZI", -1], 3: ["XYZI", 1], 4: ["IZYX", -1], 5: ["IZXY", 1], 6: ["ZIYX", -1], 7: ["ZIXY", 1]}
-    gen_dict = {0 : ["YYIZ", 1],1: ["XXIZ", 1],2: ["YYZI", 1], 3: ["XXZI", 1], 4: ["IZYY", 1], 5: ["IZXX", 1], 6: ["ZIYY", 1], 7: ["ZIXX", 1]}
+    gen_dict = {0 : ["YXIZ", -1],1: ["XYIZ", 1], 2: ["YXZI", -1], 3: ["XYZI", 1], 4: ["IZYX", -1], 5: ["IZXY", 1], 6: ["ZIYX", -1], 7: ["ZIXY", 1]}
+    gen_dict = {0 : ["YYIZ", 1], 1: ["XXIZ", 1], 2: ["YYZI", 1], 3: ["XXZI", 1], 4: ["IZYY", 1], 5: ["IZXX", 1], 6: ["ZIYY", 1], 7: ["ZIXX", 1]}
     # gen_dict = {0 : ["XXXY", 1],1: ["XXYX", 1],2: ["XYXX", 1], 3: ["YXXX", 1], 4: ["YYYX", 1], 5: ["YYXY", 1], 6: ["YXYY", 1], 7: ["XYYY", 1]}
-    gen_dict = {0:"XY", 1: "YX"}
+    # gen_dict = {0:"XY", 1: "YX"}
     
     # gen_dict = {0 : "YZZXII",1: "XZZYII",2: "IYZZXI", 3: "IXZZYI", 4: "IIXZZY", 5: "IIYZZX"}
 
-    cg = clifford_generator(n, gen_dict)
+    cg = CliffordGenerator(n, gen_dict)
     print(cg)
-    cg.transform_maj(get_pauli("Y", 0))
-    # cg.transform_maj(get_pauli("X", 1))
-    print(cg)
-    cg.transform_maj("cx", (0,1))
-    print(cg)
+    # --------------------------------------
+    # cg.transform_maj(get_pauli("Y", 0))
+    # # cg.transform_maj(get_pauli("X", 1))
+    # print(cg)
+    # cg.transform_maj("cx", (0,1))
+    # print(cg)
+    # -------------------------------------
     # cg.transform_maj("cx", (1,0))
     # cg.transform_maj("cx", (2,3))
     # print(cg)
@@ -259,25 +262,25 @@ if __name__ == "__main__":
     # cg.transform_maj(get_pauli("Y", 1), coef=1)
     # print(cg)
 # ------------------------------------------
-    # cg.transform_maj(get_pauli("Z",0))
-    # cg.transform_maj(get_pauli("Y",0))
-    # # cg.transform_maj(get_pauli("X",1))
-    # cg.transform_maj(get_pauli("Y",2))
-    # cg.transform_maj(get_pauli("Z",3))
-    # cg.transform_maj("cx", (1,2))
-    # print(cg)
-    # cg.transform_maj("cx", (0,1))
-    # cg.transform_maj("cx", (2,3))
-    # print(cg)
-    # cg.transform_maj("cx", (0,1))
-    # cg.transform_maj("cx", (2,3))
-    # cg.transform_maj("cx", (1,2))
-    # # # cg.transform_maj(get_pauli("Y",1))
-    # print(cg)
-    # cg.transform_maj("cx", (3,0))
-    # cg.transform_maj("cx", (0,1))
-    # cg.transform_maj("cx", (2,3))
-    # print(cg)
+    cg.transform_maj(get_pauli("Z",0))
+    cg.transform_maj(get_pauli("Y",0))
+    # cg.transform_maj(get_pauli("X",1))
+    cg.transform_maj(get_pauli("Y",2))
+    cg.transform_maj(get_pauli("Z",3))
+    cg.transform_maj("cx", (1,2))
+    print(cg)
+    cg.transform_maj("cx", (0,1))
+    cg.transform_maj("cx", (2,3))
+    print(cg)
+    cg.transform_maj("cx", (0,1))
+    cg.transform_maj("cx", (2,3))
+    cg.transform_maj("cx", (1,2))
+    # # cg.transform_maj(get_pauli("Y",1))
+    print(cg)
+    cg.transform_maj("cx", (3,0))
+    cg.transform_maj("cx", (0,1))
+    cg.transform_maj("cx", (2,3))
+    print(cg)
     # --------------------------------------------------
     # # cg.transform_maj(get_pauli("Y",0))
     # # cg.transform_maj(get_pauli("Z",1))

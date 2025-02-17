@@ -1,10 +1,10 @@
-from Ternary_Tree.CircAlgorithm.optUpCCGSD import UpUCCSDG_opt
+from Ternary_Tree.UCC.UpGCCSDopt import UpUCCSDG, LadExcNames
 from qiskit.quantum_info import Statevector
 from qiskit import transpile
-
+from Ternary_Tree.UCC.AbstractUCC import Molecule
 import numpy as np
 
-from utils import CircuitProvider, TernaryTreeMapper
+from utils import CircuitProvider
 
 basis_gates = ["u3", "cx"]
 # basis_gates1 = [ "h","rz","cx"]
@@ -16,13 +16,17 @@ basis = '6-311G'
 geometry='H 0 0 0; H 0 0 0.739'
 active_orbitals=[0, 1]
 num_electrons=(1, 1)
+H2_4 = Molecule(geometry='H 0 0 0; H 0 0 0.7349', num_electrons=(1,1), active_orbitals=[0,1], basis='sto-3g')
 
 def base_test():
-    ucc = UpUCCSDG_opt(geometry=geometry, basis=basis, active_orbitals=active_orbitals, num_electrons=num_electrons)
-    cirq = ucc.get_parametrized_circuit()
+    ucc = UpUCCSDG(molecule=H2_4)
+    cirq, mtoq = ucc.swap2xn(1)
+    # cirq = ucc.swap_gen(1, LadExcNames.YORDAN())
+    print(cirq)
     params = cirq.parameters
-    params = {par: val for par, val in zip(params,[1])}
+    params = {par: 1 for par in params}
     cirq.assign_parameters(params, inplace=True)
+    # print(cirq.decompose())
     state = Statevector.from_label("0000")
     res = state.evolve(cirq)
     probs = res.probabilities_dict()
@@ -34,8 +38,8 @@ def base_test():
 
 def res(angle):
     active_orbitals = [j for j in range(2)]
-    ucc = UpUCCSDG_opt(geometry=geometry, basis=basis, active_orbitals=active_orbitals, num_electrons=num_electrons)
-    cirq = ucc.get_paramaetrized_circuit_generalized()
+    ucc = UpUCCSDG(geometry=geometry, basis=basis, active_orbitals=active_orbitals, num_electrons=num_electrons)
+    cirq = ucc.swap_gen()
     state = Statevector.from_label("0000")
     par = cirq.parameters[0]
     # cirq.assign_parameters({par:angle})
@@ -54,8 +58,8 @@ def scaleability():
     pauli_num = []
     for i in range(1,2):
         active_orbitals = [j for j in range(2*i)]
-        ucc = UpUCCSDG_opt(geometry=geometry, basis=basis, active_orbitals=active_orbitals, num_electrons=num_electrons)
-        cirq = ucc.get_paramaetrized_circuit_generalized()
+        ucc = UpUCCSDG(geometry=geometry, basis=basis, active_orbitals=active_orbitals, num_electrons=num_electrons)
+        cirq = ucc.swap_gen()
         cirq = transpile(cirq, basis_gates=basis_gates, optimization_level=3)
         # print(cirq)
         num.append(i*4)
@@ -73,15 +77,16 @@ def scaleability():
     print(pauli_num)
 
 
-def print_circuit():
-    mol = ('Be 0 0 0; Be 0 0 0.7349', (1, 1), [0,1,2,3,4,5], "6-311G")
-    # molecules = [('H 0 0 0; Li 0 0 1.5459', (2,2), [0,1,2,5], basises[0])]
-    reps = [1, 2, 3]
-    rep = 1
-    cp = CircuitProvider(reps=rep, active_orbitals=mol[2], num_electrons=mol[1], geometry=mol[0], basis=mol[3])
-    cp.get_circ_with_mapping(TernaryTreeMapper(cp.ucc.get_jw_opt()), lexic=True, init=False)
+# def print_circuit():
+#     mol = ('Be 0 0 0; Be 0 0 0.7349', (1, 1), [0,1,2,3,4,5], "6-311G")
+#     # molecules = [('H 0 0 0; Li 0 0 1.5459', (2,2), [0,1,2,5], basises[0])]
+#     reps = [1, 2, 3]
+#     rep = 1
+#     cp = CircuitProvider(reps=rep, active_orbitals=mol[2], num_electrons=mol[1], geometry=mol[0], basis=mol[3])
+#     cp.get_circ_with_mapping(TernaryTreeMapper(cp.ucc.get_jw_opt()), lexic=True, init=False)
 # scaleability()
-print_circuit()
+base_test()
+# print_circuit()
 # 2xn lattice
 # num = np.array([4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48, 52])
 # double = np.array([14, 100, 246, 456, 730, 1068, 1470, 1936, 2466, 3060, 3718, 4440, 5226])
@@ -107,4 +112,4 @@ print_circuit()
 #     print("(", num[i],",", double[i]/pauli_num[i], ")", end=" ")
 
 
-res(0.78)
+# res(0.78)

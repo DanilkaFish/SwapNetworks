@@ -1,2 +1,6 @@
 __pycache__
 *.png
+.vscode
+_library
+mappers
+MyquanSim

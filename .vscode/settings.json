@@ -1,4 +1,5 @@
 {
-    "python.defaultInterpreterPath": "~/python_venvs/quantum/bin/python3",
+    "python.defaultInterpreterPath": "~/pyenv/sn/bin/python3",
     "editor.mouseWheelScrollSensitivity": 3,
+    "python.languageServer": "Pylance",
 }

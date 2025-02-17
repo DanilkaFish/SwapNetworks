@@ -1,5 +1,7 @@
 import json
 import numpy as np
+
+
 dic = {}
 help_dict = {"swap_sh": ["green", 'pentagon*'],
             "swap_sh_inv" : ["green", 'pentagon*'],
@@ -25,7 +27,6 @@ with open('data/SimParZ8.json', 'r') as rf:
             print(obj["name"])
     ref_en = data[0]["ref_ener"]
 
-# print(dic)
 
 def gen_latex(dic, ref_en, probs):
     txt = ""
