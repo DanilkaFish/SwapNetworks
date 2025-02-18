@@ -5,7 +5,7 @@ from qiskit_algorithms.optimizers import SPSA ,CG, SLSQP, L_BFGS_B, COBYLA
 import json
 
 from Ternary_Tree.optimizer.soap import SOAP
-from Ternary_Tree.UCC.AbstractUCC import Molecule
+from Ternary_Tree.ucc.abstractucc import Molecule
 from utils import *
 
 
@@ -27,12 +27,15 @@ def run_noisy_vqe(file_name_to_write: str,
                   reps: int=1
                   ):
     data = []
-    with open(file_name_to_write, 'w') as file:
+    with open(file_name_to_write + noise_type , 'w') as file:
         with open(file_name_to_read, 'r') as rf:
+            index = 0
             datajson = json.load(rf)
             circ_prov = CircuitProvider(reps=reps, molecule=molecule)
             ref_value = numpy_energy(circ_prov.fermionic_op, circ_prov.ucc)
-            for name, circ, op in circ_prov(circ_names):
+            for name in circ_names:
+                name, circ, op = circ_prov.get_circ(name)
+                
                 for prob in probs:
                     init_point = datajson[index]["param"]
                     print(init_point)
@@ -48,6 +51,38 @@ def run_noisy_vqe(file_name_to_write: str,
                 index += 1
             json.dump(data, file, indent=4)
 
+def run_vqe(file_name_to_write: str,
+            molecule: Molecule,
+            optimizer: any,
+            circ_names: List[str]=circ_order(),
+            reps: int=1
+            ):
+    data = []
+    with open(file_name_to_write, 'w') as file:
+        index = 0
+        circ_prov = CircuitProvider(reps=reps, molecule=molecule)
+        ref_value = numpy_energy(circ_prov.fermionic_op, circ_prov.ucc)
+        for name in circ_names:
+            name, circ, op = circ_prov.get_circ(name)
+            print(circ)
+            circs = CircSim(circ, op, False, init_point=None)
+            energy, parameters = circs.run_qiskit_vqe(optimizer[0])
+            data.append({"name": name, 
+                        "ref_ener": ref_value, 
+                        "energy": energy, 
+                        "param" : parameters[-1], 
+                        "optimizer": optimizer[1], 
+                        })
+            index += 1
+        json.dump(data, file, indent=4)
+
+
+run_vqe(
+    "data02/H2_4",
+    H2_8,
+    optimizers[0],
+    circ_names=["swap 2xn"]
+)
 # def write_data():
 #     noises = ["D", "X", "Y", "Z"]
 #     id_en = [None]*n

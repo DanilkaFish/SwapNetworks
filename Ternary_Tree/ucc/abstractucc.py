@@ -1,11 +1,12 @@
 from __future__ import annotations
+from abc import ABC, abstractmethod
+from typing import List, Tuple, Dict, Union, Optional
 
 from qiskit.circuit import Parameter, QuantumCircuit
 from qiskit_nature.second_q.drivers import PySCFDriver
 from qiskit_nature.second_q.transformers import ActiveSpaceTransformer
+
 from .utils import lad2maj
-from abc import ABC, abstractmethod
-from typing import List, Tuple, Dict, Union, Optional
 from .excitation import LadExcitation, DoubleLadExcitation, SingleLadExcitation
 
 
@@ -25,8 +26,6 @@ class Molecule:
         self.active_orbitals: Optional[List[Tuple[int,int]]] = active_orbitals
         self.num_electrons: Optional[Union[int, Tuple[int, int]]] = num_electrons
 
-    def get():
-        return 1
     
 class AbstractUCC(ABC):
     def __init__(self, molecule: Molecule=Molecule()):

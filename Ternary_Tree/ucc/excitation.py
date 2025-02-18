@@ -8,7 +8,6 @@ from numpy.typing import ArrayLike
 
 class Excitation(ABC):
     
-    
     @abstractmethod
     def maj_range(self) -> List[MajExcitation]:
         pass
@@ -48,8 +47,6 @@ class LadExcitation(Excitation):
     
     @op.setter
     def op(self, op: Tuple[int,...]):
-        # self._op = _arranging(op)
-        # self.sign = _parity(op)
         self._op = op
         self.sign = 1
     
@@ -117,10 +114,3 @@ def _arranging(t: tuple):
         new_t = new_t[:2] if new_t[2] == new_t[3] else new_t
     new_t = new_t[2:] if new_t[1] == new_t[0] else new_t
     return new_t
-
-# def simplification(maj_exc):
-#     maj = {}
-#     for key in maj_exc:
-#         new_key, coef = _arranging(key), _parity(key)
-#         maj[new_key] = maj.get(new_key, 0) + coef * maj_exc[key]
-#     return maj

@@ -6,20 +6,25 @@ from qiskit_nature.second_q.mappers import JordanWignerMapper, BravyiKitaevMappe
 from qiskit_nature.second_q.circuit.library.ansatzes import UCC, UCCSD
 from qiskit_nature.second_q.circuit.library import HartreeFock
 from qiskit.providers.fake_provider import GenericBackendV2
-from qiskit.primitives import Estimator
+# from qiskit.primitives import Estimator
+from qiskit.quantum_info import SparsePauliOp
 
 from qiskit import transpile, QuantumCircuit
 from qiskit.circuit.parametervector import ParameterVector
+# from qiskit_aer import AerSimulator 
 from qiskit_aer import AerSimulator
 from qiskit_aer.noise import NoiseModel
-from qiskit_aer.primitives import EstimatorV2 as Estimator
-# from qiskit_algorithms.utils import algorithm_globals
+from qiskit_aer.primitives import EstimatorV2, Estimator
+from qiskit_aer.noise import (NoiseModel, QuantumError, ReadoutError,
+    pauli_error, depolarizing_error, thermal_relaxation_error)
+from qiskit.circuit.library.standard_gates import IGate, XGate, ZGate, YGate
 from qiskit_algorithms import VQE, NumPyMinimumEigensolver
 
 from numpy.random import shuffle
 # from Ternary_Tree.UCC.UpGCCSD import UpUCCSDG
-from Ternary_Tree.UCC.AbstractUCC import Molecule
-from Ternary_Tree.UCC.UpGCCSDopt import UpUCCSDG, LadExcNames
+from Ternary_Tree.ucc.abstractucc import Molecule
+from Ternary_Tree.ucc.upgccsd import UpGCCSD, LadExcNames
+from Ternary_Tree.majorana import MajoranaContainer, MajoranaMapper
 from Paulihedral_v2.Paulihedral_new.benchmark.mypauli import *
 from Paulihedral_v2.Paulihedral_new.parallel_bl import depth_oriented_scheduling, gate_count_oriented_scheduling
 from Paulihedral_v2.Paulihedral_new.tools import *
@@ -27,10 +32,7 @@ from Paulihedral_v2.Paulihedral_new import synthesis_FT
 from qiskit.quantum_info import Statevector
 
 
-from qiskit_aer.noise import (NoiseModel, QuantumError, ReadoutError,
-    pauli_error, depolarizing_error, thermal_relaxation_error)
 
-from qiskit.circuit.library.standard_gates import IGate, XGate, ZGate, YGate
 
 seed = 172
 basis_gates = ["u", "cx"]
@@ -58,7 +60,8 @@ class SwapCircNames:
     SWAPGENSHORT = ("swap_gen", LadExcNames.SHORT())
         
 def circ_order():
-    return ["jw", "bk",   "swap 2xn", "swap gen yor", "swap gen short"]
+    # return ["jw", "bk",   "swap 2xn", "swap gen yor", "swap gen short"]
+    return ["swap 2xn", "swap gen yor", "swap gen short"]
     # return ["swap_sh", "swap_sh_inv", "jw", "jw_lex", "bk", "bk_lex", "jw_opt", "jw_opt_lexic", "swap_yo", "swap_yo_inv", "swap gen"]
 
 def get_ucc_ops(self, **kwargs):
@@ -75,7 +78,7 @@ class CircuitProvider:
         self.num_electrons = num_electrons
         self.basis_gates = basis_gates
 
-        self.ucc = UpUCCSDG(molecule=molecule)
+        self.ucc = UpGCCSD(molecule=molecule)
         self.al = self.ucc.get_alpha_excitations()
         self.be = self.ucc.get_beta_excitations()
         self.do = self.ucc.get_double_excitations()
@@ -103,7 +106,7 @@ class CircuitProvider:
         ansatz = transpile(cirq, basis_gates=self.basis_gates, optimization_level=3)
         print(ansatz.count_ops())
         print(ansatz.depth())
-        return ansatz, mtoq
+        return ansatz, ucc_ham(self.fermionic_op, mtoq)
     
     def qiskit_ucc(self, qubit_mapper, init=False):
         if init:
@@ -150,19 +153,15 @@ class CircuitProvider:
                 theta = ParameterVector("θ" + str(i), new_ucc.num_parameters)
                 new_ucc.assign_parameters(theta, inplace=True)
                 parr = []
-                print(new_ucc)
                 cir = new_ucc.decompose(reps=1)
-                print(cir[0].operation.operator.paulis)
                 # print(cir[0].decompose())
                 names = []
                 for gate in new_ucc.decompose(reps=1):
                     for pauli in gate.operation.operator.paulis:
                         parr.append([pauliString(pauli.__str__(), 1.0)])
                         names.append(pauli.__str__())
-                print(names)
                 shuffle(parr)
                 a1 = gate_count_oriented_scheduling(parr)
-                print(a1)
         qc = transpile(qc, basis_gates=self.basis_gates, optimization_level=3)
         ansatz = qc.decompose(reps=3)
         print(ansatz.count_ops())
@@ -239,6 +238,9 @@ class CircuitProvider:
             case "swap gen short":
                 return self.swap_circuit(SwapCircNames.SWAP2XN)
 
+    def get_circ(self, name) -> Tuple[str, QuantumCircuit, SparsePauliOp]:
+        return name, *self.get_circ_op(name)
+
     def __iter__(self, name_list=circ_order()):
         for name in name_list:
             yield name, *self.get_circ_op(name)
@@ -267,14 +269,20 @@ class CircSim:
             values.append(mean)
             params.append(parameters)
         if not self.is_noise:
-            est = Estimator()
-            est.options.run_options={"shots": None}
-            # print(self.circ)
+            est = Estimator(
+                run_options={"seed": 170, "shots": None, },
+                approximation=True,
+                # backend_options={"device": "GPU"}
+                # transpile_options={"seed_transpiler": seed},
+            )
+            # est.options.run_options={"seed": 170, "shots": 1024}
+            # est.options.transpile_options={"seed_transpiler": seed}
+            # est.options.backend_options={"device": "GPU"}
             vqe = VQE(est, self.circ, optimizer=optimizer, callback=store_intermediate_result, initial_point=self.init_point)
             result = vqe.compute_minimum_eigenvalue(operator=self.op)
             print(f"VQE on Aer qasm simulatfrom qiskit.quantum_info import Statevector (no noise): {result.eigenvalue.real:.5f}")
             print(f"Delta from hf is {(result.eigenvalue.real - self.hf):.5f}")
-            return result.eigenvalue.real, counts, values, params
+            return result.eigenvalue.real, params
         else:
             noise_est = get_qiskit_device_noise_estimator(self.circ.num_qubits, 
                                                           noise_op=self.noise_type, 
@@ -303,10 +311,9 @@ def bk_ham(fermionic_op):
     return qubit_bk_op
 
 
-# def ucc_ham(fermionic_op, tree_map):
-#     mapper = TernaryTreeMapper(tree_map)
-#     qubit_tt_op = mapper.map(fermionic_op)
-#     return qubit_tt_op
+def ucc_ham(fermionic_op, mtoq: MajoranaContainer):
+    mapper = MajoranaMapper(mtoq)
+    return mapper.map(fermionic_op)
 
     
 noise_dict_qiskit = {"I": IGate(),"X":XGate(), "Y": YGate(), "Z": ZGate()}

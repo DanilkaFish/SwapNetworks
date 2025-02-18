@@ -6,9 +6,9 @@ from qiskit import QuantumRegister
 from qiskit.circuit import Parameter
 
 
-from ..Majorana.Majorana import MajoranaContainer 
-from .AbstractUCC import AbstractUCC
-from .Mycirq import MyCirq
+from ..majorana.majorana import MajoranaContainer 
+from .abstractucc import AbstractUCC
+from .mycirq import MyCirq
 from .excitation import SingleLadExcitation, DoubleLadExcitation, SingleMajExcitation, DoubleMajExcitation, MajExcitation, LadExcitation
 from .utils import lad2lad, lad2maj
 
@@ -30,7 +30,7 @@ class LadExcNames:
     def SHORT():
         return "double_ex_short"
      
-class UpUCCSDG(AbstractUCC):
+class UpGCCSD(AbstractUCC):
     def __init__(self,  **kwargs):
         super().__init__(**kwargs)
 

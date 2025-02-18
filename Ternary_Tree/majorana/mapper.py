@@ -1,5 +1,6 @@
 from __future__ import annotations
 from functools import lru_cache
+from typing import Tuple, List
 import copy
 
 from qiskit.quantum_info.operators import SparsePauliOp, Pauli
@@ -10,17 +11,19 @@ from qiskit_nature.second_q.operators import SparseLabelOp
 
 import numpy as np
 
-from .Majorana import MajoranaContainer
+from .majorana import MajoranaContainer
 
 #TODO
 def pauli_table(mc: MajoranaContainer):
     """
     This function is used by TernaryTreeMapper to obtain pauli_table
     """
-    pauli_table = []
+    pauli_table: List[Tuple[Pauli, complex]] = []
     n = len(mc) // 2
     for i in range(0, len(mc), 2):
-        pauli_table.append(((Pauli(mc[2*i].bsf[n:], mc[2*i].bsf[:n], pow), mc[2*i + 1].bsf[n:], mc[2*i + 1].bsf[:n], pow), 1))
+        pauli1 = mc[i]
+        pauli2 = mc[i + 1]
+        pauli_table.append(((Pauli((pauli1.bsf[n:], pauli1.bsf[:n], pauli1.pow)), Pauli((pauli2.bsf[n:], pauli2.bsf[:n], pauli2.pow))), (0.5, 0.5j)))
     return pauli_table
 
 class MajoranaMapper(FermionicMapper):  # pylint: disable=missing-class-docstring
@@ -32,11 +35,12 @@ class MajoranaMapper(FermionicMapper):  # pylint: disable=missing-class-docstrin
 
 
     def pauli_table(self, nmodes):
-        pt = copy.copy(pauli_table(tt=self.pauli_container))
+        pt = copy.copy(pauli_table(self.pauli_container))
         return pt
 
+
     @lru_cache(maxsize=32)
-    def sparse_pauli_operators(cls, nmodes: int) -> tuple[list[SparsePauliOp], list[SparsePauliOp]]:
+    def sparse_pauli_operators(self, nmodes: int) -> tuple[list[SparsePauliOp], list[SparsePauliOp]]:
         """Generates the cached :class:`.SparsePauliOp` terms.
 
         This uses :meth:`.QubitMapper.pauli_table` to construct a list of operators used to
@@ -52,7 +56,7 @@ class MajoranaMapper(FermionicMapper):  # pylint: disable=missing-class-docstrin
         times_creation_op = []
         times_annihilation_op = []
 
-        for paulis, coef in cls.pauli_table(nmodes):
+        for paulis, coef in self.pauli_table(nmodes):
             real_part = SparsePauliOp(paulis[0], coeffs=coef[0])
             imag_part = SparsePauliOp(paulis[1], coeffs=coef[1])
 
@@ -127,3 +131,36 @@ class MajoranaMapper(FermionicMapper):  # pylint: disable=missing-class-docstrin
         else:
             register_length=second_q_op.register_length
         return self.mode_based_mapping(second_q_op, nmodes=register_length)
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+#     from __future__ import annotations
+
+# from qiskit.quantum_info import SparsePauliOp
+
+# from qiskit_nature.second_q.operators import FermionicOp
+
+# from .qubit_mapper import ListOrDictType, QubitMapper
+
+
+# class FermionicMapper(QubitMapper):
+#     """Mapper of Fermionic Operator to Qubit Operator"""
+
+#     def map(
+#         self,
+#         second_q_ops: FermionicOp | ListOrDictType[FermionicOp],
+#         *,
+#         register_length: int | None = None,
+#     ) -> SparsePauliOp | ListOrDictType[SparsePauliOp]:
+#         return super().map(second_q_ops, register_length=register_length)

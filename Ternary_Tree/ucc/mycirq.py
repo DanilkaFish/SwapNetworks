@@ -1,10 +1,11 @@
 from typing import Union
 from qiskit.circuit import Parameter, QuantumCircuit, ParameterExpression, QuantumRegister
-from qiskit.circuit.library import HamiltonianGate
+from qiskit.circuit.library import HamiltonianGate, PauliEvolutionGate
 from qiskit.quantum_info import Operator
+from qiskit.quantum_info import Pauli as qiskit_pauli
 from numpy import pi
 
-from ..Majorana.Majorana import Pauli
+from ..majorana.majorana import Pauli
 
 
 class MyCirq(QuantumCircuit):
@@ -28,8 +29,8 @@ class MyCirq(QuantumCircuit):
               par: Parameter,
               ) -> None:
         label, qubits = pauli.get_label_qubs()
-        op = Operator.from_label(label)
-        gate = HamiltonianGate(op, par)
+        op = qiskit_pauli(label)
+        gate = PauliEvolutionGate(op, par)
         gate.name = label
         self.append(gate, qubits)
         self.paulis.append((pauli, par))
@@ -37,8 +38,8 @@ class MyCirq(QuantumCircuit):
     def maj_swap(self, pauli: Pauli) -> None:
         par = (1j**pauli.pow).imag * pi/4
         label, qubits = pauli.get_label_qubs()
-        op = Operator.from_label(label)
-        gate = HamiltonianGate(op, par)
+        op = qiskit_pauli(label)
+        gate = PauliEvolutionGate(op, par)
         gate.name = label
         self.append(gate, qubits)
         self.paulis.append((pauli, par))

@@ -1,7 +1,7 @@
-from Ternary_Tree.UCC.UpGCCSDopt import UpUCCSDG, LadExcNames
+from Ternary_Tree.ucc.upgccsd import UpGCCSD, LadExcNames
 from qiskit.quantum_info import Statevector
 from qiskit import transpile
-from Ternary_Tree.UCC.AbstractUCC import Molecule
+from Ternary_Tree.ucc.abstractucc import Molecule
 import numpy as np
 
 from utils import CircuitProvider
@@ -19,7 +19,7 @@ num_electrons=(1, 1)
 H2_4 = Molecule(geometry='H 0 0 0; H 0 0 0.7349', num_electrons=(1,1), active_orbitals=[0,1], basis='sto-3g')
 
 def base_test():
-    ucc = UpUCCSDG(molecule=H2_4)
+    ucc = UpGCCSD(molecule=H2_4)
     cirq, mtoq = ucc.swap2xn(1)
     # cirq = ucc.swap_gen(1, LadExcNames.YORDAN())
     print(cirq)
@@ -38,7 +38,7 @@ def base_test():
 
 def res(angle):
     active_orbitals = [j for j in range(2)]
-    ucc = UpUCCSDG(geometry=geometry, basis=basis, active_orbitals=active_orbitals, num_electrons=num_electrons)
+    ucc = UpGCCSD(geometry=geometry, basis=basis, active_orbitals=active_orbitals, num_electrons=num_electrons)
     cirq = ucc.swap_gen()
     state = Statevector.from_label("0000")
     par = cirq.parameters[0]
@@ -58,7 +58,7 @@ def scaleability():
     pauli_num = []
     for i in range(1,2):
         active_orbitals = [j for j in range(2*i)]
-        ucc = UpUCCSDG(geometry=geometry, basis=basis, active_orbitals=active_orbitals, num_electrons=num_electrons)
+        ucc = UpGCCSD(geometry=geometry, basis=basis, active_orbitals=active_orbitals, num_electrons=num_electrons)
         cirq = ucc.swap_gen()
         cirq = transpile(cirq, basis_gates=basis_gates, optimization_level=3)
         # print(cirq)
