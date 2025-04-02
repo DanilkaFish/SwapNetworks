@@ -2,5 +2,6 @@ __pycache__
 *.png
 .vscode
 _library
+tests
 MyquanSim
 mappers

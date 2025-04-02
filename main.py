@@ -14,7 +14,7 @@ H2_8 = Molecule(geometry='H 0 0 0; H 0 0 0.7349', num_electrons=(1,1), active_or
 LiH_8 = Molecule(geometry='H 0 0 0; Li 0 0 1.5459', num_electrons=(2,2), active_orbitals=[0,1,2,5], basis='sto-3g')
 
 
-optimizers = [(SLSQP(maxiter=100, ftol=0), 'SLSQP')]
+optimizers = [(SLSQP(maxiter=200, ftol=0), 'SLSQP')]
 
 
 def run_noisy_vqe(file_name_to_write: str,
@@ -78,10 +78,11 @@ def run_vqe(file_name_to_write: str,
 
 
 run_vqe(
-    "data02/H2_4",
+    "data02/H2_8",
     H2_8,
     optimizers[0],
-    circ_names=["swap 2xn"]
+    circ_names=["swap 2xn"],
+    reps = 1
 )
 # def write_data():
 #     noises = ["D", "X", "Y", "Z"]

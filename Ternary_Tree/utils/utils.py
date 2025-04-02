@@ -1,11 +1,18 @@
 from __future__ import annotations
 from typing import Dict
 from copy import deepcopy
-
-from qiskit.circuit import Parameter
 from numpy.typing import ArrayLike
 
+from .parameter import Parameter
 from .excitation import LadExcitation, MajExcitation
+
+
+def static_vars(**kwargs):
+    def decorate(func):
+        for k in kwargs:
+            setattr(func, k, kwargs[k])
+        return func
+    return decorate
 
 def lad2maj(ladder_exciations: ArrayLike[LadExcitation], 
                 name: str="t_"
@@ -17,7 +24,10 @@ def lad2maj(ladder_exciations: ArrayLike[LadExcitation],
     maj_exc_par: Dict[MajExcitation, Parameter] = {}
     for op in ladder_exc_par:
         for majop in op.maj_range():
-            maj_exc_par[majop] = maj_exc_par.get(majop, 0)  + majop.sign.real * ladder_exc_par[op] 
+            if majop in maj_exc_par:
+                raise KeyError("twice simplification")
+            maj_exc_par[majop] = ladder_exc_par[op] 
+            maj_exc_par[majop].coef = majop.sign.real
     return maj_exc_par
 
 def alpha2beta(maj_alpha_par_exc: Dict[MajExcitation, Parameter], 
@@ -33,5 +43,5 @@ def lad2lad(ladder_excitations: ArrayLike[LadExcitation],
             ) -> Dict[LadExcitation, Parameter]:
     ladder_exc_par = {}
     for op in ladder_excitations:
-            ladder_exc_par[op] = Parameter(name + ','.join([str(i) for i in op]))
+        ladder_exc_par[op] = Parameter(name + ','.join([str(i) for i in op]))
     return ladder_exc_par

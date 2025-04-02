@@ -6,8 +6,7 @@ from qiskit.circuit import Parameter, QuantumCircuit
 from qiskit_nature.second_q.drivers import PySCFDriver
 from qiskit_nature.second_q.transformers import ActiveSpaceTransformer
 
-from .utils import lad2maj
-from .excitation import LadExcitation, DoubleLadExcitation, SingleLadExcitation
+from ..utils import lad2maj, LadExcitation, DoubleLadExcitation, SingleLadExcitation
 
 
 class Molecule:

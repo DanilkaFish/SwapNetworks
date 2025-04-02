@@ -1,14 +1,13 @@
 from typing import Union
-from qiskit.circuit import Parameter, QuantumCircuit, ParameterExpression, QuantumRegister
-from qiskit.circuit.library import HamiltonianGate, PauliEvolutionGate
-from qiskit.quantum_info import Operator
+from qiskit.circuit import Parameter, QuantumCircuit, ParameterExpression
+from qiskit.circuit.library import PauliEvolutionGate
 from qiskit.quantum_info import Pauli as qiskit_pauli
 from numpy import pi
 
-from ..majorana.majorana import Pauli
-
-
-class MyCirq(QuantumCircuit):
+from .circ_wrapper import CircWrapper
+from .pauli import Pauli
+    
+class QiskitCirc(CircWrapper, QuantumCircuit):
 
     def __init__(self, qc, name=None):
         self.paulis = []
@@ -35,7 +34,7 @@ class MyCirq(QuantumCircuit):
         self.append(gate, qubits)
         self.paulis.append((pauli, par))
         
-    def maj_swap(self, pauli: Pauli) -> None:
+    def mswap(self, pauli: Pauli) -> None:
         par = (1j**pauli.pow).imag * pi/4
         label, qubits = pauli.get_label_qubs()
         op = qiskit_pauli(label)
@@ -47,18 +46,17 @@ class MyCirq(QuantumCircuit):
     def fswap(self, qubits):
         q0, q1 = qubits
         circ = QuantumCircuit(2)
-        circ.rx(pi/2, 0)
-        circ.ry(pi/2, 1)
+        circ.rx(pi/2, q0)
+        circ.ry(pi/2, q1)
         circ.cx(1,0)
-        circ.rz(-pi/2, 0)
-        circ.ry(pi/2, 1)
+        circ.rz(-pi/2, q0)
+        circ.ry(pi/2, q1)
         circ.cx(1,0)
-        circ.rx(pi/2, 0)
-        circ.ry(pi/2, 1)
+        circ.rx(pi/2, q0)
+        circ.ry(pi/2, q1)
         circ.z(1)
         circ.name = "fswap"
         self.compose(circ, qubits=qubits, inplace=True, wrap=True)
-
 
     @staticmethod
     def get_pauli_single_ex():

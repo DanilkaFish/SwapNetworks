@@ -24,7 +24,7 @@ from numpy.random import shuffle
 # from Ternary_Tree.UCC.UpGCCSD import UpUCCSDG
 from Ternary_Tree.ucc.abstractucc import Molecule
 from Ternary_Tree.ucc.upgccsd import UpGCCSD, LadExcNames
-from Ternary_Tree.majorana import MajoranaContainer, MajoranaMapper
+from Ternary_Tree.utils import MajoranaContainer, MajoranaMapper
 from Paulihedral_v2.Paulihedral_new.benchmark.mypauli import *
 from Paulihedral_v2.Paulihedral_new.parallel_bl import depth_oriented_scheduling, gate_count_oriented_scheduling
 from Paulihedral_v2.Paulihedral_new.tools import *
@@ -272,7 +272,7 @@ class CircSim:
             est = Estimator(
                 run_options={"seed": 170, "shots": None, },
                 approximation=True,
-                # backend_options={"device": "GPU"}
+                # backend_options={"device": "GPU"},
                 # transpile_options={"seed_transpiler": seed},
             )
             # est.options.run_options={"seed": 170, "shots": 1024}
