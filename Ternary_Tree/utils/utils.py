@@ -5,6 +5,14 @@ from numpy.typing import ArrayLike
 
 from .parameter import Parameter
 from .excitation import LadExcitation, MajExcitation
+from time import time
+
+def static_vars(**kwargs):
+    def decorate(func):
+        for k in kwargs:
+            setattr(func, k, kwargs[k])
+        return func
+    return decorate
 
 
 def static_vars(**kwargs):
@@ -13,6 +21,7 @@ def static_vars(**kwargs):
             setattr(func, k, kwargs[k])
         return func
     return decorate
+
 
 def lad2maj(ladder_exciations: ArrayLike[LadExcitation], 
                 name: str="t_"

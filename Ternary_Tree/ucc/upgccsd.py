@@ -4,11 +4,12 @@ from typing import Tuple, List, Dict, Optional
 
 
 from .abstractucc import AbstractUCC
-from ..utils import CircWrapper, QiskitCirc, Pauli, Parameter
+from ..qiskit_interface import QiskitCirc 
+from ..utils import CircWrapper, Pauli, Parameter
 from ..utils import lad2lad, lad2maj, MajoranaContainer, MajExcitation 
 from ..utils import SingleLadExcitation, DoubleLadExcitation,  LadExcitation
 
-class LadExcNames:
+class LadExcImpl:
     @staticmethod
     def YORDAN():
         return "double_ex_yordan"    
@@ -59,7 +60,7 @@ class UpGCCSD(AbstractUCC):
 
     def swap2xn(self, 
                 number_of_layers: int=1,
-                method_name: str=LadExcNames.CNOT12(),
+                method_name: str=LadExcImpl.CNOT12(),
                 circ: Optional[CircWrapper]=None
                 ) -> Tuple[CircWrapper, MajoranaContainer]:
         n = self.n_qubits
@@ -127,12 +128,11 @@ class UpGCCSD(AbstractUCC):
                     single_exc_layer()
                     double_exc_layer(i)
                     mswap_layer(i+1)
-        print(circ)
         return circ, mtoq
     
     def swap_gen(self, 
                 number_of_layers: int=1, 
-                method_name: str=LadExcNames.YORDAN(),
+                method_name: str=LadExcImpl.YORDAN(),
                 circ: Optional[CircWrapper]=None
                 ) -> Tuple[CircWrapper, MajoranaContainer]:
         n = self.n_qubits
@@ -143,7 +143,7 @@ class UpGCCSD(AbstractUCC):
         double_ladder_exc = self.get_double_excitations()
 
         def append_lad_S(i):
-            _append_lad([i, i + 1], circ, mtoq, LadExcNames.SINGLE(), sp_lad_exc )
+            _append_lad([i, i + 1], circ, mtoq, LadExcImpl.SINGLE(), sp_lad_exc )
         
         def append_lad_D(i):
             return _append_lad([i, i + 1, i + 2, i + 3], circ, mtoq, method_name, dp_lad_exc )
@@ -155,18 +155,20 @@ class UpGCCSD(AbstractUCC):
                         mtoq.get_by_qubs(i)[0]  < 2*self.n_spatial + 2*num_electrons):
                     circ.x(i)
                 else:
-                    circ.id(i)
+                   circ.id(i)
                     
         def single_exc_layer(parity):
             for i in range(0, n-1, 2):
                 append_lad_S(i)
             for i in range(1, n-1, 2):
                 append_lad_S(i)
+                
 
         def fswap(fq, circ=circ):
             list_trans = [(fq, 0, fq + 1, 0), (fq, 1, fq + 1, 1)]
-            _ = [mtoq.branch_transposition(*el, unsigned=True) for el in list_trans]  
-            circ.fswap([fq, fq + 1])
+            _mswap(fq, 0, fq + 1, 0, circ, mtoq)
+            _mswap(fq, 1, fq + 1, 1, circ, mtoq)
+            # circ.fswap([fq, fq + 1])
 
         def fswap_layer():
             for i in range(0, n-1, 2):
@@ -197,6 +199,7 @@ class UpGCCSD(AbstractUCC):
                     single_exc_layer(i)
                     double_exc_layer(i)
                     fswap_layer()
+        print(circ)
         return circ, mtoq
     
     def get_jw_opt(self) -> MajoranaContainer:

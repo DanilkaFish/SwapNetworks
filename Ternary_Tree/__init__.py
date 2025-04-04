@@ -1,1 +1,1 @@
-from .ucc.upgccsd import CircWrapper, LadExcNames
+from .ucc.upgccsd import CircWrapper, LadExcImpl

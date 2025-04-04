@@ -3,11 +3,16 @@ from typing import List
 from qiskit_algorithms.optimizers import SPSA ,CG, SLSQP, L_BFGS_B, COBYLA
 
 import json
-
+from copy import deepcopy
 from Ternary_Tree.optimizer.soap import SOAP
 from Ternary_Tree.ucc.abstractucc import Molecule
 from utils import *
-
+from my_utils import Timer
+import threading
+from multiprocessing import Process
+import multiprocessing as mp
+from functools import partial
+from multiprocessing import Process
 
 H2_4 = Molecule(geometry='H 0 0 0; H 0 0 0.7349', num_electrons=(1,1), active_orbitals=[0,1], basis='sto-3g')
 H2_8 = Molecule(geometry='H 0 0 0; H 0 0 0.7349', num_electrons=(1,1), active_orbitals=[0,1,2,3], basis='6-31g')
@@ -16,125 +21,82 @@ LiH_8 = Molecule(geometry='H 0 0 0; Li 0 0 1.5459', num_electrons=(2,2), active_
 
 optimizers = [(SLSQP(maxiter=200, ftol=0), 'SLSQP')]
 
-
-def run_noisy_vqe(file_name_to_write: str,
-                  file_name_to_read: str,
+class vqeData:
+    def __init__(self, 
+                 file_name_to_read: str,
                   molecule: Molecule,
                   optimizer: any,
-                  circ_names: List[str]=circ_order(),
-                  noise_type: str="D",
+                  reps: int=1,
+                  noise_type: str="",
                   probs: np.ndarray=np.flip(np.geomspace(0.00002, (0.001), 7)),
-                  reps: int=1
+                  device: str="CPU",
                   ):
-    data = []
-    with open(file_name_to_write + noise_type , 'w') as file:
-        with open(file_name_to_read, 'r') as rf:
-            index = 0
-            datajson = json.load(rf)
-            circ_prov = CircuitProvider(reps=reps, molecule=molecule)
-            ref_value = numpy_energy(circ_prov.fermionic_op, circ_prov.ucc)
-            for name in circ_names:
-                name, circ, op = circ_prov.get_circ(name)
-                
-                for prob in probs:
-                    init_point = datajson[index]["param"]
-                    print(init_point)
-                    circs = CircSim(circ, op, True, 1 - prob, noise_type, q1_noise=False, q2_noise=True, init_point=init_point)
-                    energy, parameters = circs.run_qiskit_vqe(optimizer[0])
-                    data.append({"name": name, 
-                                 "ref_ener": ref_value, 
-                                 "energy": energy, 
-                                 "param" : parameters[-1], 
-                                 "optimizer": optimizer[1], 
-                                 "prob": prob, 
-                                 "noise gates": circ.count_ops()["cx"]})
-                index += 1
-            json.dump(data, file, indent=4)
+        self.file_name_to_ideal = file_name_to_read 
+        self.molecule = molecule 
+        self.optimizer = optimizer 
+        self.circ_prov = CircuitProvider(reps=reps, molecule=molecule)
+        self.noise_type = noise_type 
+        self.probs = probs 
+        self.ref_value = numpy_energy(self.circ_prov.fermionic_op, self.circ_prov.uccgsd)
+        self.data = []
+        self.device = device
+        
 
-def run_vqe(file_name_to_write: str,
-            molecule: Molecule,
-            optimizer: any,
-            circ_names: List[str]=circ_order(),
-            reps: int=1
-            ):
+@Timer.attach_timer("thread_timer")
+def to_thread(namet, vqe_data: vqeData):
+    # vqe_data=deepcopy(vqe_data), 
+    name, circ, op = vqe_data.circ_prov.get_circ(namet)
+    init_point = None
+    probs = [0]
+    if vqe_data.noise_type != "":
+        probs = vqe_data.probs
+        try:
+            with open(vqe_data.file_name_to_ideal + "_" + name +  ".json", "r") as file:
+                init_point = json.load(file)[0]["param"]
+        except FileNotFoundError:
+            print("RUNNING NOISY SIM WITHOUT INIT POINT")
     data = []
-    with open(file_name_to_write, 'w') as file:
-        index = 0
-        circ_prov = CircuitProvider(reps=reps, molecule=molecule)
-        ref_value = numpy_energy(circ_prov.fermionic_op, circ_prov.ucc)
-        for name in circ_names:
-            name, circ, op = circ_prov.get_circ(name)
-            print(circ)
-            circs = CircSim(circ, op, False, init_point=None)
-            energy, parameters = circs.run_qiskit_vqe(optimizer[0])
-            data.append({"name": name, 
-                        "ref_ener": ref_value, 
-                        "energy": energy, 
-                        "param" : parameters[-1], 
-                        "optimizer": optimizer[1], 
-                        })
-            index += 1
+    for prob in probs:
+        circs = CircSim(circ, op, prob, vqe_data.noise_type, init_point)
+        energy, parameters = circs.run_qiskit_vqe(vqe_data.optimizer[0], vqe_data.device)
+        data.append({
+            "name": name, 
+            "ref_ener": vqe_data.ref_value, 
+            "energy": energy, 
+            "param": parameters[-1], 
+            "optimizer": vqe_data.optimizer[1],
+            "prob": prob,
+            "noise": vqe_data.noise_type
+        })
+    return data
+        
+def run_vqe(name: str, vqe_data: vqeData):
+    data = []
+    result = to_thread(name, vqe_data)
+    data.extend(result)
+    with open(vqe_data.file_name_to_ideal + f"_{vqe_data.noise_type}" + name +".json", 'w') as file:
         json.dump(data, file, indent=4)
+    print("thread_timer" + ": ", Timer.timers["thread_timer"])
+    return result
 
-
-run_vqe(
-    "data02/H2_8",
-    H2_8,
-    optimizers[0],
-    circ_names=["swap 2xn"],
-    reps = 1
-)
-# def write_data():
-#     noises = ["D", "X", "Y", "Z"]
-#     id_en = [None]*n
-#     for noise in noises:
-#         with open(f'data/NewSimPar{noise}8.json', 'w') as file:
-#             data = []
-#             with open('data/SimParId8.json', 'r') as rf:
-#                 index = 0
-#                 datajson = json.load(rf)
-#                 for mol in molecules[1:2]:
-#                     for opt in optimizers[0:1]:
-#                         for rep in reps:
-#                             circ_prov = CircuitProvider(reps=rep, active_orbitals=mol[2], num_electrons=mol[1], geometry=mol[0], basis=mol[3])
-#                             ref_value = numpy_energy(circ_prov.fermionic_op, circ_prov.ucc)
-#                             for name, circ, op in circ_prov.__iter__(circ_order()):
-#                                 for prob in np.flip(np.geomspace(0.00002, (0.001), 7)):
-#                                     init_point = datajson[index]["param"]
-#                                     print(init_point)
-#                                     circs = CircSim(circ, op, True, 1 - prob, noise, q1_noise=False, q2_noise=True, init_point=init_point)
-#                                     energy, _, values, parameters = circs.run_qiskit_vqe(opt[0])
-#                                     data.append({"name": name, "ref_ener": ref_value, "energy": energy, "param" : parameters[-1], "optimizer": opt[1], "prob": prob, "noise gates": circ.count_ops()["cx"]})
-#                                 index += 1
-#             json.dump(data, file, indent=4)
-
-# def pure_write_data():
-#     noises = ["Id"]
-#     import json
-#     id_en = [None]*n
-#     for noise in noises:
-#         with open(f'data/SimPar{noise}8.json', 'w') as file:
-#             data = []
-#             index = 0
-#             for mol in molecules[1:2]:
-#                 for opt in optimizers[0:1]:
-#                     for rep in reps:
-#                         iter_num = [None]*n
-#                         # circs, ops, ref_value, init_point, enhf, circ_prov = get_circs_and_ops(get_cp=True, reps=rep, active_orbitals=mol[2], num_electrons=mol[1], geometry=mol[0], basis=mol[3])
-#                         circ_prov = CircuitProvider(reps=rep, active_orbitals=mol[2], num_electrons=mol[1], geometry=mol[0], basis=mol[3])
-#                         ref_value = numpy_energy(circ_prov.fermionic_op, circ_prov.ucc)
-#                         # circs.append(circ_prov.get_yordan_dynamic())
-#                         # ops.append(ops[0])
-#                         # circs.append(circ_prov.get_zyx_yordan_dynamic())
-#                         # ops.append(ops[1])
-#                         for name, circ, op in circ_prov.__iter__(circ_order()):
-#                             circs = CircSim(circ, op, False)
-#                             # energy, _, values, parameters = [0,0,[0],[0]]
-#                             energy, _, values, parameters = circs.run_qiskit_vqe(opt[0])
-#                             data.append({"name": name, "ref_ener": ref_value, "energy": energy, "param" : parameters[-1], "optimizer": opt[1]})
-#                             index += 1
-#             json.dump(data, file, indent=4)
-
-# pure_write_data()
-# write_data()
-
+if __name__ == "__main__":
+    
+    vqe_data=vqeData(
+            "data02/H2_8",
+            H2_8,
+            optimizers[0],
+            reps=1,
+            probs=1 - np.flip(np.geomspace(0.00002, (0.001), 7)),
+            noise_type="",
+            device="CPU",
+        )
+    circ_names = circ_order()[4:]
+    procs= []
+    for name in circ_names:
+        procs.append(mp.Process(target=run_vqe, args=(name, vqe_data,)))
+    for proc in procs:
+        proc.start()
+    for proc in procs:
+        proc.join()
+        
+    

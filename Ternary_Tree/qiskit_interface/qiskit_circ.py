@@ -1,14 +1,20 @@
 from typing import Union
+from abc import abstractmethod
+from numpy import pi
 from qiskit.circuit import Parameter, QuantumCircuit, ParameterExpression
 from qiskit.circuit.library import PauliEvolutionGate
 from qiskit.quantum_info import Pauli as qiskit_pauli
-from numpy import pi
 
-from .circ_wrapper import CircWrapper
-from .pauli import Pauli
-    
+from ..utils import Parameter as MyParameter
+from ..utils import static_vars, Pauli, CircWrapper
+
+  
+@static_vars(d_par={})
+def to_qiskit_parameter(par: MyParameter) -> ParameterExpression:
+    return to_qiskit_parameter.d_par.setdefault(par.name, par.coef * Parameter(par.name))
+
+
 class QiskitCirc(CircWrapper, QuantumCircuit):
-
     def __init__(self, qc, name=None):
         self.paulis = []
         self.swaps = []
@@ -16,8 +22,9 @@ class QiskitCirc(CircWrapper, QuantumCircuit):
 
     def rotation(self, 
               pauli: Pauli,
-              par: Parameter,
+              par: MyParameter,
               ) -> None:
+        par = to_qiskit_parameter(par)
         par = (1j**pauli.pow).imag * par
         label, qubits = pauli.get_label_qubs()
         if len(qubits) <=2 and isinstance(par, (ParameterExpression, Parameter)):
@@ -25,8 +32,9 @@ class QiskitCirc(CircWrapper, QuantumCircuit):
 
     def any_rot(self, 
               pauli: Pauli,
-              par: Parameter,
+              par: MyParameter,
               ) -> None:
+        par = to_qiskit_parameter(par)
         label, qubits = pauli.get_label_qubs()
         op = qiskit_pauli(label)
         gate = PauliEvolutionGate(op, par)
@@ -58,11 +66,13 @@ class QiskitCirc(CircWrapper, QuantumCircuit):
         circ.name = "fswap"
         self.compose(circ, qubits=qubits, inplace=True, wrap=True)
 
+
     @staticmethod
     def get_pauli_single_ex():
         return {"XY": -1, "YX": 1}
 
-    def single_ex(self, qubits, parameter, list_signs):
+    def single_ex(self, qubits, par: MyParameter, list_signs):
+        parameter =  to_qiskit_parameter(par)
         q0, q1 = 0,1
         circ = QuantumCircuit(2)
         circ.ry(pi/2, q0)
@@ -71,14 +81,15 @@ class QiskitCirc(CircWrapper, QuantumCircuit):
         circ.ry(parameter*list_signs["YX"], q1)
         circ.cx(q0,q1)
         circ.ry(-pi/2, q0)
-        circ.name = parameter.name
+        circ.name = par.name
         self.compose(circ, qubits=qubits, inplace=True, wrap=True)
 
     @staticmethod
     def get_pauli_double_ex_short():
         return  {"XXXY": 1, "XXYX": 1, "XYXX": -1, "YXXX": -1, "YYYX": -1, "YYXY": -1, "YXYY": 1, "XYYY": 1}
         
-    def double_ex_short(self, qubits, parameter, list_signs):
+    def double_ex_short(self, qubits, par, list_signs):
+        parameter =  to_qiskit_parameter(par)
         q0, q1, q2, q3 = 0,1,2,3
         circ = QuantumCircuit(4)
         circ.cx(q1, q0)
@@ -105,11 +116,12 @@ class QiskitCirc(CircWrapper, QuantumCircuit):
         circ.ry(-pi/2, q2)
         circ.cx(q1, q0)
         circ.cx(q2, q3)
-        circ.name = parameter.name
+        circ.name = par.name
 
         self.compose(circ, qubits=qubits, inplace=True, wrap=True)
     
-    def double_ex_zyx_opt(self, qubits, parameter, list_signs):
+    def double_ex_zyx_opt(self, qubits, par, list_signs):
+        parameter =  to_qiskit_parameter(par)
         q0, q1, q2, q3 = 1,0,2,3
         circ = QuantumCircuit(4)
         circ.cx(q0, q1)
@@ -136,7 +148,7 @@ class QiskitCirc(CircWrapper, QuantumCircuit):
         circ.ry(-pi/2, q2)
         circ.cx(q0, q1)
         circ.cx(q3, q2)
-        circ.name = parameter.name
+        circ.name = par.name
 
         self.compose(circ, qubits=qubits, inplace=True, wrap=True)
 
@@ -144,7 +156,8 @@ class QiskitCirc(CircWrapper, QuantumCircuit):
     def get_pauli_double_ex_yordan():
         return {"XXXY": -1, "XXYX": 1, "XYXX": -1, "YXXX": 1, "YYYX": 1, "YYXY": -1, "YXYY": 1, "XYYY": -1}
         
-    def double_ex_yordan(self, qubits, parameter, list_signs):
+    def double_ex_yordan(self, qubits, par, list_signs):
+        parameter =  to_qiskit_parameter(par)
         circ = QuantumCircuit(4)
         q0, q1, q2, q3 = 0,1,2,3
         circ.cx(q0, q1), circ.cx(q2, q3)
@@ -173,10 +186,11 @@ class QiskitCirc(CircWrapper, QuantumCircuit):
         circ.ry(pi/2, q2)
         circ.x(q1), circ.x(q3)
         circ.cx(q0, q1), circ.cx(q2, q3)
-        circ.name = parameter.name
+        circ.name = par.name
         self.compose(circ, qubits=qubits, inplace=True, wrap=True)
 
-    def double_ex_zyx_yordan(self, qubits, parameter, list_signs):
+    def double_ex_zyx_yordan(self, qubits, par, list_signs):
+        parameter =  to_qiskit_parameter(par)
         circ = QuantumCircuit(4)
         q0, q1, q2, q3 = 0,1,2,3
         circ.cx(q1, q0), circ.cx(q3, q2)
@@ -205,14 +219,16 @@ class QiskitCirc(CircWrapper, QuantumCircuit):
         # circ.ry(pi/2, q2)
         circ.x(q1), circ.x(q3)
         circ.cx(q1, q0), circ.cx(q3, q2)
-        circ.name = parameter.name
+        circ.name = par.name
         self.compose(circ, qubits=qubits, inplace=True, wrap=True)
     
     @staticmethod
     def get_pauli_double_ex_12cnot():
         return {"YYIZ": 1,"XXIZ": 1,"YYZI": 1,"XXZI": 1,"IZYY": -1,"IZXX": -1,"ZIYY": -1,"ZIXX": -1}
 
-    def double_ex_12cnot(self, qubits, parameter, list_signs):
+    def double_ex_12cnot(self, qubits, par, list_signs):
+        
+        parameter = to_qiskit_parameter(par)
         circ = QuantumCircuit(4)
         q0, q1, q2, q3 = 0,1,2,3
         circ.ry(pi/2, q2)
@@ -240,7 +256,7 @@ class QiskitCirc(CircWrapper, QuantumCircuit):
         circ.ry(-pi/2, q0)
         circ.rz(-pi/2, q3)
         circ.rz(-pi/2, q0)
-        circ.name = parameter.name
+        circ.name = par.name
         self.compose(circ, qubits=qubits, inplace=True, wrap=True)
 
     def fermionic_2swap(self, qubits):
@@ -280,4 +296,3 @@ class QiskitCirc(CircWrapper, QuantumCircuit):
         circ.name = "2fswap"
 
         self.compose(circ, qubits=qubits, inplace=True, wrap=True)
-

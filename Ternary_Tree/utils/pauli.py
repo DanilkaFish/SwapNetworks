@@ -97,6 +97,9 @@ class PauliContainer:
             new_pl1 = pl*pauli
             new_pl2 = pauli*pl
             if ((new_pl1.pow - new_pl2.pow) % 4 == 2):
+                # print(": ", new_pl1)
+                # new_pl1.pow -= 1
+                print("- ", new_pl1)
                 self._paulis[index] = new_pl1
 
     def __str__(self):
@@ -132,6 +135,7 @@ class MajoranaContainer(PauliContainer):
     
     def transpose(self, qub1: int, i1: int, qub2: int,  i2: int) -> Pauli:
         pauli: Pauli = self[self.qubs[2*qub1 + i1]] * self[self.qubs[2*qub2 + i2]]
+        print(pauli, self[self.qubs[2*qub1 + i1]], self[self.qubs[2*qub2 + i2]])
         self.transform(pauli)
         self.qubs[2*qub1 + i1], self.qubs[2*qub2 + i2] = self.qubs[2*qub2 + i2], self.qubs[2*qub1 + i1] 
         return pauli
@@ -146,5 +150,10 @@ class MajoranaContainer(PauliContainer):
         return s
     
 if __name__ == "__main__":
-    jw = MajoranaContainer(4)
-    print(jw)
+    # jw = MajoranaContainer(4)
+    # print(jw)
+    pl1 = Pauli.from_str("XY")
+    pl2 = Pauli.from_str("ZY")
+    print(pl1, pl2, pl1*pl2)
+    print(pl1, pl2, pl2*pl1)
+    

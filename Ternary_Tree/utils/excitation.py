@@ -86,7 +86,7 @@ class SingleLadExcitation(LadExcitation):
 
 class DoubleLadExcitation(LadExcitation):
     def __init__(self, init: Tuple[int, int], finit: Tuple[int, int], sign: int=1):
-        self.op = (*finit, *init)
+        self.op = (*init, *finit )
         self.sign = self.sign * sign
     
     def maj_range(self):

@@ -1,5 +1,6 @@
 {
-    "python.defaultInterpreterPath": "~/pyenv/sn/bin/python3",
+    "python.defaultInterpreterPath": "~/pyenv/sn312/bin/python3",
     "editor.mouseWheelScrollSensitivity": 3,
     "python.languageServer": "Pylance",
+    "terminal.integrated.scrollback": 50000
 }
