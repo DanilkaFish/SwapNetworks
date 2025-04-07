@@ -71,7 +71,9 @@ class LadExcitation(ABC):
 
     
 class SingleLadExcitation(LadExcitation):
-    
+    """
+        a_i^+ a_j - a_j^+ a_ = (i, j)
+    """
     def __init__(self, init: Tuple[int, int], finit: Tuple[int, int], sign: int=1):
         self.op = (*finit, *init)
         self.sign = self.sign * sign
@@ -85,6 +87,9 @@ class SingleLadExcitation(LadExcitation):
 
 
 class DoubleLadExcitation(LadExcitation):
+    """
+        a_i^+ a_j^+ a_k a_l - a_i a_j a_k^+ a_l^+ = (i, j, k, l)
+    """
     def __init__(self, init: Tuple[int, int], finit: Tuple[int, int], sign: int=1):
         self.op = (*init, *finit )
         self.sign = self.sign * sign
@@ -110,10 +115,3 @@ def _parity(t: tuple):
             if el1 > el2:
                 par = par * (-1)
     return par
-
-def _arranging(t: tuple):
-    new_t = tuple(sorted(t))
-    # if len(new_t) == 4:
-    #     new_t = new_t[:2] if new_t[2] == new_t[3] else new_t
-    # new_t = new_t[2:] if new_t[1] == new_t[0] else new_t
-    return new_t

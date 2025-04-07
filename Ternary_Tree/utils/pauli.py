@@ -14,8 +14,11 @@ class PauliBin:
     stob = {"I": (0,0), "X": (1,0), "Y": (1,1), "Z": (0,1)}
     btos = {(0,0): "I", (1,0): "X", (1,1): "Y", (0,1): "Z"}
 
-
 class Pauli:
+    """
+        P = i^{pow - k_1 * k_2} X^{k1} Z^{k2},
+        bsf = (k1,k2) 
+    """
     def __init__(self, bsf: np.ndarray[bool], pow: int=0):
         self.bsf = bsf
         self.pow = pow
@@ -69,7 +72,7 @@ class Pauli:
         n = len(self.bsf) // 2
         k1, k2 = self.bsf[:n], self.bsf[n:]
         p1, p2 = pauli.bsf[:n], pauli.bsf[n:]
-        pow = (self.pow  + pauli.pow + sum(k1*k2 + p1*p2 + 2*k2*p1 - new_bsf[:n] * new_bsf[n:] )) % 4
+        pow = (self.pow  + pauli.pow + sum(2*k2*p1 + k1*k2 + p1*p2  - new_bsf[:n] * new_bsf[n:] )) % 4
         return Pauli(new_bsf, pow)
 
     def _to_str(self):
@@ -97,9 +100,6 @@ class PauliContainer:
             new_pl1 = pl*pauli
             new_pl2 = pauli*pl
             if ((new_pl1.pow - new_pl2.pow) % 4 == 2):
-                # print(": ", new_pl1)
-                # new_pl1.pow -= 1
-                print("- ", new_pl1)
                 self._paulis[index] = new_pl1
 
     def __str__(self):
@@ -135,23 +135,26 @@ class MajoranaContainer(PauliContainer):
     
     def transpose(self, qub1: int, i1: int, qub2: int,  i2: int) -> Pauli:
         pauli: Pauli = self[self.qubs[2*qub1 + i1]] * self[self.qubs[2*qub2 + i2]]
-        print(pauli, self[self.qubs[2*qub1 + i1]], self[self.qubs[2*qub2 + i2]])
         self.transform(pauli)
         self.qubs[2*qub1 + i1], self.qubs[2*qub2 + i2] = self.qubs[2*qub2 + i2], self.qubs[2*qub1 + i1] 
         return pauli
     
+    def renumerate(self, list_enum):
+        _paulis = [] 
+        for num in list_enum:
+            _paulis.append(self._paulis[num])
+        self._paulis = _paulis
+            
     def get_by_qubs(self, qub: int) -> Tuple[int,int]:
         return (self.qubs[2*qub], self.qubs[2*qub + 1])
     
     def __str__(self):
         s: str = ""
         for index, pauli in enumerate(self._paulis):
-            s += f"{index + 1} : " + str(pauli) + '\n'
+            s += f"{self.qubs[index] + 1} : " + f"{index + 1} : " + str(pauli) + '\n'
         return s
     
 if __name__ == "__main__":
-    # jw = MajoranaContainer(4)
-    # print(jw)
     pl1 = Pauli.from_str("XY")
     pl2 = Pauli.from_str("ZY")
     print(pl1, pl2, pl1*pl2)

@@ -13,10 +13,9 @@ import numpy as np
 
 from .pauli import MajoranaContainer
 
-#TODO
 def pauli_table(mc: MajoranaContainer):
     """
-    This function is used by TernaryTreeMapper to obtain pauli_table
+    This function is used by MajoranaMapper to obtain pauli_table
     """
     pauli_table: List[Tuple[Pauli, complex]] = []
     n = len(mc) // 2
@@ -132,35 +131,3 @@ class MajoranaMapper(FermionicMapper):  # pylint: disable=missing-class-docstrin
             register_length=second_q_op.register_length
         return self.mode_based_mapping(second_q_op, nmodes=register_length)
     
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-#     from __future__ import annotations
-
-# from qiskit.quantum_info import SparsePauliOp
-
-# from qiskit_nature.second_q.operators import FermionicOp
-
-# from .qubit_mapper import ListOrDictType, QubitMapper
-
-
-# class FermionicMapper(QubitMapper):
-#     """Mapper of Fermionic Operator to Qubit Operator"""
-
-#     def map(
-#         self,
-#         second_q_ops: FermionicOp | ListOrDictType[FermionicOp],
-#         *,
-#         register_length: int | None = None,
-#     ) -> SparsePauliOp | ListOrDictType[SparsePauliOp]:
-#         return super().map(second_q_ops, register_length=register_length)

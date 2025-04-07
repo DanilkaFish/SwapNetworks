@@ -4,6 +4,7 @@ from typing import Tuple
 
 from qiskit_nature.second_q.mappers import JordanWignerMapper, BravyiKitaevMapper
 from qiskit_nature.second_q.circuit.library import HartreeFock, UCC
+from qiskit_nature.second_q.mappers.fermionic_mapper import FermionicMapper
 
 from qiskit import transpile, QuantumCircuit
 from qiskit.quantum_info import SparsePauliOp, Statevector
@@ -15,20 +16,15 @@ from qiskit_aer.noise import (NoiseModel, QuantumError, ReadoutError,
 # from qiskit_aer.primitives import EstimatorV2 as Estimator
 from qiskit_aer.primitives import Estimator
 from qiskit_algorithms import NumPyMinimumEigensolver
-
-
+from qiskit.synthesis.evolution import synth_pauli_network_rustiq
+from qiskit.circuit.library import PauliEvolutionGate
 from numpy.random import shuffle
 
 from Ternary_Tree.ucc.abstractucc import Molecule
 from Ternary_Tree.ucc.upgccsd import UpGCCSD, LadExcImpl
 from Ternary_Tree.utils import MajoranaContainer, MajoranaMapper
 from Ternary_Tree.qiskit_interface import VQEV1 as VQE
-# from Ternary_Tree.qiskit_interface import VQEV2 as VQE
 
-from Paulihedral_v2.Paulihedral_new.benchmark.mypauli import *
-from Paulihedral_v2.Paulihedral_new.parallel_bl import depth_oriented_scheduling, gate_count_oriented_scheduling
-from Paulihedral_v2.Paulihedral_new.tools import *
-from Paulihedral_v2.Paulihedral_new import synthesis_FT
 
 
 noise_dict_qiskit = {"I": IGate(),"X":XGate(), "Y": YGate(), "Z": ZGate()}
@@ -40,9 +36,7 @@ class SwapCircNames:
     SWAPGENSHORT = ("swap_gen", LadExcImpl.SHORT())
         
 def circ_order():
-    return ["jw", "bk", "swap 2xn", "swap gen yor", "swap gen short"]
-    # return ["swap 2xn", "swap gen yor", "swap gen short"]
-    # return ["swap_sh", "swap_sh_inv", "jw", "jw_lex", "bk", "bk_lex", "jw_opt", "jw_opt_lexic", "swap_yo", "swap_yo_inv", "swap gen"]
+    return ["jw", "bk", "jw_lex", "bk_lex", "swap 2xn", "swap gen yor", "swap gen short", ]
 
 def eq_alpha_beta(qc):
     n = qc.num_qubits
@@ -56,9 +50,6 @@ def print_params(ansatz):
     print(ansatz.count_ops())
     print(ansatz.depth())
     
-
-
-
 
 class CircuitProvider:
     def __init__(self,
@@ -96,59 +87,49 @@ class CircuitProvider:
         # eq_alpha_beta(qc)
         return ansatz, ucc_ham(self.fermionic_op, mtoq)
     
-    def get_circ_via_mapping(self, qubit_mapper,  init=True):
+    def get_ucc(self, qubit_mapper,  init=False):
         num_electrons = (self.uccgsd.n_alpha, self.uccgsd.n_beta)
         initial_state = None if not init else HartreeFock(self.uccgsd.n_spatial, 
                                                         num_electrons,
                                                         qubit_mapper)
-        qc = UCC(
+        return UCC(
             self.uccgsd.n_spatial, 
             num_electrons,
             excitations=self.to_qiskit_excitations, 
             qubit_mapper=qubit_mapper, 
             initial_state=initial_state
-            )  
+            ) 
         
+    def get_circ_via_mapping(self, qubit_mapper,  init=True):
+        qc = self.get_ucc(qubit_mapper, True)
         for i in range(self.reps-1):
-            new_ucc = self.qiskit_ucc(qubit_mapper, init=False)
+            new_ucc = self.get_ucc(qubit_mapper, init=False)
             theta = ParameterVector("θ" + str(i), new_ucc.num_parameters)
             new_ucc.assign_parameters(theta, inplace=True)
             qc = qc.compose(new_ucc)
         ansatz= transpile(qc, basis_gates=self.basis_gates, optimization_level=3).decompose(reps=3)
         print_params(ansatz)
         return ansatz
+        
+    # TODO reps
+    
+    def get_rust_circ(self, qubit_mapper: FermionicMapper):
+        circ = HartreeFock(self.uccgsd.n_spatial, (self.uccgsd.n_alpha, self.uccgsd.n_beta), qubit_mapper)
+        circ._build()
+        
+        qc = self.get_ucc(qubit_mapper, init=None)
+        nq = qc.num_qubits
+        rq = list(range(nq))
+        parr = []
+        for gate in qc.decompose(reps=1):
+            i = 0
+            for pauli, coef in zip(gate.operation.operator.paulis, gate.operation.operator.coeffs):
+                parr.append((str(pauli), list(reversed(rq)), coef*gate.params[0]))
+        circ.compose(synth_pauli_network_rustiq(nq, parr, optimize_count=True, preserve_order=True, upto_phase=True, resynth_clifford_method=1),inplace=True)
+        ansatz = transpile(circ.decompose(reps=3), basis_gates=self.basis_gates, optimization_level=3).decompose(reps=3)
+        print_params(ansatz)
+        return circ
 
-
-    #TODO
-    # def get_jw_opt_ansatz(self):
-    #     qubit_mapper=TernaryTreeMapper(self.jw_opt_map)
-    #     qc = QuantumCircuit(self.dynamic_circ.num_qubits)
-    #     num_electrons = self.num_electrons[0]    
-    #     for i in range(self.dynamic_circ.num_qubits):
-    #         if (self.jw_opt_map[i][0].num <= 2*num_electrons) or (self.uccgsd.n_spatial*2 + 1<= 
-    #                 self.jw_opt_map[i][0].num <= 2*self.uccgsd.n_spatial + 2*num_electrons):
-    #             qc.x(i)
-    #         else:
-    #             qc.id(i)
-    #     ansatz = qc.compose(self.get_circ_via_mapping(qubit_mapper, lexic=False, init=False))
-    #     ansatz = transpile(ansatz, basis_gates=basis_gates, optimization_level=3)
-    #     return ansatz.decompose(reps=1)
-
-
-    #TODO
-    # def get_jw_opt_lexic_ansatz(self):
-    #     qubit_mapper = TernaryTreeMapper(self.jw_opt_map)
-    #     qc = QuantumCircuit(self.dynamic_circ.num_qubits)
-    #     num_electrons = self.num_electrons[0]    
-    #     for i in range(self.dynamic_circ.num_qubits):
-    #         if (self.jw_opt_map[i][0].num <= 2*num_electrons) or (self.uccgsd.n_spatial*2 + 1<= 
-    #                 self.jw_opt_map[i][0].num <= 2*self.uccgsd.n_spatial + 2*num_electrons):
-    #             qc.x(i)
-    #         else:
-    #             qc.id(i)
-    #     qc = qc.compose(self.get_circ_via_mapping(qubit_mapper, lexic=True, init=False))
-    #     ansatz = transpile(qc, basis_gates=basis_gates, optimization_level=3)
-    #     return ansatz
 
     def get_circ_op(self, name):
         match name:
@@ -162,14 +143,10 @@ class CircuitProvider:
                 return self.get_swap_circuit(SwapCircNames.SWAPGENYORDAN)
             case "swap gen short":
                 return self.get_swap_circuit(SwapCircNames.SWAPGENSHORT)
-            # case "jw_lex":
-                # return (self.get_jw_lexic(), jw_ham(self.fermionic_op))
-            # case "bk_lex":
-            #     return (self.get_bk_lexic(), bk_ham(self.fermionic_op))
-            # case "jw_opt":
-            #     return (self.get_jw_opt_ansatz(), ucc_ham(self.fermionic_op, self.jw_opt_map))
-            # case "jw_opt_lexic":
-            #     return (self.get_jw_opt_lexic_ansatz(), ucc_ham(self.fermionic_op, self.jw_opt_map))
+            case "jw_lex":
+                return (self.get_rust_circ(JordanWignerMapper()), jw_ham(self.fermionic_op))
+            case "bk_lex":
+                return (self.get_rust_circ(BravyiKitaevMapper()), bk_ham(self.fermionic_op))
             
 
     def get_circ(self, name) -> Tuple[str, QuantumCircuit, SparsePauliOp]:
@@ -212,7 +189,8 @@ class CircSim:
         else:
             noise_est = get_qiskit_device_noise_estimator(self.circ.num_qubits, 
                                                           noise_op=self.noise_type, 
-                                                          prob=self.noise_par)
+                                                          prob=self.noise_par,
+                                                          device=device)
             
             vqe = VQE(noise_est, self.circ, optimizer=optimizer, callback=store_intermediate_result, initial_point=self.init_point)
             result = vqe.compute_minimum_eigenvalue(operator=self.op)
@@ -227,20 +205,16 @@ def jw_ham(fermionic_op):
     qubit_jw_op = mapper.map(fermionic_op)
     return qubit_jw_op
 
-
 def bk_ham(fermionic_op):
     mapper = BravyiKitaevMapper()
     qubit_bk_op = mapper.map(fermionic_op)
     return qubit_bk_op
 
-
 def ucc_ham(fermionic_op, mtoq: MajoranaContainer):
     mapper = MajoranaMapper(mtoq)
     return mapper.map(fermionic_op)
 
-    
-
-def get_qiskit_device_noise_estimator(n_qubits, noise_op,  prob):
+def get_qiskit_device_noise_estimator(n_qubits, noise_op,  prob, device):
     # coupling_map = [(x,y) for x in range(n_qubits) for y in range(n_qubits) if x != y]
     noise_model = NoiseModel(basis_gates=["u", "cx"])
     if noise_op=="D":
@@ -258,11 +232,10 @@ def get_qiskit_device_noise_estimator(n_qubits, noise_op,  prob):
                         "noise_model": noise_model,
                         "basis_gates": ["u","cx"],
                         "method": "density_matrix",
-                        "device": "GPU",
+                        "device": device,
                         },
             )
     return noisy_estimator
-
 
 def numpy_energy(fermionic_op, ucc):
     numpy_solver = NumPyMinimumEigensolver()
@@ -285,30 +258,16 @@ def hf(ansatz, op):
     return energy
 
 
-
-
-
-
-
-
-# else:
-#             qc = self.qiskit_ucc(qubit_mapper, init=init)
-#             if init:
-#                 qc = HartreeFock(self.uccgsd.n_spatial, (self.uccgsd.n_alpha, self.uccgsd.n_beta), qubit_mapper)
-#                 qc._build()
-#             else:
-#                 qc = QuantumCircuit(self.uccgsd.n_qubits)
-#             for i in range(self.reps):
-#                 new_ucc = self.qiskit_ucc(qubit_mapper)
-#                 theta = ParameterVector("θ" + str(i), new_ucc.num_parameters)
-#                 new_ucc.assign_parameters(theta, inplace=True)
-#                 parr = []
-#                 cir = new_ucc.decompose(reps=1)
-#                 # print(cir[0].decompose())
-#                 names = []
-#                 for gate in new_ucc.decompose(reps=1):
-#                     for pauli in gate.operation.operator.paulis:
-#                         parr.append([pauliString(pauli.__str__(), 1.0)])
-#                         names.append(pauli.__str__())
-#                 shuffle(parr)
-#                 a1 = gate_count_oriented_scheduling(parr)
+if __name__ == "__main__":
+    nq = 4
+    rq = list(range(4))
+    parr = []
+    theta = ParameterVector("θ" + str(0), 1)
+    for key, coef in {"YYIZ": 1,"XXIZ": 1,"YYZI": 1,"XXZI": 1,"IZYY": -1,"IZXX": -1,"ZIYY": -1,"ZIXX": -1}.items():
+        # circ.append(PauliEvolutionGate(pauli, coef*gate.params[0]), rq)
+        parr.append((str(key), rq, theta[0]))
+    circ = synth_pauli_network_rustiq(nq, parr, optimize_count=False, preserve_order=False, upto_phase=True, resynth_clifford_method=2)
+    print(circ)
+    # print(circ)
+    ansatz = transpile(circ.decompose(reps=3), basis_gates=["u","cx"], optimization_level=3).decompose(reps=3)
+    print_params(ansatz)

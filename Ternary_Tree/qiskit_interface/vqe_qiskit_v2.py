@@ -14,7 +14,6 @@ from qiskit.circuit import QuantumCircuit
 from qiskit.quantum_info.operators.base_operator import BaseOperator
 
 from qiskit_algorithms import VQE
-# from qiskit import BaseEstimator
 
 from my_utils import Timer
 

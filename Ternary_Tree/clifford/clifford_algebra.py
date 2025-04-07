@@ -62,7 +62,9 @@ class CliffordGenerator:
         self._gen_dict = {}
         for key in smth:
             if isinstance(smth[key], list):
+                # print(''.join(list(reversed(smth[key][0]))))
                 self._gen_dict[key] = smth[key]
+                # self._gen_dict[key] = [''.join(list(reversed(smth[key][0]))), smth[key][1]]
             else:
                 self._gen_dict[key] = [smth[key], 1]
 
@@ -140,7 +142,7 @@ class CliffordGenerator:
         return self.gen_dict.__iter__()
 
 
-def get_pauli(char='I', pos=0, numq=4):
+def get_pauli(char='I', pos=0, numq=8):
     pauli = ["I" for _ in range(numq)]
     pauli[pos] = char
     # print("".join(pauli))
@@ -198,14 +200,42 @@ if __name__ == "__main__":
     n = 5
     gen_dict = {0 : ["YXIZ", -1],1: ["XYIZ", 1], 2: ["YXZI", -1], 3: ["XYZI", 1], 4: ["IZYX", -1], 5: ["IZXY", 1], 6: ["ZIYX", -1], 7: ["ZIXY", 1]}
     gen_dict = {0 : ["YYIZ", 1], 1: ["XXIZ", 1], 2: ["YYZI", 1], 3: ["XXZI", 1], 4: ["IZYY", 1], 5: ["IZXX", 1], 6: ["ZIYY", 1], 7: ["ZIXX", 1]}
+    gen_dict = {0 : ['IZYYIZYX', -1], 1: ['IZYXIZYY', -1], 2: ['ZIXXZZYX', -1], 3: ['ZIXYZZYY', 1], 4: ['IZYXZIXX', -1], 5: ['IZYYZIXY', 1], 6: ['ZIXYIIXX', 1], 7: ['ZIXXIIXY', 1]}
     # gen_dict = {0 : ["XXXY", 1],1: ["XXYX", 1],2: ["XYXX", 1], 3: ["YXXX", 1], 4: ["YYYX", 1], 5: ["YYXY", 1], 6: ["YXYY", 1], 7: ["XYYY", 1]}
     # gen_dict = {0:"XY", 1: "YX"}
     
     # gen_dict = {0 : "YZZXII",1: "XZZYII",2: "IYZZXI", 3: "IXZZYI", 4: "IIXZZY", 5: "IIYZZX"}
 
-    cg = CliffordGenerator(n, gen_dict)
+    cg = CliffordGenerator(8, gen_dict)
     print(cg)
     # --------------------------------------
+    cg.transform_maj(get_pauli("Z", 2))
+    print(cg)
+    cg.transform_maj("cx", (0,2))
+    cg.transform_maj(get_pauli("Z", 2))
+    cg.transform_maj("cx", (3,2))
+    cg.transform_maj("cx", (2,1))
+    cg.transform_maj("cx", (3,6))
+    cg.transform_maj("cx", (3,7))
+    print(cg)
+    cg.transform_maj("cx", (7,3))
+    print(cg)
+    cg.transform_maj("cx", (1,3))
+    cg.transform_maj("cx", (4,3))
+    print(cg)
+    cg.transform_maj("cx", (7,3))
+    print(cg)
+    cg.transform_maj("cx", (5,3))
+    cg.transform_maj("cx", (6,3))
+    cg.transform_maj("cx", (4,3))
+    print(cg)
+    cg.transform_maj("cx", (7,3))
+    print(cg)
+    cg.transform_maj("cx", (1,3))
+    cg.transform_maj("cx", (4,3))
+    print(cg)
+    cg.transform_maj("cx", (7,3))
+    print(cg)
     # cg.transform_maj(get_pauli("Y", 0))
     # # cg.transform_maj(get_pauli("X", 1))
     # print(cg)
@@ -262,25 +292,34 @@ if __name__ == "__main__":
     # cg.transform_maj(get_pauli("Y", 1), coef=1)
     # print(cg)
 # ------------------------------------------
-    cg.transform_maj(get_pauli("Z",0))
-    cg.transform_maj(get_pauli("Y",0))
-    # cg.transform_maj(get_pauli("X",1))
-    cg.transform_maj(get_pauli("Y",2))
-    cg.transform_maj(get_pauli("Z",3))
-    cg.transform_maj("cx", (1,2))
-    print(cg)
-    cg.transform_maj("cx", (0,1))
-    cg.transform_maj("cx", (2,3))
-    print(cg)
-    cg.transform_maj("cx", (0,1))
-    cg.transform_maj("cx", (2,3))
-    cg.transform_maj("cx", (1,2))
-    # # cg.transform_maj(get_pauli("Y",1))
-    print(cg)
-    cg.transform_maj("cx", (3,0))
-    cg.transform_maj("cx", (0,1))
-    cg.transform_maj("cx", (2,3))
-    print(cg)
+
+
+
+
+
+    # cg.transform_maj(get_pauli("Z",0))
+    # cg.transform_maj(get_pauli("Y",0))
+    # # cg.transform_maj(get_pauli("X",1))
+    # cg.transform_maj(get_pauli("Y",2))
+    # cg.transform_maj(get_pauli("Z",3))
+    # cg.transform_maj("cx", (1,2))
+    # print(cg)
+    # cg.transform_maj("cx", (0,1))
+    # cg.transform_maj("cx", (2,3))
+    # print(cg)
+    # cg.transform_maj("cx", (0,1))
+    # cg.transform_maj("cx", (2,3))
+    # cg.transform_maj("cx", (1,2))
+    # # # cg.transform_maj(get_pauli("Y",1))
+    # print(cg)
+    # cg.transform_maj("cx", (3,0))
+    # cg.transform_maj("cx", (0,1))
+    # cg.transform_maj("cx", (2,3))
+    # print(cg)
+    
+    
+    
+    
     # --------------------------------------------------
     # # cg.transform_maj(get_pauli("Y",0))
     # # cg.transform_maj(get_pauli("Z",1))

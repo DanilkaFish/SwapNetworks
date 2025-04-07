@@ -1,4 +1,5 @@
 from typing import List
+import numpy as np
 
 from qiskit_algorithms.optimizers import SPSA ,CG, SLSQP, L_BFGS_B, COBYLA
 
@@ -19,7 +20,8 @@ H2_8 = Molecule(geometry='H 0 0 0; H 0 0 0.7349', num_electrons=(1,1), active_or
 LiH_8 = Molecule(geometry='H 0 0 0; Li 0 0 1.5459', num_electrons=(2,2), active_orbitals=[0,1,2,5], basis='sto-3g')
 
 
-optimizers = [(SLSQP(maxiter=200, ftol=0), 'SLSQP')]
+# optimizers = [(SLSQP(maxiter=200, ftol=0), 'SLSQP')]
+optimizers = [(L_BFGS_B(maxiter=1000, ftol=0), 'L_BFGS_B')]
 
 class vqeData:
     def __init__(self, 
@@ -28,7 +30,7 @@ class vqeData:
                   optimizer: any,
                   reps: int=1,
                   noise_type: str="",
-                  probs: np.ndarray=np.flip(np.geomspace(0.00002, (0.001), 7)),
+                  probs: np.ndarray=np.flip(np.geomspace(0.00002, (0.001), 1)),
                   device: str="CPU",
                   ):
         self.file_name_to_ideal = file_name_to_read 
@@ -82,18 +84,30 @@ def run_vqe(name: str, vqe_data: vqeData):
 if __name__ == "__main__":
     
     vqe_data=vqeData(
-            "data02/H2_8",
+            "data03/H2_8",
             H2_8,
             optimizers[0],
             reps=1,
-            probs=1 - np.flip(np.geomspace(0.00002, (0.001), 7)),
-            noise_type="",
+            probs=1 - np.flip(np.geomspace(0.00002, (0.002), 10)),
+            noise_type="X",
             device="CPU",
         )
-    circ_names = circ_order()[4:]
+    vqe_data2=vqeData(
+            "data03/H2_8",
+            H2_8,
+            optimizers[0],
+            reps=1,
+            probs=1 - np.flip(np.geomspace(0.00002, (0.002), 10)),
+            noise_type="Z",
+            device="GPU",
+        )
+    circ_names = circ_order()[0:2]
+    # circ_names = circ_order()[1:2] + circ_order()[3:4]
     procs= []
     for name in circ_names:
         procs.append(mp.Process(target=run_vqe, args=(name, vqe_data,)))
+    for name in circ_names:
+        procs.append(mp.Process(target=run_vqe, args=(name, vqe_data2,)))
     for proc in procs:
         proc.start()
     for proc in procs:

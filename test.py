@@ -35,7 +35,6 @@ def base_test():
             print(key, ": ", probs[key])
     print(probs)
 
-
 def res(angle):
     active_orbitals = [j for j in range(2)]
     ucc = UpGCCSD(geometry=geometry, basis=basis, active_orbitals=active_orbitals, num_electrons=num_electrons)

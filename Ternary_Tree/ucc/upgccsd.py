@@ -63,14 +63,32 @@ class UpGCCSD(AbstractUCC):
                 method_name: str=LadExcImpl.CNOT12(),
                 circ: Optional[CircWrapper]=None
                 ) -> Tuple[CircWrapper, MajoranaContainer]:
+                
+        # circuit generation
         n = self.n_qubits
         if circ is None:
             circ = QiskitCirc(n)
         mtoq = MajoranaContainer.jw(n)
-
         single_ladder_exc = self.get_alpha_excitations() + self.get_beta_excitations()
         double_ladder_exc = self.get_double_excitations()
-                
+        
+        init_state()
+        for k in range(number_of_layers):
+            sp_maj_exc: Dict[MajExcitation, Parameter] = lad2maj(single_ladder_exc, name="t" + str(k)+ "_")
+            dp_lad_exc: Dict[LadExcitation, Parameter] = lad2lad(double_ladder_exc, name="t" + str(k)+ "_")
+            # if n == 4:
+            #     single_exc_layer()
+            #     double_exc_layer(0)
+            #     for i in range(2):
+            #         for j in range(i*n//2, i*n//2 + n//2 - 1, 2):
+            #             mswap(j, 1, j + 1, 0)
+            # else:
+            for i in range(n//2):
+                single_exc_layer()
+                double_exc_layer(i)
+                mswap_layer(i+1)
+
+        # supporting functions 
         def init_state():
             num_electrons = self.n_alpha  
             for i in range(self.n_qubits):
@@ -112,22 +130,7 @@ class UpGCCSD(AbstractUCC):
 
         def append_lad_D(qubits: List[int]):
             return _append_lad(qubits,  circ, mtoq, method_name, dp_lad_exc)    
-            
-        init_state()
-        for k in range(number_of_layers):
-            sp_maj_exc: Dict[MajExcitation, Parameter] = lad2maj(single_ladder_exc, name="t" + str(k)+ "_")
-            dp_lad_exc: Dict[LadExcitation, Parameter] = lad2lad(double_ladder_exc, name="t" + str(k)+ "_")
-            if n == 4:
-                single_exc_layer()
-                double_exc_layer(0)
-                for i in range(2):
-                    for j in range(i*n//2, i*n//2 + n//2 - 1, 2):
-                        mswap(j, 1, j + 1, 0)
-            else:
-                for i in range(n//2):
-                    single_exc_layer()
-                    double_exc_layer(i)
-                    mswap_layer(i+1)
+        
         return circ, mtoq
     
     def swap_gen(self, 
@@ -139,6 +142,18 @@ class UpGCCSD(AbstractUCC):
         if circ is None:
             circ = QiskitCirc(n)
         mtoq = MajoranaContainer.jw(n)
+        list_enum = []
+        for j in range(n//4):
+            for i in range(2*j, 2*j + 2):
+                list_enum.extend([2*i, 2*i + 1])
+            for i in range(2*j, 2*j + 2):
+                list_enum.extend([2*i + n, 2 * i + n + 1])
+        if (n%4 != 0):
+            list_enum.extend([n - 2, n -1, 2*n-2, 2*n - 1])
+
+        mtoq.qubs = list_enum
+        mtoq.renumerate(list_enum)
+        
         single_ladder_exc = self.get_alpha_excitations() + self.get_beta_excitations()
         double_ladder_exc = self.get_double_excitations()
 
@@ -165,7 +180,7 @@ class UpGCCSD(AbstractUCC):
                 
 
         def fswap(fq, circ=circ):
-            list_trans = [(fq, 0, fq + 1, 0), (fq, 1, fq + 1, 1)]
+            # list_trans = [(fq, 0, fq + 1, 0), (fq, 1, fq + 1, 1)]
             _mswap(fq, 0, fq + 1, 0, circ, mtoq)
             _mswap(fq, 1, fq + 1, 1, circ, mtoq)
             # circ.fswap([fq, fq + 1])
@@ -199,7 +214,6 @@ class UpGCCSD(AbstractUCC):
                     single_exc_layer(i)
                     double_exc_layer(i)
                     fswap_layer()
-        print(circ)
         return circ, mtoq
     
     def get_jw_opt(self) -> MajoranaContainer:

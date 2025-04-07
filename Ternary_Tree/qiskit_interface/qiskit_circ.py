@@ -1,4 +1,3 @@
-from typing import Union
 from abc import abstractmethod
 from numpy import pi
 from qiskit.circuit import Parameter, QuantumCircuit, ParameterExpression
