@@ -140,9 +140,10 @@ class MajoranaContainer(PauliContainer):
         return pauli
     
     def renumerate(self, list_enum):
-        _paulis = [] 
-        for num in list_enum:
-            _paulis.append(self._paulis[num])
+        _paulis = [None]*len(list_enum)
+        for index, num in enumerate(list_enum):
+            _paulis[num] = self._paulis[index]
+            self.qubs[index] = num
         self._paulis = _paulis
             
     def get_by_qubs(self, qub: int) -> Tuple[int,int]:

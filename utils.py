@@ -1,5 +1,6 @@
 from __future__ import annotations
 from typing import Tuple 
+from numpy.random import shuffle
 
 
 from qiskit_nature.second_q.mappers import JordanWignerMapper, BravyiKitaevMapper
@@ -10,15 +11,14 @@ from qiskit import transpile, QuantumCircuit
 from qiskit.quantum_info import SparsePauliOp, Statevector
 from qiskit.circuit.parametervector import ParameterVector
 from qiskit.circuit.library.standard_gates import IGate, XGate, ZGate, YGate
+from qiskit.circuit.library import PauliEvolutionGate
+from qiskit.synthesis.evolution import synth_pauli_network_rustiq
 
-from qiskit_aer.noise import (NoiseModel, QuantumError, ReadoutError,
+from qiskit_aer.noise import (NoiseModel, QuantumError, 
     pauli_error, depolarizing_error, thermal_relaxation_error)
 # from qiskit_aer.primitives import EstimatorV2 as Estimator
 from qiskit_aer.primitives import Estimator
 from qiskit_algorithms import NumPyMinimumEigensolver
-from qiskit.synthesis.evolution import synth_pauli_network_rustiq
-from qiskit.circuit.library import PauliEvolutionGate
-from numpy.random import shuffle
 
 from Ternary_Tree.ucc.abstractucc import Molecule
 from Ternary_Tree.ucc.upgccsd import UpGCCSD, LadExcImpl
@@ -29,14 +29,56 @@ from Ternary_Tree.qiskit_interface import VQEV1 as VQE
 
 noise_dict_qiskit = {"I": IGate(),"X":XGate(), "Y": YGate(), "Z": ZGate()}
 
+def get_file_name(name, noise, method):
+    return name + f"_{noise}" + method +".json",
 
 class SwapCircNames:
     SWAP2XN = ("swap2xn", LadExcImpl.CNOT12())
     SWAPGENYORDAN = ("swap_gen", LadExcImpl.YORDAN())
     SWAPGENSHORT = ("swap_gen", LadExcImpl.SHORT())
         
-def circ_order():
-    return ["jw", "bk", "jw_lex", "bk_lex", "swap 2xn", "swap gen yor", "swap gen short", ]
+
+class Circuits:
+    @staticmethod
+    def jw():
+        return "jw"
+    
+    @staticmethod
+    def bk():
+        return "bk"
+        
+    @staticmethod
+    def jw_lex():
+        return "jw_lex"
+        
+    @staticmethod
+    def bk_lex():
+        return "bk_lex"
+
+    @staticmethod
+    def swap_2xn():
+        return "swap 2xn"
+
+    @staticmethod
+    def swap_gen_yor():
+        return "swap gen yor"    
+
+    @staticmethod
+    def swap_gen_short():
+        return "swap gen short"
+    
+    
+    @staticmethod
+    def get_circs_names():
+        circs = []
+        circs.append(Circuits.jw())
+        circs.append(Circuits.bk())
+        circs.append(Circuits.jw_lex())
+        circs.append(Circuits.bk_lex())
+        circs.append(Circuits.swap_2xn())
+        circs.append(Circuits.swap_gen_short())
+        circs.append(Circuits.swap_gen_yor())
+        return circs
 
 def eq_alpha_beta(qc):
     n = qc.num_qubits
@@ -112,7 +154,6 @@ class CircuitProvider:
         return ansatz
         
     # TODO reps
-    
     def get_rust_circ(self, qubit_mapper: FermionicMapper):
         circ = HartreeFock(self.uccgsd.n_spatial, (self.uccgsd.n_alpha, self.uccgsd.n_beta), qubit_mapper)
         circ._build()
@@ -125,34 +166,31 @@ class CircuitProvider:
             i = 0
             for pauli, coef in zip(gate.operation.operator.paulis, gate.operation.operator.coeffs):
                 parr.append((str(pauli), list(reversed(rq)), coef*gate.params[0]))
-        circ.compose(synth_pauli_network_rustiq(nq, parr, optimize_count=True, preserve_order=True, upto_phase=True, resynth_clifford_method=1),inplace=True)
+        circ.compose(synth_pauli_network_rustiq(nq, parr, optimize_count=True, preserve_order=True, upto_phase=True, upto_clifford=True, resynth_clifford_method=2),inplace=True)
         ansatz = transpile(circ.decompose(reps=3), basis_gates=self.basis_gates, optimization_level=3).decompose(reps=3)
         print_params(ansatz)
         return circ
 
-
     def get_circ_op(self, name):
-        match name:
-            case "jw":
-                return (self.get_circ_via_mapping(JordanWignerMapper()), jw_ham(self.fermionic_op))
-            case "bk":
-                return (self.get_circ_via_mapping(BravyiKitaevMapper()), bk_ham(self.fermionic_op))
-            case "swap 2xn":
-                return self.get_swap_circuit(SwapCircNames.SWAP2XN)
-            case "swap gen yor":
-                return self.get_swap_circuit(SwapCircNames.SWAPGENYORDAN)
-            case "swap gen short":
-                return self.get_swap_circuit(SwapCircNames.SWAPGENSHORT)
-            case "jw_lex":
-                return (self.get_rust_circ(JordanWignerMapper()), jw_ham(self.fermionic_op))
-            case "bk_lex":
-                return (self.get_rust_circ(BravyiKitaevMapper()), bk_ham(self.fermionic_op))
+        if name == Circuits.jw():
+            return (self.get_circ_via_mapping(JordanWignerMapper()), jw_ham(self.fermionic_op))
+        elif name == Circuits.bk():
+            return (self.get_circ_via_mapping(BravyiKitaevMapper()), bk_ham(self.fermionic_op))
+        elif name == Circuits.swap_2xn():
+            return self.get_swap_circuit(SwapCircNames.SWAP2XN)
+        elif name == Circuits.swap_gen_yor():
+            return self.get_swap_circuit(SwapCircNames.SWAPGENYORDAN)
+        elif name == Circuits.swap_gen_short():
+            return self.get_swap_circuit(SwapCircNames.SWAPGENSHORT)
+        elif name == Circuits.jw_lex():
+            return (self.get_rust_circ(JordanWignerMapper()), jw_ham(self.fermionic_op))
+        elif name == Circuits.bk_lex():
+            return (self.get_rust_circ(BravyiKitaevMapper()), bk_ham(self.fermionic_op))
             
-
     def get_circ(self, name) -> Tuple[str, QuantumCircuit, SparsePauliOp]:
         return name, *self.get_circ_op(name)
 
-    def __iter__(self, name_list=circ_order()):
+    def __iter__(self, name_list=Circuits.get_circs_names()):
         for name in name_list:
             yield name, *self.get_circ_op(name)
 
@@ -171,31 +209,25 @@ class CircSim:
         self.noise_type = noise_type
 
     def run_qiskit_vqe(self, optimizer, device="CPU"):
-        counts, values, params = [], [], []
-        def store_intermediate_result(eval_count, parameters, mean, std):
-            counts.append(eval_count)
-            values.append(mean)
-            params.append(parameters)
+        params = []
+
         if self.noise_type == "":
             est = Estimator(
                 run_options={"seed": 170, "shots": None, },
                 approximation=True,
                 backend_options={"device": device},
             )
-            vqe = VQE(est, self.circ, optimizer=optimizer, callback=store_intermediate_result, initial_point=self.init_point)
-            result = vqe.compute_minimum_eigenvalue(operator=self.op)
-            print(f"VQE on Aer qasm simulatfrom qiskit.quantum_info import Statevector (no noise): {result.eigenvalue.real:.5f}")
-            return result.eigenvalue.real, params
         else:
-            noise_est = get_qiskit_device_noise_estimator(self.circ.num_qubits, 
-                                                          noise_op=self.noise_type, 
-                                                          prob=self.noise_par,
-                                                          device=device)
+            est = get_qiskit_device_noise_estimator(
+                                                    noise_op=self.noise_type, 
+                                                    prob=self.noise_par,
+                                                    device=device
+                                                    )
             
-            vqe = VQE(noise_est, self.circ, optimizer=optimizer, callback=store_intermediate_result, initial_point=self.init_point)
-            result = vqe.compute_minimum_eigenvalue(operator=self.op)
-            print(f"VQE on Aer qasm simulator (with noise): {result.eigenvalue.real:.5f}")
-            return result.eigenvalue.real, params
+        vqe = VQE(est, self.circ, optimizer=optimizer, initial_point=self.init_point)
+        result = vqe.compute_minimum_eigenvalue(operator=self.op)
+        print(f"VQE on Aer qasm simulator (with noise): {result.eigenvalue.real:.5f}")
+        return result.eigenvalue.real, params
         
     def run_qulacs_sim(parameters):
         pass
@@ -214,8 +246,7 @@ def ucc_ham(fermionic_op, mtoq: MajoranaContainer):
     mapper = MajoranaMapper(mtoq)
     return mapper.map(fermionic_op)
 
-def get_qiskit_device_noise_estimator(n_qubits, noise_op,  prob, device):
-    # coupling_map = [(x,y) for x in range(n_qubits) for y in range(n_qubits) if x != y]
+def get_qiskit_device_noise_estimator(noise_op,  prob, device):
     noise_model = NoiseModel(basis_gates=["u", "cx"])
     if noise_op=="D":
         error1 = depolarizing_error(1 - prob, 1)

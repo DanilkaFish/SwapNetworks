@@ -1,7 +1,8 @@
 from typing import List
 import numpy as np
 
-from qiskit_algorithms.optimizers import SPSA ,CG, SLSQP, L_BFGS_B, COBYLA
+# from qiskit_algorithms.optimizers import SPSA ,CG, SLSQP, L_BFGS_B, COBYLA
+from qiskit_algorithms.optimizers import CG, SLSQP, L_BFGS_B, COBYLA
 
 import json
 from copy import deepcopy
@@ -9,11 +10,7 @@ from Ternary_Tree.optimizer.soap import SOAP
 from Ternary_Tree.ucc.abstractucc import Molecule
 from utils import *
 from my_utils import Timer
-import threading
-from multiprocessing import Process
 import multiprocessing as mp
-from functools import partial
-from multiprocessing import Process
 
 H2_4 = Molecule(geometry='H 0 0 0; H 0 0 0.7349', num_electrons=(1,1), active_orbitals=[0,1], basis='sto-3g')
 H2_8 = Molecule(geometry='H 0 0 0; H 0 0 0.7349', num_electrons=(1,1), active_orbitals=[0,1,2,3], basis='6-31g')
@@ -53,7 +50,7 @@ def to_thread(namet, vqe_data: vqeData):
     if vqe_data.noise_type != "":
         probs = vqe_data.probs
         try:
-            with open(vqe_data.file_name_to_ideal + "_" + name +  ".json", "r") as file:
+            with open(get_file_name(vqe_data.file_name_to_ideal, "", name), "r") as file:
                 init_point = json.load(file)[0]["param"]
         except FileNotFoundError:
             print("RUNNING NOISY SIM WITHOUT INIT POINT")
@@ -76,7 +73,7 @@ def run_vqe(name: str, vqe_data: vqeData):
     data = []
     result = to_thread(name, vqe_data)
     data.extend(result)
-    with open(vqe_data.file_name_to_ideal + f"_{vqe_data.noise_type}" + name +".json", 'w') as file:
+    with open(get_file_name(vqe_data.file_name_to_ideal, vqe_data.noise_type, name), 'w') as file:
         json.dump(data, file, indent=4)
     print("thread_timer" + ": ", Timer.timers["thread_timer"])
     return result
@@ -84,7 +81,7 @@ def run_vqe(name: str, vqe_data: vqeData):
 if __name__ == "__main__":
     
     vqe_data=vqeData(
-            "data03/H2_8",
+            "data04/H2_8",
             H2_8,
             optimizers[0],
             reps=1,
@@ -93,7 +90,7 @@ if __name__ == "__main__":
             device="CPU",
         )
     vqe_data2=vqeData(
-            "data03/H2_8",
+            "data04/H2_8",
             H2_8,
             optimizers[0],
             reps=1,
@@ -101,8 +98,8 @@ if __name__ == "__main__":
             noise_type="Z",
             device="GPU",
         )
-    circ_names = circ_order()[0:2]
-    # circ_names = circ_order()[1:2] + circ_order()[3:4]
+    circ_names = Circuits.get_circs_names()[0:2]
+    # circ_names = Circuits.get_circs_names()[1:2] + Circuits.get_circs_names()[3:4]
     procs= []
     for name in circ_names:
         procs.append(mp.Process(target=run_vqe, args=(name, vqe_data,)))

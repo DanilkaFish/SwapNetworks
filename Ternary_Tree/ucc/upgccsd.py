@@ -72,21 +72,6 @@ class UpGCCSD(AbstractUCC):
         single_ladder_exc = self.get_alpha_excitations() + self.get_beta_excitations()
         double_ladder_exc = self.get_double_excitations()
         
-        init_state()
-        for k in range(number_of_layers):
-            sp_maj_exc: Dict[MajExcitation, Parameter] = lad2maj(single_ladder_exc, name="t" + str(k)+ "_")
-            dp_lad_exc: Dict[LadExcitation, Parameter] = lad2lad(double_ladder_exc, name="t" + str(k)+ "_")
-            # if n == 4:
-            #     single_exc_layer()
-            #     double_exc_layer(0)
-            #     for i in range(2):
-            #         for j in range(i*n//2, i*n//2 + n//2 - 1, 2):
-            #             mswap(j, 1, j + 1, 0)
-            # else:
-            for i in range(n//2):
-                single_exc_layer()
-                double_exc_layer(i)
-                mswap_layer(i+1)
 
         # supporting functions 
         def init_state():
@@ -131,6 +116,24 @@ class UpGCCSD(AbstractUCC):
         def append_lad_D(qubits: List[int]):
             return _append_lad(qubits,  circ, mtoq, method_name, dp_lad_exc)    
         
+
+        init_state()
+        for k in range(number_of_layers):
+            sp_maj_exc: Dict[MajExcitation, Parameter] = lad2maj(single_ladder_exc, name="t" + str(k)+ "_")
+            dp_lad_exc: Dict[LadExcitation, Parameter] = lad2lad(double_ladder_exc, name="t" + str(k)+ "_")
+            # if n == 4:
+            #     single_exc_layer()
+            #     double_exc_layer(0)
+            #     for i in range(2):
+            #         for j in range(i*n//2, i*n//2 + n//2 - 1, 2):
+            #             mswap(j, 1, j + 1, 0)
+            # else:
+            for i in range(n//2):
+                single_exc_layer()
+                double_exc_layer(i)
+                mswap_layer(i+1)
+            print(dp_lad_exc)
+            # print(sp_lad_exc)
         return circ, mtoq
     
     def swap_gen(self, 
@@ -151,9 +154,8 @@ class UpGCCSD(AbstractUCC):
         if (n%4 != 0):
             list_enum.extend([n - 2, n -1, 2*n-2, 2*n - 1])
 
-        mtoq.qubs = list_enum
+        # mtoq.qubs = list_enum
         mtoq.renumerate(list_enum)
-        
         single_ladder_exc = self.get_alpha_excitations() + self.get_beta_excitations()
         double_ladder_exc = self.get_double_excitations()
 
@@ -214,6 +216,8 @@ class UpGCCSD(AbstractUCC):
                     single_exc_layer(i)
                     double_exc_layer(i)
                     fswap_layer()
+            print(dp_lad_exc)
+            print(sp_lad_exc)
         return circ, mtoq
     
     def get_jw_opt(self) -> MajoranaContainer:
@@ -248,7 +252,7 @@ def _append_lad(qubits: Tuple[int,...],
                 circ: CircWrapper, 
                 mtoq: MajoranaContainer, 
                 method_name: str,
-                dp_lad_exc: Dict[LadExcitation, Parameter]) -> bool:
+                lad_exc: Dict[LadExcitation, Parameter]) -> bool:
     maj_set = []
     list_signs = getattr(CircWrapper, "get_pauli_" + method_name)()
     for i in qubits:
@@ -266,6 +270,6 @@ def _append_lad(qubits: Tuple[int,...],
             list_signs[label] = (list_signs[label] * maj.sign * 1j**pauli.pow ).imag
             if len(pauli.get_label_qubs()[0]) > len(label):
                 raise KeyError
-        getattr(circ, method_name)(qubits, dp_lad_exc.pop(exc), list_signs)
+        getattr(circ, method_name)(qubits, lad_exc.pop(exc), list_signs)
     except KeyError:
         return False
