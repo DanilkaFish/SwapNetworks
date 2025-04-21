@@ -1,0 +1,142 @@
+[
+    {
+        "name": "jw",
+        "ref_ener": -1.8573730129353947,
+        "energy": -1.5298773773810017,
+        "param": 0.11249284558620061,
+        "optimizer": "L_BFGS_B",
+        "gate_count": {
+            "u": 44,
+            "cx": 42,
+            "save_density_matrix": 1
+        },
+        "prob": 0.98,
+        "noise": "Z"
+    },
+    {
+        "name": "jw",
+        "ref_ener": -1.8573730129353947,
+        "energy": -1.6580797473645825,
+        "param": 0.11219367309422529,
+        "optimizer": "L_BFGS_B",
+        "gate_count": {
+            "u": 44,
+            "cx": 42,
+            "save_density_matrix": 1
+        },
+        "prob": 0.9880103149936211,
+        "noise": "Z"
+    },
+    {
+        "name": "jw",
+        "ref_ener": -1.8573730129353947,
+        "energy": -1.7386419941883446,
+        "param": 0.11201564021225553,
+        "optimizer": "L_BFGS_B",
+        "gate_count": {
+            "u": 44,
+            "cx": 42,
+            "save_density_matrix": 1
+        },
+        "prob": 0.9928123726723908,
+        "noise": "Z"
+    },
+    {
+        "name": "jw",
+        "ref_ener": -1.8573730129353947,
+        "energy": -1.7868726995052155,
+        "param": 0.1119087876354952,
+        "optimizer": "L_BFGS_B",
+        "gate_count": {
+            "u": 44,
+            "cx": 42,
+            "save_density_matrix": 1
+        },
+        "prob": 0.9956911306199362,
+        "noise": "Z"
+    },
+    {
+        "name": "jw",
+        "ref_ener": -1.8573730129353947,
+        "energy": -1.815439681843516,
+        "param": 0.11184463219300352,
+        "optimizer": "L_BFGS_B",
+        "gate_count": {
+            "u": 44,
+            "cx": 42,
+            "save_density_matrix": 1
+        },
+        "prob": 0.9974169006699702,
+        "noise": "Z"
+    },
+    {
+        "name": "jw",
+        "ref_ener": -1.8573730129353947,
+        "energy": -1.8323717180453685,
+        "param": 0.11180607717671781,
+        "optimizer": "L_BFGS_B",
+        "gate_count": {
+            "u": 44,
+            "cx": 42,
+            "save_density_matrix": 1
+        },
+        "prob": 0.9984514726346377,
+        "noise": "Z"
+    },
+    {
+        "name": "jw",
+        "ref_ener": -1.8573730129353947,
+        "energy": -1.8424382506045753,
+        "param": 0.11178294795272815,
+        "optimizer": "L_BFGS_B",
+        "gate_count": {
+            "u": 44,
+            "cx": 42,
+            "save_density_matrix": 1
+        },
+        "prob": 0.9990716822332775,
+        "noise": "Z"
+    },
+    {
+        "name": "jw",
+        "ref_ener": -1.8573730129353947,
+        "energy": -1.8484397667429773,
+        "param": 0.11176906830196798,
+        "optimizer": "L_BFGS_B",
+        "gate_count": {
+            "u": 44,
+            "cx": 42,
+            "save_density_matrix": 1
+        },
+        "prob": 0.9994434881195585,
+        "noise": "Z"
+    },
+    {
+        "name": "jw",
+        "ref_ener": -1.8573730129353947,
+        "energy": -1.8520250018042053,
+        "param": 0.11176069263976215,
+        "optimizer": "L_BFGS_B",
+        "gate_count": {
+            "u": 44,
+            "cx": 42,
+            "save_density_matrix": 1
+        },
+        "prob": 0.99966637989256,
+        "noise": "Z"
+    },
+    {
+        "name": "jw",
+        "ref_ener": -1.8573730129353947,
+        "energy": -1.8541696358427353,
+        "param": 0.1117557212351389,
+        "optimizer": "L_BFGS_B",
+        "gate_count": {
+            "u": 44,
+            "cx": 42,
+            "save_density_matrix": 1
+        },
+        "prob": 0.9998,
+        "noise": "Z"
+    }
+]

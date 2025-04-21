@@ -1,0 +1,16 @@
+[
+    {
+        "name": "bk_lex",
+        "ref_ener": -1.857373012935396,
+        "energy": -1.6087386183108572,
+        "param": 0.22004903616469,
+        "optimizer": "L_BFGS_B",
+        "gate_count": {
+            "cx": 10,
+            "ry": 8,
+            "x": 3
+        },
+        "prob": 0.99998,
+        "noise": "D"
+    }
+]

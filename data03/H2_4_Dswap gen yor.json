@@ -1,0 +1,17 @@
+[
+    {
+        "name": "swap gen yor",
+        "ref_ener": -1.857373012935396,
+        "energy": -1.2286524366355533,
+        "param": 6.582202900563021,
+        "optimizer": "L_BFGS_B",
+        "gate_count": {
+            "rz": 28,
+            "sx": 22,
+            "cx": 13,
+            "x": 2
+        },
+        "prob": 0.99998,
+        "noise": "D"
+    }
+]

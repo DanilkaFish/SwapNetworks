@@ -24,13 +24,13 @@ sgen_yrd = [126, 192, 258, 324, 390, 456, 522, 588, 654, 720, 786, 852]
 pauli_num = [60.0, 150.0, 280.0, 450.0, 660.0, 910.0, 1200.0, 1530.0, 1900.0, 2310.0, 2760.0, 3250.0]
 n = len(jw2)
 Xs = [4*i for i in range(n)]
-jw_line = Line(Xs, jwd, Marks.triangle(), "blue", "ДВ")
-bk_line = Line(Xs, jwd, Marks.triangle(), "red", "БК")
-jw_opt_line = Line(Xs, jwd, Marks.triangle(), "blue", "ДВ опт")
-bk_opt_line = Line(Xs, jwd, Marks.triangle(), "red", "БК опт")
-swap2xn_line = Line(Xs, jwd, Marks.triangle(), "green", "SWAP 2xn")
-swapgens_line = Line(Xs, jwd, Marks.triangle(), "black", "SWAP short")
-swapgeny_line = Line(Xs, jwd, Marks.triangle(), "gray", "SWAP yor")
+jw_line = Line(None, None, Marks.triangle(), "blue", "ДВ")
+bk_line = Line(None, None, Marks.triangle(), "red", "БК")
+jw_opt_line = Line(None, None, Marks.square(), "blue", "ДВ опт")
+bk_opt_line = Line(None, None, Marks.square(), "red", "БК опт")
+swap2xn_line = Line(None, None, Marks.pentagon(), "green", "SWAP 2xn")
+swapgens_line = Line(None, None, Marks.pentagon(), "black", "SWAP short")
+swapgeny_line = Line(None, None, Marks.pentagon(), "gray", "SWAP yor")
 
 if __name__ == "__main__":
     lines=[jw_line, bk_line, jw_opt_line, bk_opt_line, swap2xn_line, swapgens_line, swapgeny_line],

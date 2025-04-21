@@ -13,24 +13,41 @@ from qiskit.circuit.parametervector import ParameterVector
 from qiskit.circuit.library.standard_gates import IGate, XGate, ZGate, YGate
 from qiskit.circuit.library import PauliEvolutionGate
 from qiskit.synthesis.evolution import synth_pauli_network_rustiq
+from qiskit.providers.fake_provider import Fake20QV1, Fake5QV1, GenericBackendV2
 
-from qiskit_aer.noise import (NoiseModel, QuantumError, 
+from qiskit_aer.noise import (NoiseModel, QuantumError, kraus_error,
     pauli_error, depolarizing_error, thermal_relaxation_error)
+from qiskit_aer import AerSimulator
 # from qiskit_aer.primitives import EstimatorV2 as Estimator
 from qiskit_aer.primitives import Estimator
+from qiskit.primitives import BackendEstimator
+from qiskit.transpiler import generate_preset_pass_manager
 from qiskit_algorithms import NumPyMinimumEigensolver
 
 from Ternary_Tree.ucc.abstractucc import Molecule
 from Ternary_Tree.ucc.upgccsd import UpGCCSD, LadExcImpl
 from Ternary_Tree.utils import MajoranaContainer, MajoranaMapper
 from Ternary_Tree.qiskit_interface import VQEV1 as VQE
+# from Ternary_Tree.qiskit_interface.vqe_qiskit_v2 import MyEstimator as Estimator
+# from qiskit_aer.library.save_instructions.save_density_matrix import *
+# QuantumCircuit.save_density_matrix = save_density_matrix
 
+noise_dict_qiskit = {"I": IGate(),"X": XGate(), "Y": YGate(), "Z": ZGate()}
+import numpy as np
+tensors_dict = {"X": np.array([[0,1], [1,0]]),"Y":  np.array([[0,-1j], [1j,0]]), "Z":  np.array([[1,0], [0,-1]]),
+                "I":  np.array([[1,0], [0,1]])}
 
+trasnpile_backend = Fake20QV1()
+trasnpile_backend = Fake5QV1()
+# trasnpile_backend = GenericBackendV2(4)
+# Create a pass manager for circuit transpilation
+# pass_manager = generate_preset_pass_manager(optimization_level=3, backend=trasnpile_backend)
+pass_manager = None
+# Set the pre-initialization stage of the pass manager with passes suggested by ffsim
 
-noise_dict_qiskit = {"I": IGate(),"X":XGate(), "Y": YGate(), "Z": ZGate()}
-
+# pass_manager.pre_init = ffsim.qiskit.PRE_INIT
 def get_file_name(name, noise, method):
-    return name + f"_{noise}" + method +".json",
+    return name + f"_{noise}" + method +".json"
 
 class SwapCircNames:
     SWAP2XN = ("swap2xn", LadExcImpl.CNOT12())
@@ -112,6 +129,7 @@ class CircuitProvider:
     def to_qiskit_excitations(self, **kwargs):
         ls1 = []
         ls2 = []
+        return "sd"
         for el in self.al:
             ls1.append(((el[1],), (el[0],)))
         for el in self.be:
@@ -119,12 +137,16 @@ class CircuitProvider:
         for el in self.do:
             if el[0] < el[2]:
                 ls2.append(((el[3],el[2]), (el[1],el[0])))
-        return ls2 + ls1
+        return ls2
+        # return ls2 + ls1
 
     def get_swap_circuit(self, name: Tuple[str,str]) -> Tuple[QuantumCircuit, SparsePauliOp]:
         method, double = name
         cirq, mtoq = getattr(self.uccgsd, method)(self.reps, double)
-        ansatz = transpile(cirq, basis_gates=self.basis_gates, optimization_level=3)
+        if pass_manager is not None:
+            ansatz = pass_manager.run(cirq)
+        else:
+            ansatz = transpile(cirq,  basis_gates=self.basis_gates, optimization_level=3)
         print_params(ansatz)
         # eq_alpha_beta(qc)
         return ansatz, ucc_ham(self.fermionic_op, mtoq)
@@ -137,7 +159,7 @@ class CircuitProvider:
         return UCC(
             self.uccgsd.n_spatial, 
             num_electrons,
-            excitations=self.to_qiskit_excitations, 
+            excitations=self.to_qiskit_excitations(), 
             qubit_mapper=qubit_mapper, 
             initial_state=initial_state
             ) 
@@ -149,7 +171,15 @@ class CircuitProvider:
             theta = ParameterVector("θ" + str(i), new_ucc.num_parameters)
             new_ucc.assign_parameters(theta, inplace=True)
             qc = qc.compose(new_ucc)
-        ansatz= transpile(qc, basis_gates=self.basis_gates, optimization_level=3).decompose(reps=3)
+        if pass_manager is not None:
+            ansatz = pass_manager.run(qc)
+        else:
+            ansatz = transpile(qc,  basis_gates=self.basis_gates, optimization_level=3).decompose(reps=3)
+        # ansatz.save_density_matrix()
+        # qc = QuantumCircuit(1)
+        # qc = QuantumCircuit.from_instructions([*ansatz])
+        # qc.save_density_matrix()
+        # print(qc)
         print_params(ansatz)
         return ansatz
         
@@ -166,8 +196,20 @@ class CircuitProvider:
             i = 0
             for pauli, coef in zip(gate.operation.operator.paulis, gate.operation.operator.coeffs):
                 parr.append((str(pauli), list(reversed(rq)), coef*gate.params[0]))
-        circ.compose(synth_pauli_network_rustiq(nq, parr, optimize_count=True, preserve_order=True, upto_phase=True, upto_clifford=True, resynth_clifford_method=2),inplace=True)
-        ansatz = transpile(circ.decompose(reps=3), basis_gates=self.basis_gates, optimization_level=3).decompose(reps=3)
+        print(len(parr))
+        circ.compose(synth_pauli_network_rustiq(nq, 
+                                                    parr, 
+                                                    optimize_count=True, 
+                                                    preserve_order=True, 
+                                                    upto_phase=True, 
+                                                    upto_clifford=False, 
+                                                    resynth_clifford_method=0
+                                                ),
+                                                inplace=True)
+        if pass_manager is not None:
+            ansatz = pass_manager.run(qc)
+        else:
+            ansatz = transpile(circ.decompose(reps=3), basis_gates=self.basis_gates, optimization_level=3).decompose(reps=3)
         print_params(ansatz)
         return circ
 
@@ -200,7 +242,8 @@ class CircSim:
         self.circ = circ
         self.op = op
         
-        self.hf = hf(circ, op)
+        # self.hf = hf(circ, op)
+        self.hf = 0
         if init_point is None:
             self.init_point = [0 for _ in circ.parameters]
         else:
@@ -227,7 +270,7 @@ class CircSim:
         vqe = VQE(est, self.circ, optimizer=optimizer, initial_point=self.init_point)
         result = vqe.compute_minimum_eigenvalue(operator=self.op)
         print(f"VQE on Aer qasm simulator (with noise): {result.eigenvalue.real:.5f}")
-        return result.eigenvalue.real, params
+        return result.eigenvalue.real, list(result.optimal_parameters.values())
         
     def run_qulacs_sim(parameters):
         pass
@@ -253,9 +296,15 @@ def get_qiskit_device_noise_estimator(noise_op,  prob, device):
         error2 = depolarizing_error(1 - prob, 2)
     else:
         error1 = QuantumError([(noise_dict_qiskit["I"], prob), (noise_dict_qiskit[noise_op], 1 - prob)])
+        # print(error1)
         error2 = error1.tensor(error1)
+        op = tensors_dict[noise_op]
+        # op = tensors_dict["I"]
+        I = tensors_dict["I"]
+        error2 = kraus_error([np.sqrt(prob) * np.kron(I, I), np.sqrt(1-prob) * np.kron(op, op)])
     noise_model.add_all_qubit_quantum_error(error2, ['cx'])
-
+    if trasnpile_backend is not None:
+        noise_model = NoiseModel.from_backend(trasnpile_backend)
     noisy_estimator = Estimator(
                 run_options={"seed": 170, "shots": None, },
                 approximation=True,
@@ -297,8 +346,8 @@ if __name__ == "__main__":
     for key, coef in {"YYIZ": 1,"XXIZ": 1,"YYZI": 1,"XXZI": 1,"IZYY": -1,"IZXX": -1,"ZIYY": -1,"ZIXX": -1}.items():
         # circ.append(PauliEvolutionGate(pauli, coef*gate.params[0]), rq)
         parr.append((str(key), rq, theta[0]))
-    circ = synth_pauli_network_rustiq(nq, parr, optimize_count=False, preserve_order=False, upto_phase=True, resynth_clifford_method=2)
+    circ = synth_pauli_network_rustiq(nq, parr, optimize_count=False, preserve_order=False, upto_phase=True, resynth_clifford_method=0)
     print(circ)
     # print(circ)
-    ansatz = transpile(circ.decompose(reps=3), basis_gates=["u","cx"], optimization_level=3).decompose(reps=3)
-    print_params(ansatz)
+    # ansatz = transpile(circ.decompose(reps=3), trasnpile_backend, basis_gates=["u","cx"], optimization_level=3).decompose(reps=3)
+    # print_params(ansatz)

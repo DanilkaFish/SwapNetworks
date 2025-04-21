@@ -3,7 +3,7 @@ from numpy import pi
 from qiskit.circuit import Parameter, QuantumCircuit, ParameterExpression
 from qiskit.circuit.library import PauliEvolutionGate
 from qiskit.quantum_info import Pauli as qiskit_pauli
-
+from typing import List, Dict
 from ..utils import Parameter as MyParameter
 from ..utils import static_vars, Pauli, CircWrapper
 
@@ -87,7 +87,10 @@ class QiskitCirc(CircWrapper, QuantumCircuit):
     def get_pauli_double_ex_short():
         return  {"XXXY": 1, "XXYX": 1, "XYXX": -1, "YXXX": -1, "YYYX": -1, "YYXY": -1, "YXYY": 1, "XYYY": 1}
         
-    def double_ex_short(self, qubits, par, list_signs):
+    def double_ex_short(self, 
+                        qubits: List[int], 
+                        par: MyParameter, 
+                        list_signs: Dict[str, int]):
         parameter =  to_qiskit_parameter(par)
         q0, q1, q2, q3 = 0,1,2,3
         circ = QuantumCircuit(4)

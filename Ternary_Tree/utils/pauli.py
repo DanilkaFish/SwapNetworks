@@ -14,6 +14,7 @@ class PauliBin:
     stob = {"I": (0,0), "X": (1,0), "Y": (1,1), "Z": (0,1)}
     btos = {(0,0): "I", (1,0): "X", (1,1): "Y", (0,1): "Z"}
 
+
 class Pauli:
     """
         P = i^{pow - k_1 * k_2} X^{k1} Z^{k2},
@@ -108,8 +109,9 @@ class PauliContainer:
             s += str(pauli) + '\n'
         return s
         
+
 class MajoranaContainer(PauliContainer):
-    def __init__(self, pauli_list, qubs):
+    def __init__(self, pauli_list: ArrayLike[Pauli], qubs):
         self.qubs = qubs
         super().__init__(pauli_list)
         
@@ -120,16 +122,12 @@ class MajoranaContainer(PauliContainer):
         bsfy = np.zeros(n_qubits*2, dtype=bool)
         pauli_list = []
         for i in range(n_qubits):
-            bsfx[i] = 1
-            bsfx[i + n_qubits] = 0
-            bsfy[i] = 1
-            bsfy[i + n_qubits] = 1
+            bsfx[i], bsfx[i + n_qubits] = 1, 0
+            bsfy[i], bsfy[i + n_qubits] = 1, 1
             pauli_list.append(Pauli(bsfx))
             pauli_list.append(Pauli(bsfy))
-            bsfx[i] = 0
-            bsfx[i + n_qubits] = 1
-            bsfy[i] = 0
-            bsfy[i + n_qubits] = 1
+            bsfx[i], bsfx[i + n_qubits] = 0, 1
+            bsfy[i],bsfy[i + n_qubits] = 0, 1
         return cls(pauli_list, qubs)
     
     

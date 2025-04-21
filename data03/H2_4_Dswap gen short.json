@@ -1,0 +1,17 @@
+[
+    {
+        "name": "swap gen short",
+        "ref_ener": -1.857373012935396,
+        "energy": -1.8009842239052876,
+        "param": 0.11005676967479922,
+        "optimizer": "L_BFGS_B",
+        "gate_count": {
+            "rz": 20,
+            "sx": 18,
+            "cx": 14,
+            "x": 2
+        },
+        "prob": 0.99998,
+        "noise": "D"
+    }
+]

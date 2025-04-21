@@ -1,0 +1,16 @@
+[
+    {
+        "name": "jw",
+        "ref_ener": -1.8573730129353947,
+        "energy": -1.8573730129353887,
+        "param": 0.11174824609333282,
+        "optimizer": "L_BFGS_B",
+        "gate_count": {
+            "u": 44,
+            "cx": 42,
+            "save_density_matrix": 1
+        },
+        "prob": 0,
+        "noise": ""
+    }
+]

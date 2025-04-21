@@ -1,0 +1,16 @@
+[
+    {
+        "name": "swap 2xn",
+        "ref_ener": -1.857373012935396,
+        "energy": -1.2195912537634561,
+        "param": -0.787001379896759,
+        "optimizer": "L_BFGS_B",
+        "gate_count": {
+            "rz": 36,
+            "sx": 29,
+            "cx": 14
+        },
+        "prob": 0.99998,
+        "noise": "D"
+    }
+]

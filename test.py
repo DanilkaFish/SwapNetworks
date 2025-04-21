@@ -51,13 +51,13 @@ def res(angle):
     
 def scaleability():
     mol = Molecule(geometry='Li 0 0 0; Li 0 0 1.5459', num_electrons=(2,2), active_orbitals=[0,1,2,5], basis='6-311g')
-    circ_names = Circuits.get_circs_names()[2:4]
+    circ_names = Circuits.get_circs_names()[0:4]
     double = {circ: [] for circ in circ_names}
     single = {circ: [] for circ in circ_names}
     depth = {circ: [] for circ in circ_names}
     num = {circ: [] for circ in circ_names}
     pauli_num = {circ: [] for circ in circ_names}
-    for i in range(4,28,2):
+    for i in range(4,14,2):
         mol.active_orbitals = list(range(i))
         try:
             circ_prov = CircuitProvider(reps=1, molecule=mol)
@@ -96,7 +96,6 @@ def scaleability():
 #     rep = 1
 #     cp = CircuitProvider(reps=rep, active_orbitals=mol[2], num_electrons=mol[1], geometry=mol[0], basis=mol[3])
 #     cp.get_circ_with_mapping(TernaryTreeMapper(cp.ucc.get_jw_opt()), lexic=True, init=False)
-scaleability()
 # base_test()
 # print_circuit()
 
@@ -134,3 +133,40 @@ scaleability()
 # bk_lex  single: [122, 376, 710, 1331, 1977, 2868, 3936, 5833, 6824, 9392, 11243, 16497]
 # bk_lex depth: [148, 458, 817, 1348, 2118, 2791, 3968, 5355, 6373, 8249, 10319, 15205]
 # jw pauli num: [60.0, 150.0, 280.0, 450.0, 660.0, 910.0, 1200.0, 1530.0, 1900.0, 2310.0, 2760.0, 3250.0]
+
+
+# ops =[84, 828, 2340,4620,7668, 11484]
+#  jw  double: [657,9028,32208,76828,149512,256884]
+# jw  single: [460,4453,12721,25261,42073,63157]
+# jw depth: [853,11019,37887,88109,168307,285105]
+# bk  double: [591,9262,28122,67027,128200,192266]
+# bk  single: [299,3791,10636,22214,38251, 57336]
+# bk depth: [742,10997,32910, 76533,145118,216968]
+# jw_lex  double: [277,3314,11209, 27912,53498,91783]
+# jw_lex  single: [231,2551,9246, 23399,46141,79600]
+# jw_lex depth: [331,3510,10749, 25436,46368,76216]
+# bk_lex  double: [233,3441,11376, 27904,54506,90344]
+# bk_lex  single: [169,2779,9358,22850, 46872, 79600]
+# bk_lex depth: [276,2562,11263,25596, 46100, 76941]
+# cycl_double [292.0, 1860.0, 4996.0, 9828.0, 16484.0, 25092.0]
+# cycl_depth [412.0, 2166.0, 5608.0, 10962.0, 18452.0, 28302.0]
+if __name__ == "__main__":
+    # scaleability()
+    na = 3
+    cycl_double = []
+    cycl_depth = []
+    for i in range(4,16,2):
+        nb = i - na
+        s = na*nb*2
+        sg = i*(i - 1)
+        d = 2*na*(na-1)*nb*(nb-1)/4 + na*na*nb*nb
+        dg = 2*i*(i - 1)*i*(i-1)/4 + i*(i-1)*i*(i-1)
+        # print(s)
+        # print(d)
+        print(s*2 + d*8)
+        swap = (4/6*i*i*i + i*i  + 1/3*i - 14)*4
+        cycl_double.append(swap + 12*d)
+        cycl_depth.append(swap/4*7 + 10*d)
+
+    print("cycl_depth",cycl_depth)
+    print("cycl_double",cycl_double)
