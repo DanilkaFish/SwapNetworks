@@ -22,32 +22,58 @@ sgen_yr2 = [136, 327, 598, 949, 1380, 1891, 2482, 3153, 3904, 4735, 5646, 6637]
 sgen_yr1 = [260, 618, 1128, 1790, 2604, 3570, 4688, 5958, 7380, 8954, 10680, 12558]
 sgen_yrd = [126, 192, 258, 324, 390, 456, 522, 588, 654, 720, 786, 852]
 pauli_num = [60.0, 150.0, 280.0, 450.0, 660.0, 910.0, 1200.0, 1530.0, 1900.0, 2310.0, 2760.0, 3250.0]
+
+# uccsd
+pauli_num =[84, 828, 2340,4620,7668, 11484]
+jw2 = [657,9028,32208,76828,149512,256884]
+jw1 = [460,4453,12721,25261,42073,63157]
+jwd = [853,11019,37887,88109,168307,285105]
+bk2 = [591,9262,28122,67027,128200,192266]
+bk1 = [299,3791,10636,22214,38251, 57336]
+bkd = [742,10997,32910, 76533,145118,216968]
+jwr1 = [277,3314,11209, 27912,53498,91783]
+jwr2 = [231,2551,9246, 23399,46141,79600]
+jwrd = [331,3510,10749, 25436,46368,76216]
+bkr2 = [233,3441,11376, 27904,54506,90344]
+bkr1 = [169,2779,9358,22850, 46872, 79600]
+bkrd = [276,2562,11263,25596, 46100, 76941]
+cycl2 = [292.0, 1860.0, 4996.0, 9828.0, 16484.0, 25092.0]
+cycld = [412.0, 2166.0, 5608.0, 10962.0, 18452.0, 28302.0]
+
 n = len(jw2)
-Xs = [4*i for i in range(n)]
-jw_line = Line(None, None, Marks.triangle(), "blue", "ДВ")
-bk_line = Line(None, None, Marks.triangle(), "red", "БК")
-jw_opt_line = Line(None, None, Marks.square(), "blue", "ДВ опт")
-bk_opt_line = Line(None, None, Marks.square(), "red", "БК опт")
-swap2xn_line = Line(None, None, Marks.pentagon(), "green", "SWAP 2xn")
-swapgens_line = Line(None, None, Marks.pentagon(), "black", "SWAP short")
-swapgeny_line = Line(None, None, Marks.pentagon(), "gray", "SWAP yor")
+Xs = [4*i for i in range(2, n + 2)]
+jw_line = Line(Xs, Xs, Marks.triangle(), "blue", "ДВ")
+bk_line = Line(Xs, Xs, Marks.triangle(), "red", "БК")
+jw_opt_line = Line(Xs, Xs, Marks.square(), "blue", "ДВ опт")
+bk_opt_line = Line(Xs, Xs, Marks.square(), "red", "БК опт")
+cycl_line = Line(Xs, Xs, Marks.pentagon(), "green", "cycl")
+
+swap2xn_line = Line(Xs, Xs, Marks.pentagon(), "green", "SWAP 2xn")
+swapgens_line = Line(Xs, Xs, Marks.pentagon(), "black", "SWAP short")
+swapgeny_line = Line(Xs, Xs, Marks.pentagon(), "gray", "SWAP yor")
 
 if __name__ == "__main__":
-    lines=[jw_line, bk_line, jw_opt_line, bk_opt_line, swap2xn_line, swapgens_line, swapgeny_line],
+    # lines=[jw_line, bk_line, jw_opt_line, bk_opt_line, swap2xn_line, swapgens_line, swapgeny_line],
+
+    depth_arr = [jwd, bkd, jwrd, bkrd, cycld]
+    double_arr = [jw2, bk2, jwr2, bkr2, cycl2]
+    lines=[jw_line, bk_line, jw_opt_line, bk_opt_line, cycl_line]
+    for index, line in enumerate(lines):
+        line.Y = depth_arr[index]
     depth = Axis(
         lines=lines,
         xlabel= "Число кубитов",
         ylabel= "Глубина схемы",
         axistype=AxisScale.usual(),
         )
-    for line in lines:
-        line.Y = line.Y/array(pauli_num)
+    for index, line in enumerate(lines):
+        line.Y = double_arr[index]/array(pauli_num)
     cx_num = Axis(
         lines=lines,
         xlabel= "Число кубитов",
-        ylabel= "Глубина схемы",
+        ylabel= "Число ",
         axistype=AxisScale.usual(),
         )
     # Xs = 
-    gd = GraphData([cx_num])
+    gd = GraphData([depth, cx_num])
     print(gd.generate_tikz())

@@ -91,7 +91,7 @@ class QiskitCirc(CircWrapper, QuantumCircuit):
                         qubits: List[int], 
                         par: MyParameter, 
                         list_signs: Dict[str, int]):
-        parameter =  to_qiskit_parameter(par)
+        parameter = to_qiskit_parameter(par)
         q0, q1, q2, q3 = 0,1,2,3
         circ = QuantumCircuit(4)
         circ.cx(q1, q0)
@@ -161,7 +161,7 @@ class QiskitCirc(CircWrapper, QuantumCircuit):
     def double_ex_yordan(self, qubits, par, list_signs):
         parameter =  to_qiskit_parameter(par)
         circ = QuantumCircuit(4)
-        q0, q1, q2, q3 = 0,1,2,3
+        q0, q1, q2, q3 = 3,2,1,0
         circ.cx(q0, q1), circ.cx(q2, q3)
         circ.x(q1), circ.x(q3)
         circ.cx(q0, q2)
@@ -228,6 +228,7 @@ class QiskitCirc(CircWrapper, QuantumCircuit):
     def get_pauli_double_ex_12cnot():
         return {"YYIZ": 1,"XXIZ": 1,"YYZI": 1,"XXZI": 1,"IZYY": -1,"IZXX": -1,"ZIYY": -1,"ZIXX": -1}
 
+    # TODO
     def double_ex_12cnot(self, qubits, par, list_signs):
         
         parameter = to_qiskit_parameter(par)

@@ -5,7 +5,7 @@ from typing import Tuple, List, Dict, Optional
 
 from .abstractucc import AbstractUCC
 from ..qiskit_interface import QiskitCirc 
-from ..utils import CircWrapper, Pauli, Parameter
+from ..utils import CircWrapper, Pauli, Parameter, alpha2beta
 from ..utils import lad2lad, lad2maj, MajoranaContainer, MajExcitation 
 from ..utils import SingleLadExcitation, DoubleLadExcitation,  LadExcitation
 
@@ -118,7 +118,9 @@ class UpGCCSD(AbstractUCC):
         # circuit generation
         init_state()
         for k in range(number_of_layers):
-            sp_maj_exc: Dict[MajExcitation, Parameter] = lad2maj(single_ladder_exc, name="t" + str(k)+ "_")
+            alpha = lad2maj(self.get_alpha_excitations(), name="t" + str(k)+ "_")
+            sp_maj_exc = alpha2beta(alpha, self.n_qubits)
+            # sp_maj_exc: Dict[MajExcitation, Parameter] = lad2maj(single_ladder_exc, name="t" + str(k)+ "_")
             dp_lad_exc: Dict[LadExcitation, Parameter] = lad2lad(double_ladder_exc, name="t" + str(k)+ "_")
             if n == 4:
                 # single_exc_layer()
@@ -128,10 +130,9 @@ class UpGCCSD(AbstractUCC):
                 #         mswap(j, 1, j + 1, 0)
             else:
                 for i in range(n//2):
+                    double_exc_layer(i)
                     single_exc_layer()
-                    # double_exc_layer(i)
                     mswap_layer(i+1)
-        print(circ)
         return circ, mtoq
     
     def swap_gen(self, 
@@ -172,7 +173,7 @@ class UpGCCSD(AbstractUCC):
                 else:
                    circ.id(i)
                     
-        def single_exc_layer(parity):
+        def single_exc_layer():
             for i in range(0, n-1, 2):
                 append_lad_S(i)
             for i in range(1, n-1, 2):
@@ -204,16 +205,19 @@ class UpGCCSD(AbstractUCC):
 
         init_state()
         for k in range(number_of_layers):
-            sp_lad_exc: Dict[LadExcitation, Parameter] = lad2lad(single_ladder_exc, name="t" + str(k)+ "_")
+            alpha = lad2lad(self.get_alpha_excitations(), name="t" + str(k)+ "_")
+            sp_lad_exc = alpha2beta(alpha, self.n_qubits)
+            # sp_lad_exc: Dict[LadExcitation, Parameter] = lad2lad(single_ladder_exc, name="t" + str(k)+ "_")
             dp_lad_exc: Dict[LadExcitation, Parameter] = lad2lad(double_ladder_exc, name="t" + str(k)+ "_")
             if n == 4:
                 # single_exc_layer(0)
                 double_exc_layer(0)
             else:
                 for i in range(n//2):
-                    single_exc_layer(i)
                     double_exc_layer(i)
+                    single_exc_layer()
                     fswap_layer()
+        # print(circ)
         return circ, mtoq
     
     def get_jw_opt(self) -> MajoranaContainer:

@@ -126,10 +126,14 @@ class CircuitProvider:
         self.do = self.uccgsd.get_double_excitations()
         self.fermionic_op = self.uccgsd.mol.hamiltonian.second_q_op()
 
+    def update_molecule(self, molecule):
+        self.uccgsd = UpGCCSD(molecule=molecule)
+        self.fermionic_op = self.uccgsd.mol.hamiltonian.second_q_op()
+        
     def to_qiskit_excitations(self, **kwargs):
         ls1 = []
         ls2 = []
-        return "sd"
+        # return "sd"
         for el in self.al:
             ls1.append(((el[1],), (el[0],)))
         for el in self.be:
@@ -137,8 +141,8 @@ class CircuitProvider:
         for el in self.do:
             if el[0] < el[2]:
                 ls2.append(((el[3],el[2]), (el[1],el[0])))
-        return ls2
-        # return ls2 + ls1
+        # return ls2
+        return ls2 + ls1
 
     def get_swap_circuit(self, name: Tuple[str,str]) -> Tuple[QuantumCircuit, SparsePauliOp]:
         method, double = name
@@ -159,18 +163,19 @@ class CircuitProvider:
         return UCC(
             self.uccgsd.n_spatial, 
             num_electrons,
-            excitations=self.to_qiskit_excitations(), 
+            excitations=self.to_qiskit_excitations, 
             qubit_mapper=qubit_mapper, 
-            initial_state=initial_state
+            initial_state=initial_state,
+            reps=self.reps
             ) 
         
     def get_circ_via_mapping(self, qubit_mapper,  init=True):
         qc = self.get_ucc(qubit_mapper, True)
-        for i in range(self.reps-1):
-            new_ucc = self.get_ucc(qubit_mapper, init=False)
-            theta = ParameterVector("θ" + str(i), new_ucc.num_parameters)
-            new_ucc.assign_parameters(theta, inplace=True)
-            qc = qc.compose(new_ucc)
+        # for i in range(self.reps-1):
+        #     new_ucc = self.get_ucc(qubit_mapper, init=False)
+        #     theta = ParameterVector("θ" + str(i), new_ucc.num_parameters)
+        #     new_ucc.assign_parameters(theta, inplace=True)
+        #     qc = qc.compose(new_ucc)
         if pass_manager is not None:
             ansatz = pass_manager.run(qc)
         else:
@@ -193,10 +198,8 @@ class CircuitProvider:
         rq = list(range(nq))
         parr = []
         for gate in qc.decompose(reps=1):
-            i = 0
             for pauli, coef in zip(gate.operation.operator.paulis, gate.operation.operator.coeffs):
                 parr.append((str(pauli), list(reversed(rq)), coef*gate.params[0]))
-        print(len(parr))
         circ.compose(synth_pauli_network_rustiq(nq, 
                                                     parr, 
                                                     optimize_count=True, 
@@ -242,8 +245,8 @@ class CircSim:
         self.circ = circ
         self.op = op
         
-        # self.hf = hf(circ, op)
-        self.hf = 0
+        self.hf = hf(circ, op)
+        # self.hf = 0
         if init_point is None:
             self.init_point = [0 for _ in circ.parameters]
         else:
@@ -251,7 +254,7 @@ class CircSim:
         self.noise_par = noise_par
         self.noise_type = noise_type
 
-    def run_qiskit_vqe(self, optimizer, device="CPU"):
+    def run_qiskit_vqe(self, optimizer, device="CPU", reps=1):
         params = []
 
         if self.noise_type == "":
@@ -266,9 +269,13 @@ class CircSim:
                                                     prob=self.noise_par,
                                                     device=device
                                                     )
-            
         vqe = VQE(est, self.circ, optimizer=optimizer, initial_point=self.init_point)
         result = vqe.compute_minimum_eigenvalue(operator=self.op)
+        for i in range(reps-1):
+            vqe.initial_point = np.random.rand(len(self.init_point)) - 0.5
+            _res = vqe.compute_minimum_eigenvalue(operator=self.op)
+            if result.eigenvalue.real > _res.eigenvalue.real:
+                result = _res
         print(f"VQE on Aer qasm simulator (with noise): {result.eigenvalue.real:.5f}")
         return result.eigenvalue.real, list(result.optimal_parameters.values())
         

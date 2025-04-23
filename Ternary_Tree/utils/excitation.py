@@ -74,7 +74,7 @@ class SingleLadExcitation(LadExcitation):
     """
         a_i^+ a_j - a_j^+ a_ = (i, j)
     """
-    def __init__(self, init: Tuple[int, int], finit: Tuple[int, int], sign: int=1):
+    def __init__(self, init: Tuple[int], finit: Tuple[int], sign: int=1):
         self.op = (*finit, *init)
         self.sign = self.sign * sign
         
