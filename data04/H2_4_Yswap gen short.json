@@ -1,132 +1,242 @@
 [
     {
         "name": "swap gen short",
-        "ref_ener": -1.857373012935396,
-        "energy": -1.6090045018631678,
-        "param": 0.12425976924627422,
-        "optimizer": "L_BFGS_B",
+        "ref_ener": -1.8573730129353914,
+        "energy": -1.6090043695684977,
+        "param": [
+            0.12425979151348437
+        ],
+        "optimizer": "SOAP",
         "gate_count": {
             "cx": 14,
             "u": 12
         },
+        "dist": 0,
         "prob": 0.98,
         "noise": "Y"
     },
     {
         "name": "swap gen short",
-        "ref_ener": -1.857373012935396,
-        "energy": -1.700887383105685,
-        "param": 0.11905201161117028,
-        "optimizer": "L_BFGS_B",
+        "ref_ener": -1.8573730129353914,
+        "energy": -1.6804842233527442,
+        "param": [
+            0.1201402141701726
+        ],
+        "optimizer": "SOAP",
         "gate_count": {
             "cx": 14,
             "u": 12
         },
-        "prob": 0.9880103149936211,
+        "dist": 0,
+        "prob": 0.9863015726662724,
         "noise": "Y"
     },
     {
         "name": "swap gen short",
-        "ref_ener": -1.857373012935396,
-        "energy": -1.7606855389797134,
-        "param": 0.11605836473070412,
-        "optimizer": "L_BFGS_B",
+        "ref_ener": -1.8573730129353914,
+        "energy": -1.7328971657078522,
+        "param": [
+            0.11741510866938688
+        ],
+        "optimizer": "SOAP",
         "gate_count": {
             "cx": 14,
             "u": 12
         },
-        "prob": 0.9928123726723908,
+        "dist": 0,
+        "prob": 0.9906176544291292,
         "noise": "Y"
     },
     {
         "name": "swap gen short",
-        "ref_ener": -1.857373012935396,
-        "energy": -1.7983430134720593,
-        "param": 0.11430808887161854,
-        "optimizer": "L_BFGS_B",
+        "ref_ener": -1.8573730129353914,
+        "energy": -1.7705112493072277,
+        "param": [
+            0.1155923288198804
+        ],
+        "optimizer": "SOAP",
         "gate_count": {
             "cx": 14,
             "u": 12
         },
-        "prob": 0.9956911306199362,
+        "dist": 0,
+        "prob": 0.9935738310488752,
         "noise": "Y"
     },
     {
         "name": "swap gen short",
-        "ref_ener": -1.857373012935396,
-        "energy": -1.8215944263760802,
-        "param": 0.11327424262753732,
-        "optimizer": "L_BFGS_B",
+        "ref_ener": -1.8573730129353914,
+        "energy": -1.7971105496497128,
+        "param": [
+            0.11436388503397837
+        ],
+        "optimizer": "SOAP",
         "gate_count": {
             "cx": 14,
             "u": 12
         },
-        "prob": 0.9974169006699702,
+        "dist": 0,
+        "prob": 0.995598579579438,
         "noise": "Y"
     },
     {
         "name": "swap gen short",
-        "ref_ener": -1.857373012935396,
-        "energy": -1.835782154186477,
-        "param": 0.11266015097640958,
-        "optimizer": "L_BFGS_B",
+        "ref_ener": -1.8573730129353914,
+        "energy": -1.8157320503992678,
+        "param": [
+            0.1135317356085145
+        ],
+        "optimizer": "SOAP",
         "gate_count": {
             "cx": 14,
             "u": 12
         },
-        "prob": 0.9984514726346377,
+        "dist": 0,
+        "prob": 0.9969853731101873,
         "noise": "Y"
     },
     {
         "name": "swap gen short",
-        "ref_ener": -1.857373012935396,
-        "energy": -1.8443781887193844,
-        "param": 0.11229373486483143,
-        "optimizer": "L_BFGS_B",
+        "ref_ener": -1.8573730129353914,
+        "energy": -1.8286788877049243,
+        "param": [
+            0.11296606415048088
+        ],
+        "optimizer": "SOAP",
         "gate_count": {
             "cx": 14,
             "u": 12
         },
-        "prob": 0.9990716822332775,
+        "dist": 0,
+        "prob": 0.99793521763058,
         "noise": "Y"
     },
     {
         "name": "swap gen short",
-        "ref_ener": -1.857373012935396,
-        "energy": -1.8495642553538256,
-        "param": 0.11207489823832506,
-        "optimizer": "L_BFGS_B",
+        "ref_ener": -1.8573730129353914,
+        "energy": -1.8376379304759483,
+        "param": [
+            0.11258061873136355
+        ],
+        "optimizer": "SOAP",
         "gate_count": {
             "cx": 14,
             "u": 12
         },
-        "prob": 0.9994434881195585,
+        "dist": 0,
+        "prob": 0.9985857864376269,
         "noise": "Y"
     },
     {
         "name": "swap gen short",
-        "ref_ener": -1.857373012935396,
-        "energy": -1.8526850971472648,
-        "param": 0.11194400717870825,
-        "optimizer": "L_BFGS_B",
+        "ref_ener": -1.8573730129353914,
+        "energy": -1.8438174533565657,
+        "param": [
+            0.11231754994744995
+        ],
+        "optimizer": "SOAP",
         "gate_count": {
             "cx": 14,
             "u": 12
         },
-        "prob": 0.99966637989256,
+        "dist": 0,
+        "prob": 0.999031374914073,
         "noise": "Y"
     },
     {
         "name": "swap gen short",
-        "ref_ener": -1.857373012935396,
-        "energy": -1.854560273900519,
-        "param": 0.1118656275058865,
-        "optimizer": "L_BFGS_B",
+        "ref_ener": -1.8573730129353914,
+        "energy": -1.8480703650435353,
+        "param": [
+            0.11213780370931221
+        ],
+        "optimizer": "SOAP",
         "gate_count": {
             "cx": 14,
             "u": 12
         },
-        "prob": 0.9998,
+        "dist": 0,
+        "prob": 0.9993365679823402,
+        "noise": "Y"
+    },
+    {
+        "name": "swap gen short",
+        "ref_ener": -1.8573730129353914,
+        "energy": -1.8509928952036412,
+        "param": [
+            0.11201489532577266
+        ],
+        "optimizer": "SOAP",
+        "gate_count": {
+            "cx": 14,
+            "u": 12
+        },
+        "dist": 0,
+        "prob": 0.999545601235761,
+        "noise": "Y"
+    },
+    {
+        "name": "swap gen short",
+        "ref_ener": -1.8573730129353914,
+        "energy": -1.8529991239509407,
+        "param": [
+            0.11193080812545149
+        ],
+        "optimizer": "SOAP",
+        "gate_count": {
+            "cx": 14,
+            "u": 12
+        },
+        "dist": 0,
+        "prob": 0.9996887725773768,
+        "noise": "Y"
+    },
+    {
+        "name": "swap gen short",
+        "ref_ener": -1.8573730129353914,
+        "energy": -1.8543753598383763,
+        "param": [
+            0.11187325969711132
+        ],
+        "optimizer": "SOAP",
+        "gate_count": {
+            "cx": 14,
+            "u": 12
+        },
+        "dist": 0,
+        "prob": 0.9997868336883466,
+        "noise": "Y"
+    },
+    {
+        "name": "swap gen short",
+        "ref_ener": -1.8573730129353914,
+        "energy": -1.855318972283894,
+        "param": [
+            0.11183386449810824
+        ],
+        "optimizer": "SOAP",
+        "gate_count": {
+            "cx": 14,
+            "u": 12
+        },
+        "dist": 0,
+        "prob": 0.9998539978384908,
+        "noise": "Y"
+    },
+    {
+        "name": "swap gen short",
+        "ref_ener": -1.8573730129353914,
+        "energy": -1.8559657417108384,
+        "param": [
+            0.11180689170684875
+        ],
+        "optimizer": "SOAP",
+        "gate_count": {
+            "cx": 14,
+            "u": 12
+        },
+        "dist": 0,
+        "prob": 0.9999,
         "noise": "Y"
     }
 ]

@@ -1,0 +1,242 @@
+[
+    {
+        "name": "swap gen short",
+        "ref_ener": -1.857373012935394,
+        "energy": -1.0678508247035599,
+        "param": [
+            0.1951043438451012
+        ],
+        "optimizer": "L_BFGS_B",
+        "gate_count": {
+            "cx": 14,
+            "u": 12
+        },
+        "dist": 0.7349,
+        "prob": 0.9,
+        "noise": "Y"
+    },
+    {
+        "name": "swap gen short",
+        "ref_ener": -1.857373012935394,
+        "energy": -1.1973505933278374,
+        "param": [
+            0.1657614243477495
+        ],
+        "optimizer": "L_BFGS_B",
+        "gate_count": {
+            "cx": 14,
+            "u": 12
+        },
+        "dist": 0.7349,
+        "prob": 0.9280314326998849,
+        "noise": "Y"
+    },
+    {
+        "name": "swap gen short",
+        "ref_ener": -1.857373012935394,
+        "energy": -1.325171501357894,
+        "param": [
+            0.1478949650208433
+        ],
+        "optimizer": "L_BFGS_B",
+        "gate_count": {
+            "cx": 14,
+            "u": 12
+        },
+        "dist": 0.7349,
+        "prob": 0.9482052532076879,
+        "noise": "Y"
+    },
+    {
+        "name": "swap gen short",
+        "ref_ener": -1.857373012935394,
+        "energy": -1.440401096908121,
+        "param": [
+            0.13647529453989982
+        ],
+        "optimizer": "L_BFGS_B",
+        "gate_count": {
+            "cx": 14,
+            "u": 12
+        },
+        "dist": 0.7349,
+        "prob": 0.9627240627968506,
+        "noise": "Y"
+    },
+    {
+        "name": "swap gen short",
+        "ref_ener": -1.857373012935394,
+        "energy": -1.5378466536917006,
+        "param": [
+            0.12891959537296083
+        ],
+        "optimizer": "L_BFGS_B",
+        "gate_count": {
+            "cx": 14,
+            "u": 12
+        },
+        "dist": 0.7349,
+        "prob": 0.9731730420472028,
+        "noise": "Y"
+    },
+    {
+        "name": "swap gen short",
+        "ref_ener": -1.857373012935394,
+        "energy": -1.6165845543392603,
+        "param": [
+            0.12379819853081646
+        ],
+        "optimizer": "L_BFGS_B",
+        "gate_count": {
+            "cx": 14,
+            "u": 12
+        },
+        "dist": 0.7349,
+        "prob": 0.9806930227111675,
+        "noise": "Y"
+    },
+    {
+        "name": "swap gen short",
+        "ref_ener": -1.857373012935394,
+        "energy": -1.6781663115953953,
+        "param": [
+            0.12026595973345836
+        ],
+        "optimizer": "L_BFGS_B",
+        "gate_count": {
+            "cx": 14,
+            "u": 12
+        },
+        "dist": 0.7349,
+        "prob": 0.9861050450562686,
+        "noise": "Y"
+    },
+    {
+        "name": "swap gen short",
+        "ref_ener": -1.857373012935394,
+        "energy": -1.7252170957836919,
+        "param": [
+            0.11780024364290559
+        ],
+        "optimizer": "L_BFGS_B",
+        "gate_count": {
+            "cx": 14,
+            "u": 12
+        },
+        "dist": 0.7349,
+        "prob": 0.99,
+        "noise": "Y"
+    },
+    {
+        "name": "swap gen short",
+        "ref_ener": -1.857373012935394,
+        "energy": -1.7605670328790624,
+        "param": [
+            0.11606407400430535
+        ],
+        "optimizer": "L_BFGS_B",
+        "gate_count": {
+            "cx": 14,
+            "u": 12
+        },
+        "dist": 0.7349,
+        "prob": 0.9928031432699885,
+        "noise": "Y"
+    },
+    {
+        "name": "swap gen short",
+        "ref_ener": -1.857373012935394,
+        "energy": -1.7868073031273894,
+        "param": [
+            0.11483397344044259
+        ],
+        "optimizer": "L_BFGS_B",
+        "gate_count": {
+            "cx": 14,
+            "u": 12
+        },
+        "dist": 0.7349,
+        "prob": 0.9948205253207688,
+        "noise": "Y"
+    },
+    {
+        "name": "swap gen short",
+        "ref_ener": -1.857373012935394,
+        "energy": -1.8061171306772597,
+        "param": [
+            0.11395861140221676
+        ],
+        "optimizer": "L_BFGS_B",
+        "gate_count": {
+            "cx": 14,
+            "u": 12
+        },
+        "dist": 0.7349,
+        "prob": 0.996272406279685,
+        "noise": "Y"
+    },
+    {
+        "name": "swap gen short",
+        "ref_ener": -1.857373012935394,
+        "energy": -1.820238509396204,
+        "param": [
+            0.11333358442353438
+        ],
+        "optimizer": "L_BFGS_B",
+        "gate_count": {
+            "cx": 14,
+            "u": 12
+        },
+        "dist": 0.7349,
+        "prob": 0.9973173042047203,
+        "noise": "Y"
+    },
+    {
+        "name": "swap gen short",
+        "ref_ener": -1.857373012935394,
+        "energy": -1.8305192691817367,
+        "param": [
+            0.11288643593378292
+        ],
+        "optimizer": "L_BFGS_B",
+        "gate_count": {
+            "cx": 14,
+            "u": 12
+        },
+        "dist": 0.7349,
+        "prob": 0.9980693022711168,
+        "noise": "Y"
+    },
+    {
+        "name": "swap gen short",
+        "ref_ener": -1.857373012935394,
+        "energy": -1.8379798027098337,
+        "param": [
+            0.11256593577055252
+        ],
+        "optimizer": "L_BFGS_B",
+        "gate_count": {
+            "cx": 14,
+            "u": 12
+        },
+        "dist": 0.7349,
+        "prob": 0.9986105045056268,
+        "noise": "Y"
+    },
+    {
+        "name": "swap gen short",
+        "ref_ener": -1.857373012935394,
+        "energy": -1.843381182552193,
+        "param": [
+            0.11233598215734687
+        ],
+        "optimizer": "L_BFGS_B",
+        "gate_count": {
+            "cx": 14,
+            "u": 12
+        },
+        "dist": 0.7349,
+        "prob": 0.999,
+        "noise": "Y"
+    }
+]

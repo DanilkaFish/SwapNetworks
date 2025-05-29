@@ -11,7 +11,7 @@ from qiskit_nature.second_q.operators import SparseLabelOp
 
 import numpy as np
 
-from .pauli import MajoranaContainer
+from ..utils import MajoranaContainer
 
 def pauli_table(mc: MajoranaContainer):
     """

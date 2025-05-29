@@ -1,0 +1,242 @@
+[
+    {
+        "name": "swap 2xn",
+        "ref_ener": -1.8573730129353967,
+        "energy": -1.6305470866356064,
+        "param": [
+            -0.1114598213702498
+        ],
+        "optimizer": "SOAP",
+        "gate_count": {
+            "u": 19,
+            "cx": 14
+        },
+        "dist": 0,
+        "prob": 0.98,
+        "noise": "sc"
+    },
+    {
+        "name": "swap 2xn",
+        "ref_ener": -1.8573730129353967,
+        "energy": -1.6962669254998017,
+        "param": [
+            -0.11154771938693174
+        ],
+        "optimizer": "SOAP",
+        "gate_count": {
+            "u": 19,
+            "cx": 14
+        },
+        "dist": 0,
+        "prob": 0.9863015726662724,
+        "noise": "sc"
+    },
+    {
+        "name": "swap 2xn",
+        "ref_ener": -1.8573730129353967,
+        "energy": -1.7440936667802887,
+        "param": [
+            -0.11160767696930371
+        ],
+        "optimizer": "SOAP",
+        "gate_count": {
+            "u": 19,
+            "cx": 14
+        },
+        "dist": 0,
+        "prob": 0.9906176544291292,
+        "noise": "sc"
+    },
+    {
+        "name": "swap 2xn",
+        "ref_ener": -1.8573730129353967,
+        "energy": -1.7782360418347498,
+        "param": [
+            -0.11164862857340878
+        ],
+        "optimizer": "SOAP",
+        "gate_count": {
+            "u": 19,
+            "cx": 14
+        },
+        "dist": 0,
+        "prob": 0.9935738310488752,
+        "noise": "sc"
+    },
+    {
+        "name": "swap 2xn",
+        "ref_ener": -1.8573730129353967,
+        "energy": -1.8022921548340924,
+        "param": [
+            -0.1116766236248781
+        ],
+        "optimizer": "SOAP",
+        "gate_count": {
+            "u": 19,
+            "cx": 14
+        },
+        "dist": 0,
+        "prob": 0.995598579579438,
+        "noise": "sc"
+    },
+    {
+        "name": "swap 2xn",
+        "ref_ener": -1.8573730129353967,
+        "energy": -1.8190907376013339,
+        "param": [
+            -0.11169577296234658
+        ],
+        "optimizer": "SOAP",
+        "gate_count": {
+            "u": 19,
+            "cx": 14
+        },
+        "dist": 0,
+        "prob": 0.9969853731101873,
+        "noise": "sc"
+    },
+    {
+        "name": "swap 2xn",
+        "ref_ener": -1.8573730129353967,
+        "energy": -1.830749851676464,
+        "param": [
+            -0.11170887701129346
+        ],
+        "optimizer": "SOAP",
+        "gate_count": {
+            "u": 19,
+            "cx": 14
+        },
+        "dist": 0,
+        "prob": 0.99793521763058,
+        "noise": "sc"
+    },
+    {
+        "name": "swap 2xn",
+        "ref_ener": -1.8573730129353967,
+        "energy": -1.83880815201598,
+        "param": [
+            -0.11171784675273459
+        ],
+        "optimizer": "SOAP",
+        "gate_count": {
+            "u": 19,
+            "cx": 14
+        },
+        "dist": 0,
+        "prob": 0.9985857864376269,
+        "noise": "sc"
+    },
+    {
+        "name": "swap 2xn",
+        "ref_ener": -1.8573730129353967,
+        "energy": -1.8443618159847033,
+        "param": [
+            -0.1117239877414382
+        ],
+        "optimizer": "SOAP",
+        "gate_count": {
+            "u": 19,
+            "cx": 14
+        },
+        "dist": 0,
+        "prob": 0.999031374914073,
+        "noise": "sc"
+    },
+    {
+        "name": "swap 2xn",
+        "ref_ener": -1.8573730129353967,
+        "energy": -1.8481818382854787,
+        "param": [
+            -0.1117281926266673
+        ],
+        "optimizer": "SOAP",
+        "gate_count": {
+            "u": 19,
+            "cx": 14
+        },
+        "dist": 0,
+        "prob": 0.9993365679823402,
+        "noise": "sc"
+    },
+    {
+        "name": "swap 2xn",
+        "ref_ener": -1.8573730129353967,
+        "energy": -1.850805878119533,
+        "param": [
+            -0.11173107207540058
+        ],
+        "optimizer": "SOAP",
+        "gate_count": {
+            "u": 19,
+            "cx": 14
+        },
+        "dist": 0,
+        "prob": 0.999545601235761,
+        "noise": "sc"
+    },
+    {
+        "name": "swap 2xn",
+        "ref_ener": -1.8573730129353967,
+        "energy": -1.85260672431391,
+        "param": [
+            -0.11173304400542816
+        ],
+        "optimizer": "SOAP",
+        "gate_count": {
+            "u": 19,
+            "cx": 14
+        },
+        "dist": 0,
+        "prob": 0.9996887725773768,
+        "noise": "sc"
+    },
+    {
+        "name": "swap 2xn",
+        "ref_ener": -1.8573730129353967,
+        "energy": -1.8538418469079831,
+        "param": [
+            -0.11173439449770421
+        ],
+        "optimizer": "SOAP",
+        "gate_count": {
+            "u": 19,
+            "cx": 14
+        },
+        "dist": 0,
+        "prob": 0.9997868336883466,
+        "noise": "sc"
+    },
+    {
+        "name": "swap 2xn",
+        "ref_ener": -1.8573730129353967,
+        "energy": -1.8546885998729232,
+        "param": [
+            -0.1117353194202285
+        ],
+        "optimizer": "SOAP",
+        "gate_count": {
+            "u": 19,
+            "cx": 14
+        },
+        "dist": 0,
+        "prob": 0.9998539978384908,
+        "noise": "sc"
+    },
+    {
+        "name": "swap 2xn",
+        "ref_ener": -1.8573730129353967,
+        "energy": -1.8552689304690932,
+        "param": [
+            -0.11173595289198168
+        ],
+        "optimizer": "SOAP",
+        "gate_count": {
+            "u": 19,
+            "cx": 14
+        },
+        "dist": 0,
+        "prob": 0.9999,
+        "noise": "sc"
+    }
+]

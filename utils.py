@@ -1,10 +1,14 @@
 from __future__ import annotations
 from typing import Tuple 
 from numpy.random import shuffle
+from pyscf import gto, scf, cc
+from pyscf.gto import Mole
+import pandas as pd
 
 
 from qiskit_nature.second_q.mappers import JordanWignerMapper, BravyiKitaevMapper
-from qiskit_nature.second_q.circuit.library import HartreeFock, UCC
+from qiskit_nature.second_q.circuit.library import HartreeFock, UCC, UCCSD
+# from qiskit_nature.second_q.circuit.library import UCCSD, HartreeFock
 from qiskit_nature.second_q.mappers.fermionic_mapper import FermionicMapper
 
 from qiskit import transpile, QuantumCircuit
@@ -13,21 +17,25 @@ from qiskit.circuit.parametervector import ParameterVector
 from qiskit.circuit.library.standard_gates import IGate, XGate, ZGate, YGate
 from qiskit.circuit.library import PauliEvolutionGate
 from qiskit.synthesis.evolution import synth_pauli_network_rustiq
+from qiskit.providers import QubitProperties
 from qiskit.providers.fake_provider import Fake20QV1, Fake5QV1, GenericBackendV2
 
 from qiskit_aer.noise import (NoiseModel, QuantumError, kraus_error,
-    pauli_error, depolarizing_error, thermal_relaxation_error)
+    pauli_error, depolarizing_error, thermal_relaxation_error, )
 from qiskit_aer import AerSimulator
 # from qiskit_aer.primitives import EstimatorV2 as Estimator
 from qiskit_aer.primitives import Estimator
 from qiskit.primitives import BackendEstimator
-from qiskit.transpiler import generate_preset_pass_manager
+from qiskit.transpiler import generate_preset_pass_manager, Target
 from qiskit_algorithms import NumPyMinimumEigensolver
 
 from Ternary_Tree.ucc.abstractucc import Molecule
 from Ternary_Tree.ucc.upgccsd import UpGCCSD, LadExcImpl
-from Ternary_Tree.utils import MajoranaContainer, MajoranaMapper
+from Ternary_Tree.utils import MajoranaContainer
 from Ternary_Tree.qiskit_interface import VQEV1 as VQE
+from Ternary_Tree.qiskit_interface import MajoranaMapper
+# from qiskit_algorithms import VQE
+
 # from Ternary_Tree.qiskit_interface.vqe_qiskit_v2 import MyEstimator as Estimator
 # from qiskit_aer.library.save_instructions.save_density_matrix import *
 # QuantumCircuit.save_density_matrix = save_density_matrix
@@ -39,6 +47,7 @@ tensors_dict = {"X": np.array([[0,1], [1,0]]),"Y":  np.array([[0,-1j], [1j,0]]),
 
 trasnpile_backend = Fake20QV1()
 trasnpile_backend = Fake5QV1()
+trasnpile_backend = None
 # trasnpile_backend = GenericBackendV2(4)
 # Create a pass manager for circuit transpilation
 # pass_manager = generate_preset_pass_manager(optimization_level=3, backend=trasnpile_backend)
@@ -119,7 +128,6 @@ class CircuitProvider:
         self.reps = reps
         self.num_electrons = molecule.num_electrons
         self.basis_gates = basis_gates
-
         self.uccgsd = UpGCCSD(molecule=molecule)
         self.al = self.uccgsd.get_alpha_excitations()
         self.be = self.uccgsd.get_beta_excitations()
@@ -153,7 +161,8 @@ class CircuitProvider:
             ansatz = transpile(cirq,  basis_gates=self.basis_gates, optimization_level=3)
         print_params(ansatz)
         # eq_alpha_beta(qc)
-        return ansatz, ucc_ham(self.fermionic_op, mtoq)
+        circ, op = ansatz, ucc_ham(self.fermionic_op, mtoq)
+        return circ, op
     
     def get_ucc(self, qubit_mapper,  init=False):
         num_electrons = (self.uccgsd.n_alpha, self.uccgsd.n_beta)
@@ -171,11 +180,14 @@ class CircuitProvider:
         
     def get_circ_via_mapping(self, qubit_mapper,  init=True):
         qc = self.get_ucc(qubit_mapper, True)
+        # print(qc.decompose())
+        # eq_alpha_beta(qc)
         # for i in range(self.reps-1):
         #     new_ucc = self.get_ucc(qubit_mapper, init=False)
         #     theta = ParameterVector("θ" + str(i), new_ucc.num_parameters)
         #     new_ucc.assign_parameters(theta, inplace=True)
         #     qc = qc.compose(new_ucc)
+        # print(qc.decompose(reps=2))
         if pass_manager is not None:
             ansatz = pass_manager.run(qc)
         else:
@@ -199,7 +211,8 @@ class CircuitProvider:
         parr = []
         for gate in qc.decompose(reps=1):
             for pauli, coef in zip(gate.operation.operator.paulis, gate.operation.operator.coeffs):
-                parr.append((str(pauli), list(reversed(rq)), coef*gate.params[0]))
+                # print(coef*gate.params[0]*2)
+                parr.append((str(pauli), list(reversed(rq)), coef*gate.params[0]*2))
         circ.compose(synth_pauli_network_rustiq(nq, 
                                                     parr, 
                                                     optimize_count=True, 
@@ -214,7 +227,7 @@ class CircuitProvider:
         else:
             ansatz = transpile(circ.decompose(reps=3), basis_gates=self.basis_gates, optimization_level=3).decompose(reps=3)
         print_params(ansatz)
-        return circ
+        return ansatz
 
     def get_circ_op(self, name):
         if name == Circuits.jw():
@@ -248,13 +261,13 @@ class CircSim:
         self.hf = hf(circ, op)
         # self.hf = 0
         if init_point is None:
-            self.init_point = [0 for _ in circ.parameters]
+            self.init_point = [.0 for _ in circ.parameters]
         else:
             self.init_point = init_point
         self.noise_par = noise_par
         self.noise_type = noise_type
 
-    def run_qiskit_vqe(self, optimizer, device="CPU", reps=1):
+    def run_qiskit_vqe(self, optimizer, device="CPU", reps=1, random_init=True):
         params = []
 
         if self.noise_type == "":
@@ -272,7 +285,8 @@ class CircSim:
         vqe = VQE(est, self.circ, optimizer=optimizer, initial_point=self.init_point)
         result = vqe.compute_minimum_eigenvalue(operator=self.op)
         for i in range(reps-1):
-            vqe.initial_point = np.random.rand(len(self.init_point)) - 0.5
+            if random_init:
+                vqe.initial_point = np.random.rand(len(self.init_point)) - 0.5
             _res = vqe.compute_minimum_eigenvalue(operator=self.op)
             if result.eigenvalue.real > _res.eigenvalue.real:
                 result = _res
@@ -301,6 +315,9 @@ def get_qiskit_device_noise_estimator(noise_op,  prob, device):
     if noise_op=="D":
         error1 = depolarizing_error(1 - prob, 1)
         error2 = depolarizing_error(1 - prob, 2)
+        noise_model.add_all_qubit_quantum_error(error2, ['cx'])
+    elif noise_op=="sc":
+        noise_model = get_noise_from_csv("ibm_aachen_calibrations_2025-04-30T10_50_40Z.csv", prob)
     else:
         error1 = QuantumError([(noise_dict_qiskit["I"], prob), (noise_dict_qiskit[noise_op], 1 - prob)])
         # print(error1)
@@ -309,7 +326,7 @@ def get_qiskit_device_noise_estimator(noise_op,  prob, device):
         # op = tensors_dict["I"]
         I = tensors_dict["I"]
         error2 = kraus_error([np.sqrt(prob) * np.kron(I, I), np.sqrt(1-prob) * np.kron(op, op)])
-    noise_model.add_all_qubit_quantum_error(error2, ['cx'])
+        noise_model.add_all_qubit_quantum_error(error2, ['cx'])
     if trasnpile_backend is not None:
         noise_model = NoiseModel.from_backend(trasnpile_backend)
     noisy_estimator = Estimator(
@@ -324,9 +341,46 @@ def get_qiskit_device_noise_estimator(noise_op,  prob, device):
             )
     return noisy_estimator
 
+def get_noise_from_csv(file_name, CX: float = 0.001):
+    noise_model = NoiseModel(basis_gates=["u", "cx"])
+    df = pd.read_csv(file_name)
+    T1 = df["T1 (us)"]
+    T2 = df["T1 (us)"]
+    # properties = {
+    #     "dt": 0.222e-9,
+    #     "t1": T1[0],
+    #     "t2": T2[0],
+    #     "frequency": (5e9, 5.5e9),
+    # }
+    # _target = Target(
+    #     description=f"Generic Target with {nq} qubits",
+    #     num_qubits=nq,
+    #     qubit_properties=[
+    #         QubitProperties(
+    #             t1=T1,
+    #             t2=T2,
+    #             # frequency=self._rng.uniform(
+    #                 # properties["frequency"][0], properties["frequency"][1]
+    #             # ),
+    #         )
+    #         for _ in range(nq)
+    #     ],
+    #     concurrent_measurements=[list(range(nq))],
+    # )
+    # Просмотр первых нескольких строк
+
+    U = min(df["Pauli-X error "])
+    error1 = depolarizing_error(U, 1)
+    error2 = depolarizing_error(1 - CX, 2)
+    ther = thermal_relaxation_error(T1[0], T2[0], 68)
+    noise_model.add_all_qubit_quantum_error(error2, ['cx'])
+    error1.compose(ther)
+    noise_model.add_all_qubit_quantum_error(error1, ['u'])
+    return noise_model
+
 def numpy_energy(fermionic_op, ucc):
     numpy_solver = NumPyMinimumEigensolver()
-    result = numpy_solver.compute_minimum_eigenvalue(operator=bk_ham(fermionic_op))
+    result = numpy_solver.compute_minimum_eigenvalue(operator=jw_ham(fermionic_op))
     ref_value = result.eigenvalue.real
     print(f"Reference value: {ref_value + ucc.mol.nuclear_repulsion_energy:.5f}")
     print(f"Reference value: {ref_value:.5f}")
@@ -346,15 +400,19 @@ def hf(ansatz, op):
 
 
 if __name__ == "__main__":
-    nq = 4
-    rq = list(range(4))
-    parr = []
-    theta = ParameterVector("θ" + str(0), 1)
-    for key, coef in {"YYIZ": 1,"XXIZ": 1,"YYZI": 1,"XXZI": 1,"IZYY": -1,"IZXX": -1,"ZIYY": -1,"ZIXX": -1}.items():
-        # circ.append(PauliEvolutionGate(pauli, coef*gate.params[0]), rq)
-        parr.append((str(key), rq, theta[0]))
-    circ = synth_pauli_network_rustiq(nq, parr, optimize_count=False, preserve_order=False, upto_phase=True, resynth_clifford_method=0)
-    print(circ)
+    name = "ibm_aachen_calibrations_2025-04-30T10_50_40Z.csv"
+    nm = get_noise_from_csv([0,1,2,3], name)
+    print(nm)
+    # nq = 4
+    # rq = list(range(4))
+    # parr = []
+    # theta = ParameterVector("θ" + str(0), 1)
+    # for key, coef in {"YYIZ": 1,"XXIZ": 1,"YYZI": 1,"XXZI": 1,"IZYY": -1,"IZXX": -1,"ZIYY": -1,"ZIXX": -1}.items():
+    #     # circ.append(PauliEvolutionGate(pauli, coef*gate.params[0]), rq)
+    #     parr.append((str(key), rq, theta[0]))
+    # circ = synth_pauli_network_rustiq(nq, parr, optimize_count=False, preserve_order=False, upto_phase=True, resynth_clifford_method=0)
+    # print(circ)
+    
     # print(circ)
     # ansatz = transpile(circ.decompose(reps=3), trasnpile_backend, basis_gates=["u","cx"], optimization_level=3).decompose(reps=3)
     # print_params(ansatz)

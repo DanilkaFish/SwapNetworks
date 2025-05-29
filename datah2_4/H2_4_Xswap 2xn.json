@@ -1,0 +1,242 @@
+[
+    {
+        "name": "swap 2xn",
+        "ref_ener": -1.8573730129353965,
+        "energy": -1.1018362010295784,
+        "param": [
+            -0.10248822309049466
+        ],
+        "optimizer": "L_BFGS_B",
+        "gate_count": {
+            "u": 19,
+            "cx": 14
+        },
+        "dist": 0.7349,
+        "prob": 0.9,
+        "noise": "X"
+    },
+    {
+        "name": "swap 2xn",
+        "ref_ener": -1.8573730129353965,
+        "energy": -1.2383305880318074,
+        "param": [
+            -0.10576956574996543
+        ],
+        "optimizer": "L_BFGS_B",
+        "gate_count": {
+            "u": 19,
+            "cx": 14
+        },
+        "dist": 0.7349,
+        "prob": 0.9280314326998849,
+        "noise": "X"
+    },
+    {
+        "name": "swap 2xn",
+        "ref_ener": -1.8573730129353965,
+        "energy": -1.3672091913196405,
+        "param": [
+            -0.10776413101008699
+        ],
+        "optimizer": "L_BFGS_B",
+        "gate_count": {
+            "u": 19,
+            "cx": 14
+        },
+        "dist": 0.7349,
+        "prob": 0.9482052532076879,
+        "noise": "X"
+    },
+    {
+        "name": "swap 2xn",
+        "ref_ener": -1.8573730129353965,
+        "energy": -1.4791422751883705,
+        "param": [
+            -0.1090339882509696
+        ],
+        "optimizer": "L_BFGS_B",
+        "gate_count": {
+            "u": 19,
+            "cx": 14
+        },
+        "dist": 0.7349,
+        "prob": 0.9627240627968506,
+        "noise": "X"
+    },
+    {
+        "name": "swap 2xn",
+        "ref_ener": -1.8573730129353965,
+        "energy": -1.5710345398828065,
+        "param": [
+            -0.10986993855209783
+        ],
+        "optimizer": "L_BFGS_B",
+        "gate_count": {
+            "u": 19,
+            "cx": 14
+        },
+        "dist": 0.7349,
+        "prob": 0.9731730420472028,
+        "noise": "X"
+    },
+    {
+        "name": "swap 2xn",
+        "ref_ener": -1.8573730129353965,
+        "energy": -1.643610265498255,
+        "param": [
+            -0.11043389514782229
+        ],
+        "optimizer": "L_BFGS_B",
+        "gate_count": {
+            "u": 19,
+            "cx": 14
+        },
+        "dist": 0.7349,
+        "prob": 0.9806930227111675,
+        "noise": "X"
+    },
+    {
+        "name": "swap 2xn",
+        "ref_ener": -1.8573730129353965,
+        "energy": -1.6994053264073519,
+        "param": [
+            -0.11082119973682111
+        ],
+        "optimizer": "L_BFGS_B",
+        "gate_count": {
+            "u": 19,
+            "cx": 14
+        },
+        "dist": 0.7349,
+        "prob": 0.9861050450562686,
+        "noise": "X"
+    },
+    {
+        "name": "swap 2xn",
+        "ref_ener": -1.8573730129353965,
+        "energy": -1.741494201753015,
+        "param": [
+            -0.11109068655589058
+        ],
+        "optimizer": "L_BFGS_B",
+        "gate_count": {
+            "u": 19,
+            "cx": 14
+        },
+        "dist": 0.7349,
+        "prob": 0.99,
+        "noise": "X"
+    },
+    {
+        "name": "swap 2xn",
+        "ref_ener": -1.8573730129353965,
+        "energy": -1.7728206512929794,
+        "param": [
+            -0.11127987854957604
+        ],
+        "optimizer": "L_BFGS_B",
+        "gate_count": {
+            "u": 19,
+            "cx": 14
+        },
+        "dist": 0.7349,
+        "prob": 0.9928031432699885,
+        "noise": "X"
+    },
+    {
+        "name": "swap 2xn",
+        "ref_ener": -1.8573730129353965,
+        "energy": -1.7959152437899504,
+        "param": [
+            -0.11141388909361784
+        ],
+        "optimizer": "L_BFGS_B",
+        "gate_count": {
+            "u": 19,
+            "cx": 14
+        },
+        "dist": 0.7349,
+        "prob": 0.9948205253207688,
+        "noise": "X"
+    },
+    {
+        "name": "swap 2xn",
+        "ref_ener": -1.8573730129353965,
+        "energy": -1.8128255605909598,
+        "param": [
+            -0.11150871560383592
+        ],
+        "optimizer": "L_BFGS_B",
+        "gate_count": {
+            "u": 19,
+            "cx": 14
+        },
+        "dist": 0.7349,
+        "prob": 0.996272406279685,
+        "noise": "X"
+    },
+    {
+        "name": "swap 2xn",
+        "ref_ener": -1.8573730129353965,
+        "energy": -1.8251474555551306,
+        "param": [
+            -0.11157657485329028
+        ],
+        "optimizer": "L_BFGS_B",
+        "gate_count": {
+            "u": 19,
+            "cx": 14
+        },
+        "dist": 0.7349,
+        "prob": 0.9973173042047203,
+        "noise": "X"
+    },
+    {
+        "name": "swap 2xn",
+        "ref_ener": -1.8573730129353965,
+        "energy": -1.834094658306859,
+        "param": [
+            -0.11162502683586047
+        ],
+        "optimizer": "L_BFGS_B",
+        "gate_count": {
+            "u": 19,
+            "cx": 14
+        },
+        "dist": 0.7349,
+        "prob": 0.9980693022711168,
+        "noise": "X"
+    },
+    {
+        "name": "swap 2xn",
+        "ref_ener": -1.8573730129353965,
+        "energy": -1.840575172224389,
+        "param": [
+            -0.11165977964420443
+        ],
+        "optimizer": "L_BFGS_B",
+        "gate_count": {
+            "u": 19,
+            "cx": 14
+        },
+        "dist": 0.7349,
+        "prob": 0.9986105045056268,
+        "noise": "X"
+    },
+    {
+        "name": "swap 2xn",
+        "ref_ener": -1.8573730129353965,
+        "energy": -1.8452606150899566,
+        "param": [
+            -0.11168467222914127
+        ],
+        "optimizer": "L_BFGS_B",
+        "gate_count": {
+            "u": 19,
+            "cx": 14
+        },
+        "dist": 0.7349,
+        "prob": 0.999,
+        "noise": "X"
+    }
+]

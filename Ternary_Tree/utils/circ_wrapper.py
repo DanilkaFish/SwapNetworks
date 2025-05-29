@@ -3,13 +3,45 @@
 from typing import Union
 from abc import abstractmethod
 from numpy import pi
-from qiskit.circuit import Parameter, QuantumCircuit, ParameterExpression
-from qiskit.circuit.library import PauliEvolutionGate
-from qiskit.quantum_info import Pauli as qiskit_pauli
+
+
+
+class LadExcImpl:
+    @staticmethod
+    def YORDAN():
+        return "double_ex_yordan"    
+
+    @staticmethod
+    def CNOT12():
+        return "double_ex_12cnot" 
+
+    @staticmethod
+    def SINGLE():
+        return "single_ex"
+    
+    @staticmethod
+    def SHORT():
+        return "double_ex_short"
+     
+
+class Parameter:
+    """
+        var = coef * name
+    """
+    def __init__(self, name: str='t'):
+        self.name = name
+        self.coef = 1
+
+    def __repr__(self):
+        return self.name
+        
+    def __str__(self):
+        return self.name
+    
+MyParameter = Parameter
+
 
 from .pauli import Pauli
-from .parameter import Parameter as MyParameter
-from .utils import static_vars
 
 class CircWrapper:
     @abstractmethod
@@ -75,7 +107,5 @@ class CircWrapper:
     def fermionic_2swap(self, qubits):
         pass
   
-@static_vars(d_par={})
-def to_qiskit_parameter(par: MyParameter) -> ParameterExpression:
-    return to_qiskit_parameter.d_par.setdefault(par.name, par.coef * Parameter(par.name))
+
 

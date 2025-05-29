@@ -3,7 +3,7 @@ from typing import Dict
 from copy import deepcopy
 from numpy.typing import ArrayLike
 
-from .parameter import Parameter
+from .circ_wrapper import Parameter
 from .excitation import LadExcitation, MajExcitation, SingleLadExcitation
 from time import time
 

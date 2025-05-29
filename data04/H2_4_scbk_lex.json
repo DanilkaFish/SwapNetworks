@@ -1,0 +1,257 @@
+[
+    {
+        "name": "bk_lex",
+        "ref_ener": -1.8573730129353967,
+        "energy": -1.662261173516738,
+        "param": [
+            0.22349657098296222
+        ],
+        "optimizer": "SOAP",
+        "gate_count": {
+            "cx": 16,
+            "ry": 8,
+            "x": 3
+        },
+        "dist": 0,
+        "prob": 0.98,
+        "noise": "sc"
+    },
+    {
+        "name": "bk_lex",
+        "ref_ener": -1.8573730129353967,
+        "energy": -1.719787960070523,
+        "param": [
+            0.22349657098294962
+        ],
+        "optimizer": "SOAP",
+        "gate_count": {
+            "cx": 16,
+            "ry": 8,
+            "x": 3
+        },
+        "dist": 0,
+        "prob": 0.9863015726662724,
+        "noise": "sc"
+    },
+    {
+        "name": "bk_lex",
+        "ref_ener": -1.8573730129353967,
+        "energy": -1.7611409057598308,
+        "param": [
+            0.22349657098296563
+        ],
+        "optimizer": "SOAP",
+        "gate_count": {
+            "cx": 16,
+            "ry": 8,
+            "x": 3
+        },
+        "dist": 0,
+        "prob": 0.9906176544291292,
+        "noise": "sc"
+    },
+    {
+        "name": "bk_lex",
+        "ref_ener": -1.8573730129353967,
+        "energy": -1.790413670427248,
+        "param": [
+            0.22349657098302617
+        ],
+        "optimizer": "SOAP",
+        "gate_count": {
+            "cx": 16,
+            "ry": 8,
+            "x": 3
+        },
+        "dist": 0,
+        "prob": 0.9935738310488752,
+        "noise": "sc"
+    },
+    {
+        "name": "bk_lex",
+        "ref_ener": -1.8573730129353967,
+        "energy": -1.8109196502119222,
+        "param": [
+            0.22349657098291775
+        ],
+        "optimizer": "SOAP",
+        "gate_count": {
+            "cx": 16,
+            "ry": 8,
+            "x": 3
+        },
+        "dist": 0,
+        "prob": 0.995598579579438,
+        "noise": "sc"
+    },
+    {
+        "name": "bk_lex",
+        "ref_ener": -1.8573730129353967,
+        "energy": -1.8251823994215075,
+        "param": [
+            0.22349657098295841
+        ],
+        "optimizer": "SOAP",
+        "gate_count": {
+            "cx": 16,
+            "ry": 8,
+            "x": 3
+        },
+        "dist": 0,
+        "prob": 0.9969853731101873,
+        "noise": "sc"
+    },
+    {
+        "name": "bk_lex",
+        "ref_ener": -1.8573730129353967,
+        "energy": -1.8350546039961504,
+        "param": [
+            0.22349657098297962
+        ],
+        "optimizer": "SOAP",
+        "gate_count": {
+            "cx": 16,
+            "ry": 8,
+            "x": 3
+        },
+        "dist": 0,
+        "prob": 0.99793521763058,
+        "noise": "sc"
+    },
+    {
+        "name": "bk_lex",
+        "ref_ener": -1.8573730129353967,
+        "energy": -1.8418651519525282,
+        "param": [
+            0.22349657098299835
+        ],
+        "optimizer": "SOAP",
+        "gate_count": {
+            "cx": 16,
+            "ry": 8,
+            "x": 3
+        },
+        "dist": 0,
+        "prob": 0.9985857864376269,
+        "noise": "sc"
+    },
+    {
+        "name": "bk_lex",
+        "ref_ener": -1.8573730129353967,
+        "energy": -1.8465528889346157,
+        "param": [
+            0.22349657098299983
+        ],
+        "optimizer": "SOAP",
+        "gate_count": {
+            "cx": 16,
+            "ry": 8,
+            "x": 3
+        },
+        "dist": 0,
+        "prob": 0.999031374914073,
+        "noise": "sc"
+    },
+    {
+        "name": "bk_lex",
+        "ref_ener": -1.8573730129353967,
+        "energy": -1.8497744720391496,
+        "param": [
+            0.2234965709829719
+        ],
+        "optimizer": "SOAP",
+        "gate_count": {
+            "cx": 16,
+            "ry": 8,
+            "x": 3
+        },
+        "dist": 0,
+        "prob": 0.9993365679823402,
+        "noise": "sc"
+    },
+    {
+        "name": "bk_lex",
+        "ref_ener": -1.8573730129353967,
+        "energy": -1.8519861068556212,
+        "param": [
+            0.22349657098296644
+        ],
+        "optimizer": "SOAP",
+        "gate_count": {
+            "cx": 16,
+            "ry": 8,
+            "x": 3
+        },
+        "dist": 0,
+        "prob": 0.999545601235761,
+        "noise": "sc"
+    },
+    {
+        "name": "bk_lex",
+        "ref_ener": -1.8573730129353967,
+        "energy": -1.8535033011920612,
+        "param": [
+            0.22349657098298412
+        ],
+        "optimizer": "SOAP",
+        "gate_count": {
+            "cx": 16,
+            "ry": 8,
+            "x": 3
+        },
+        "dist": 0,
+        "prob": 0.9996887725773768,
+        "noise": "sc"
+    },
+    {
+        "name": "bk_lex",
+        "ref_ener": -1.8573730129353967,
+        "energy": -1.8545435864760043,
+        "param": [
+            0.2234965709829752
+        ],
+        "optimizer": "SOAP",
+        "gate_count": {
+            "cx": 16,
+            "ry": 8,
+            "x": 3
+        },
+        "dist": 0,
+        "prob": 0.9997868336883466,
+        "noise": "sc"
+    },
+    {
+        "name": "bk_lex",
+        "ref_ener": -1.8573730129353967,
+        "energy": -1.855256628968777,
+        "param": [
+            0.22349657098306427
+        ],
+        "optimizer": "SOAP",
+        "gate_count": {
+            "cx": 16,
+            "ry": 8,
+            "x": 3
+        },
+        "dist": 0,
+        "prob": 0.9998539978384908,
+        "noise": "sc"
+    },
+    {
+        "name": "bk_lex",
+        "ref_ener": -1.8573730129353967,
+        "energy": -1.8557452552497418,
+        "param": [
+            0.22349657098298772
+        ],
+        "optimizer": "SOAP",
+        "gate_count": {
+            "cx": 16,
+            "ry": 8,
+            "x": 3
+        },
+        "dist": 0,
+        "prob": 0.9999,
+        "noise": "sc"
+    }
+]
