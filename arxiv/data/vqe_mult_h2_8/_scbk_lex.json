@@ -1,0 +1,162 @@
+[
+    {
+        "name": "bk_lex",
+        "ref_ener": -1.8716797649675696,
+        "energy": -1.8609865319391519,
+        "optimizer": "L_BFGS_B",
+        "gate_count": {
+            "cx": 236,
+            "ry": 63,
+            "h": 42,
+            "s": 20,
+            "sdg": 20,
+            "rx": 8,
+            "x": 5,
+            "sx": 4,
+            "sxdg": 4,
+            "rz": 1
+        },
+        "dist": 1.23,
+        "noise": "sc"
+    },
+    {
+        "name": "bk_lex",
+        "ref_ener": -1.8716797649675696,
+        "energy": -1.7662545475389428,
+        "optimizer": "L_BFGS_B",
+        "gate_count": {
+            "cx": 236,
+            "ry": 63,
+            "h": 42,
+            "s": 20,
+            "sdg": 20,
+            "rx": 8,
+            "x": 5,
+            "sx": 4,
+            "sxdg": 4,
+            "rz": 1
+        },
+        "dist": 1.23,
+        "noise": "sc"
+    },
+    {
+        "name": "bk_lex",
+        "ref_ener": -1.8716797649675696,
+        "energy": -1.3783566833517602,
+        "optimizer": "L_BFGS_B",
+        "gate_count": {
+            "cx": 236,
+            "ry": 63,
+            "h": 42,
+            "s": 20,
+            "sdg": 20,
+            "rx": 8,
+            "x": 5,
+            "sx": 4,
+            "sxdg": 4,
+            "rz": 1
+        },
+        "dist": 1.23,
+        "noise": "sc"
+    },
+    {
+        "name": "bk_lex",
+        "ref_ener": -1.8716797649675696,
+        "energy": -0.9577092497703306,
+        "optimizer": "L_BFGS_B",
+        "gate_count": {
+            "cx": 236,
+            "ry": 63,
+            "h": 42,
+            "s": 20,
+            "sdg": 20,
+            "rx": 8,
+            "x": 5,
+            "sx": 4,
+            "sxdg": 4,
+            "rz": 1
+        },
+        "dist": 1.23,
+        "noise": "sc"
+    },
+    {
+        "name": "bk_lex",
+        "ref_ener": -1.8716797649675696,
+        "energy": -0.2926668468243455,
+        "optimizer": "L_BFGS_B",
+        "gate_count": {
+            "cx": 236,
+            "ry": 63,
+            "h": 42,
+            "s": 20,
+            "sdg": 20,
+            "rx": 8,
+            "x": 5,
+            "sx": 4,
+            "sxdg": 4,
+            "rz": 1
+        },
+        "dist": 1.23,
+        "noise": "sc"
+    },
+    {
+        "name": "bk_lex",
+        "ref_ener": -1.8716797649675696,
+        "energy": 0.19450987246856316,
+        "optimizer": "L_BFGS_B",
+        "gate_count": {
+            "cx": 236,
+            "ry": 63,
+            "h": 42,
+            "s": 20,
+            "sdg": 20,
+            "rx": 8,
+            "x": 5,
+            "sx": 4,
+            "sxdg": 4,
+            "rz": 1
+        },
+        "dist": 1.23,
+        "noise": "sc"
+    },
+    {
+        "name": "bk_lex",
+        "ref_ener": -1.8716797649675696,
+        "energy": 0.8155895969543782,
+        "optimizer": "L_BFGS_B",
+        "gate_count": {
+            "cx": 236,
+            "ry": 63,
+            "h": 42,
+            "s": 20,
+            "sdg": 20,
+            "rx": 8,
+            "x": 5,
+            "sx": 4,
+            "sxdg": 4,
+            "rz": 1
+        },
+        "dist": 1.23,
+        "noise": "sc"
+    },
+    {
+        "name": "bk_lex",
+        "ref_ener": -1.8716797649675696,
+        "energy": 1.3832398730678932,
+        "optimizer": "L_BFGS_B",
+        "gate_count": {
+            "cx": 236,
+            "ry": 63,
+            "h": 42,
+            "s": 20,
+            "sdg": 20,
+            "rx": 8,
+            "x": 5,
+            "sx": 4,
+            "sxdg": 4,
+            "rz": 1
+        },
+        "dist": 1.23,
+        "noise": "sc"
+    }
+]

@@ -161,8 +161,6 @@ class MyEstimator(Estimator):
                          skip_transpilation=skip_transpilation,
                          abelian_grouping=abelian_grouping)
     def stabilize_via_z_sum(self, dm: DensityMatrix):
-        # print("tooooooooooooooooooooooooooooooooooo")
-        # print(self.mask)
         dm._data.flat[self.mask] = 0
         dm._data = dm.data/dm.data.trace()
                          

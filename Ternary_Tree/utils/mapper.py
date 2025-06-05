@@ -22,7 +22,9 @@ def pauli_table(mc: MajoranaContainer):
     for i in range(0, len(mc), 2):
         pauli1 = mc[i]
         pauli2 = mc[i + 1]
-        pauli_table.append(((Pauli((pauli1.bsf[n:], pauli1.bsf[:n], pauli1.pow)), Pauli((pauli2.bsf[n:], pauli2.bsf[:n], pauli2.pow))), (0.5, 0.5j)))
+        pauli_table.append(((Pauli((pauli1.bsf[n:], pauli1.bsf[:n], pauli1.pow)),
+                             Pauli((pauli2.bsf[n:], pauli2.bsf[:n], pauli2.pow))), 
+                             (0.5, 0.5j)))
     return pauli_table
 
 class MajoranaMapper(FermionicMapper):  # pylint: disable=missing-class-docstring

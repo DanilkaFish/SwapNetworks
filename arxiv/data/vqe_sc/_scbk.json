@@ -1,0 +1,122 @@
+[
+    {
+        "name": "bk",
+        "ref_ener": -1.8716797649675652,
+        "energy": 0.6164228301373047,
+        "optimizer": "L_BFGS_B",
+        "gate_count": {
+            "PauliEvolution": 18,
+            "x": 5
+        },
+        "dist": 0.735,
+        "noise": "sc"
+    },
+    {
+        "name": "bk",
+        "ref_ener": -1.8716797649675652,
+        "energy": -0.10546351020411557,
+        "optimizer": "L_BFGS_B",
+        "gate_count": {
+            "PauliEvolution": 18,
+            "x": 5
+        },
+        "dist": 0.735,
+        "noise": "sc"
+    },
+    {
+        "name": "bk",
+        "ref_ener": -1.8716797649675652,
+        "energy": -0.6852748882381537,
+        "optimizer": "L_BFGS_B",
+        "gate_count": {
+            "PauliEvolution": 18,
+            "x": 5
+        },
+        "dist": 0.735,
+        "noise": "sc"
+    },
+    {
+        "name": "bk",
+        "ref_ener": -1.8716797649675652,
+        "energy": -1.0674913445349545,
+        "optimizer": "L_BFGS_B",
+        "gate_count": {
+            "PauliEvolution": 18,
+            "x": 5
+        },
+        "dist": 0.735,
+        "noise": "sc"
+    },
+    {
+        "name": "bk",
+        "ref_ener": -1.8716797649675652,
+        "energy": -1.2947736077435914,
+        "optimizer": "L_BFGS_B",
+        "gate_count": {
+            "PauliEvolution": 18,
+            "x": 5
+        },
+        "dist": 0.735,
+        "noise": "sc"
+    },
+    {
+        "name": "bk",
+        "ref_ener": -1.8716797649675652,
+        "energy": -1.4228328628594005,
+        "optimizer": "L_BFGS_B",
+        "gate_count": {
+            "PauliEvolution": 18,
+            "x": 5
+        },
+        "dist": 0.735,
+        "noise": "sc"
+    },
+    {
+        "name": "bk",
+        "ref_ener": -1.8716797649675652,
+        "energy": -1.4929718903930733,
+        "optimizer": "L_BFGS_B",
+        "gate_count": {
+            "PauliEvolution": 18,
+            "x": 5
+        },
+        "dist": 0.735,
+        "noise": "sc"
+    },
+    {
+        "name": "bk",
+        "ref_ener": -1.8716797649675652,
+        "energy": -1.5308188951296464,
+        "optimizer": "L_BFGS_B",
+        "gate_count": {
+            "PauliEvolution": 18,
+            "x": 5
+        },
+        "dist": 0.735,
+        "noise": "sc"
+    },
+    {
+        "name": "bk",
+        "ref_ener": -1.8716797649675652,
+        "energy": -1.551078977702728,
+        "optimizer": "L_BFGS_B",
+        "gate_count": {
+            "PauliEvolution": 18,
+            "x": 5
+        },
+        "dist": 0.735,
+        "noise": "sc"
+    },
+    {
+        "name": "bk",
+        "ref_ener": -1.8716797649675652,
+        "energy": -1.5618801224101702,
+        "optimizer": "L_BFGS_B",
+        "gate_count": {
+            "PauliEvolution": 18,
+            "x": 5
+        },
+        "dist": 0.735,
+        "noise": "sc"
+    }
+]

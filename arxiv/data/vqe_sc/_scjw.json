@@ -1,0 +1,122 @@
+[
+    {
+        "name": "jw",
+        "ref_ener": -1.8716797649675652,
+        "energy": 0.49985279404973576,
+        "optimizer": "L_BFGS_B",
+        "gate_count": {
+            "PauliEvolution": 18,
+            "x": 2
+        },
+        "dist": 0.735,
+        "noise": "sc"
+    },
+    {
+        "name": "jw",
+        "ref_ener": -1.8716797649675652,
+        "energy": -0.23318745803064422,
+        "optimizer": "L_BFGS_B",
+        "gate_count": {
+            "PauliEvolution": 18,
+            "x": 2
+        },
+        "dist": 0.735,
+        "noise": "sc"
+    },
+    {
+        "name": "jw",
+        "ref_ener": -1.8716797649675652,
+        "energy": -0.7923723263960653,
+        "optimizer": "L_BFGS_B",
+        "gate_count": {
+            "PauliEvolution": 18,
+            "x": 2
+        },
+        "dist": 0.735,
+        "noise": "sc"
+    },
+    {
+        "name": "jw",
+        "ref_ener": -1.8716797649675652,
+        "energy": -1.1506183445799605,
+        "optimizer": "L_BFGS_B",
+        "gate_count": {
+            "PauliEvolution": 18,
+            "x": 2
+        },
+        "dist": 0.735,
+        "noise": "sc"
+    },
+    {
+        "name": "jw",
+        "ref_ener": -1.8716797649675652,
+        "energy": -1.3607095126951465,
+        "optimizer": "L_BFGS_B",
+        "gate_count": {
+            "PauliEvolution": 18,
+            "x": 2
+        },
+        "dist": 0.735,
+        "noise": "sc"
+    },
+    {
+        "name": "jw",
+        "ref_ener": -1.8716797649675652,
+        "energy": -1.4783707959912495,
+        "optimizer": "L_BFGS_B",
+        "gate_count": {
+            "PauliEvolution": 18,
+            "x": 2
+        },
+        "dist": 0.735,
+        "noise": "sc"
+    },
+    {
+        "name": "jw",
+        "ref_ener": -1.8716797649675652,
+        "energy": -1.5426418726244526,
+        "optimizer": "L_BFGS_B",
+        "gate_count": {
+            "PauliEvolution": 18,
+            "x": 2
+        },
+        "dist": 0.735,
+        "noise": "sc"
+    },
+    {
+        "name": "jw",
+        "ref_ener": -1.8716797649675652,
+        "energy": -1.577278211371143,
+        "optimizer": "L_BFGS_B",
+        "gate_count": {
+            "PauliEvolution": 18,
+            "x": 2
+        },
+        "dist": 0.735,
+        "noise": "sc"
+    },
+    {
+        "name": "jw",
+        "ref_ener": -1.8716797649675652,
+        "energy": -1.5958076439484319,
+        "optimizer": "L_BFGS_B",
+        "gate_count": {
+            "PauliEvolution": 18,
+            "x": 2
+        },
+        "dist": 0.735,
+        "noise": "sc"
+    },
+    {
+        "name": "jw",
+        "ref_ener": -1.8716797649675652,
+        "energy": -1.6056847710447233,
+        "optimizer": "L_BFGS_B",
+        "gate_count": {
+            "PauliEvolution": 18,
+            "x": 2
+        },
+        "dist": 0.735,
+        "noise": "sc"
+    }
+]

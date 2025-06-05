@@ -52,6 +52,29 @@ class Pauli:
         self._bsf: np.array[bool] = np.zeros(2*n_qubits, dtype=bool)
         for let, num in zip(letters, qubits):
             self._bsf[num], self._bsf[num + n_qubits] = PauliBin.stob[let]
+
+    def __len__(self):
+        return len(self.bsf) // 2
+    
+    def cx(self, ctrl: int, trg: int):
+        n = len(self.bsf) // 2
+        left = Pauli(np.zeros(2*n, dtype=bool))
+        right = Pauli(np.zeros(2*n, dtype=bool))
+        if self.bsf[ctrl] == 1:
+            left.bsf[trg] = 1
+        if self.bsf[trg + n] == 1:
+            right.bsf[ctrl + n] = 1
+        fin = left * self * right
+        self.bsf = fin.bsf
+        self.pow = fin.pow
+
+    def __mul__(self, pauli: Pauli):
+        new_bsf = self.bsf ^ pauli.bsf
+        n = len(self.bsf) // 2
+        k1, k2 = self.bsf[:n], self.bsf[n:]
+        p1, p2 = pauli.bsf[:n], pauli.bsf[n:]
+        pow = (self.pow  + pauli.pow + sum(2*k2*p1 + k1*k2 + p1*p2  - new_bsf[:n] * new_bsf[n:] )) % 4
+        return Pauli(new_bsf, pow)
     
     def get_label_qubs(self):
         label, qubits = "", []
@@ -67,14 +90,6 @@ class Pauli:
         for qub in qubits:
             label += pauli[qub]
         return label
-    
-    def __mul__(self, pauli: Pauli):
-        new_bsf = self.bsf ^ pauli.bsf
-        n = len(self.bsf) // 2
-        k1, k2 = self.bsf[:n], self.bsf[n:]
-        p1, p2 = pauli.bsf[:n], pauli.bsf[n:]
-        pow = (self.pow  + pauli.pow + sum(2*k2*p1 + k1*k2 + p1*p2  - new_bsf[:n] * new_bsf[n:] )) % 4
-        return Pauli(new_bsf, pow)
 
     def _to_str(self):
         return ''.join([PauliBin.btos[bin] for bin in self.bsf_pairs])
@@ -88,8 +103,9 @@ class Pauli:
 
 class PauliContainer:
     def __init__(self, lst: ArrayLike[Pauli]):
-        self._paulis = list(lst)
-    
+        self._paulis: ArrayLike[Pauli] = list(lst)
+        self.n = len(self._paulis[0])
+
     def __len__(self):
         return len(self._paulis)
     
@@ -102,6 +118,16 @@ class PauliContainer:
             new_pl2 = pauli*pl
             if ((new_pl1.pow - new_pl2.pow) % 4 == 2):
                 self._paulis[index] = new_pl1
+
+    def cx_transform(self, ctrl, trg):
+        for pauli in self._paulis:
+            pauli.cx(ctrl, trg)
+
+    def single_transform(self, qub, name, pow: 0 | 2=0):
+        letters = "I"* self.n
+        letters[qub] = name
+        pauli = Pauli.from_str(letters, pow=pow)
+        self.transform(pauli)
 
     def __str__(self):
         s: str = ""
@@ -116,18 +142,36 @@ class MajoranaContainer(PauliContainer):
         super().__init__(pauli_list)
         
     @classmethod
-    def jw(cls, n_qubits: int):
+    def jw(cls, n_qubits: int, encoding="xyz"):
+        qubs = list(range(2*n_qubits))
+        X = Pauli.from_str(str[0]).bsf
+        Y = Pauli.from_str(str[1]).bsf
+        Z = Pauli.from_str(str[2]).bsf
+        bsfx = np.zeros(n_qubits*2, dtype=bool)
+        bsfy = np.zeros(n_qubits*2, dtype=bool)
+        pauli_list = []
+        for i in range(n_qubits):
+            bsfx[i], bsfx[i + n_qubits] = X
+            bsfy[i], bsfy[i + n_qubits] = Y
+            pauli_list.append(Pauli(bsfx))
+            pauli_list.append(Pauli(bsfy))
+            bsfx[i], bsfx[i + n_qubits] = Z
+            bsfy[i],bsfy[i + n_qubits] = Z
+        return cls(pauli_list, qubs)
+    
+    @classmethod
+    def jw_alt(cls, n_qubits: int):
         qubs = list(range(2*n_qubits))
         bsfx = np.zeros(n_qubits*2, dtype=bool)
         bsfy = np.zeros(n_qubits*2, dtype=bool)
         pauli_list = []
         for i in range(n_qubits):
-            bsfx[i], bsfx[i + n_qubits] = 1, 0
+            bsfx[i], bsfx[i + n_qubits] = 0, 1
             bsfy[i], bsfy[i + n_qubits] = 1, 1
             pauli_list.append(Pauli(bsfx))
             pauli_list.append(Pauli(bsfy))
-            bsfx[i], bsfx[i + n_qubits] = 0, 1
-            bsfy[i],bsfy[i + n_qubits] = 0, 1
+            bsfx[i], bsfx[i + n_qubits] = 1, 0
+            bsfy[i],bsfy[i + n_qubits] = 1, 0
         return cls(pauli_list, qubs)
     
     
@@ -153,9 +197,18 @@ class MajoranaContainer(PauliContainer):
             s += f"{self.qubs[index] + 1} : " + f"{index + 1} : " + str(pauli) + '\n'
         return s
     
+    
 if __name__ == "__main__":
     pl1 = Pauli.from_str("XY")
-    pl2 = Pauli.from_str("ZY")
-    print(pl1, pl2, pl1*pl2)
-    print(pl1, pl2, pl2*pl1)
+    pl2 = Pauli.from_str("XZ")
+    pl1.cx(0,1)
+    print(pl1)
+    pl2.cx(0,1)
+    print(pl2)
+    pl2.cx(0,1)
+    print(pl2)
+    pl1.cx(1,0)
+    print(pl1)
+    # print(pl1, pl2, pl1*pl2)
+    # print(pl1, pl2, pl2*pl1)
     

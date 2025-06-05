@@ -1,0 +1,114 @@
+[
+    {
+        "name": "swap gen short",
+        "ref_ener": -1.8573730129353947,
+        "energy": -1.857194602625578,
+        "optimizer": "L_BFGS_B",
+        "gate_count": {
+            "x": 2,
+            "id": 2,
+            "t0_0,1": 2,
+            "t0_0,2,1,3": 1
+        },
+        "dist": 1.23,
+        "noise": "sc"
+    },
+    {
+        "name": "swap gen short",
+        "ref_ener": -1.8573730129353947,
+        "energy": -1.8555902686462091,
+        "optimizer": "L_BFGS_B",
+        "gate_count": {
+            "x": 2,
+            "id": 2,
+            "t0_0,1": 2,
+            "t0_0,2,1,3": 1
+        },
+        "dist": 1.23,
+        "noise": "sc"
+    },
+    {
+        "name": "swap gen short",
+        "ref_ener": -1.8573730129353947,
+        "energy": -1.8484894033372123,
+        "optimizer": "L_BFGS_B",
+        "gate_count": {
+            "x": 2,
+            "id": 2,
+            "t0_0,1": 2,
+            "t0_0,2,1,3": 1
+        },
+        "dist": 1.23,
+        "noise": "sc"
+    },
+    {
+        "name": "swap gen short",
+        "ref_ener": -1.8573730129353947,
+        "energy": -1.8396806896794518,
+        "optimizer": "L_BFGS_B",
+        "gate_count": {
+            "x": 2,
+            "id": 2,
+            "t0_0,1": 2,
+            "t0_0,2,1,3": 1
+        },
+        "dist": 1.23,
+        "noise": "sc"
+    },
+    {
+        "name": "swap gen short",
+        "ref_ener": -1.8573730129353947,
+        "energy": -1.8222854129656842,
+        "optimizer": "L_BFGS_B",
+        "gate_count": {
+            "x": 2,
+            "id": 2,
+            "t0_0,1": 2,
+            "t0_0,2,1,3": 1
+        },
+        "dist": 1.23,
+        "noise": "sc"
+    },
+    {
+        "name": "swap gen short",
+        "ref_ener": -1.8573730129353947,
+        "energy": -1.805182162095584,
+        "optimizer": "L_BFGS_B",
+        "gate_count": {
+            "x": 2,
+            "id": 2,
+            "t0_0,1": 2,
+            "t0_0,2,1,3": 1
+        },
+        "dist": 1.23,
+        "noise": "sc"
+    },
+    {
+        "name": "swap gen short",
+        "ref_ener": -1.8573730129353947,
+        "energy": -1.7718320786338406,
+        "optimizer": "L_BFGS_B",
+        "gate_count": {
+            "x": 2,
+            "id": 2,
+            "t0_0,1": 2,
+            "t0_0,2,1,3": 1
+        },
+        "dist": 1.23,
+        "noise": "sc"
+    },
+    {
+        "name": "swap gen short",
+        "ref_ener": -1.8573730129353947,
+        "energy": -1.6932318821099064,
+        "optimizer": "L_BFGS_B",
+        "gate_count": {
+            "x": 2,
+            "id": 2,
+            "t0_0,1": 2,
+            "t0_0,2,1,3": 1
+        },
+        "dist": 1.23,
+        "noise": "sc"
+    }
+]

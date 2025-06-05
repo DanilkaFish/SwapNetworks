@@ -1,0 +1,14 @@
+[
+    {
+        "name": "bk_lex",
+        "ref_ener": -4.298844223965736,
+        "energy": -4.1996644414756075,
+        "optimizer": "L_BFGS_B",
+        "gate_count": {
+            "PauliEvolution": 36,
+            "x": 2
+        },
+        "dist": 1.23,
+        "noise": "X"
+    }
+]

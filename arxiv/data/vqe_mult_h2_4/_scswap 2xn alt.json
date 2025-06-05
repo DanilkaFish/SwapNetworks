@@ -1,0 +1,114 @@
+[
+    {
+        "name": "swap 2xn alt",
+        "ref_ener": -1.8573730129353947,
+        "energy": -1.8571902633443294,
+        "optimizer": "L_BFGS_B",
+        "gate_count": {
+            "ry": 4,
+            "rx": 4,
+            "ZZ": 2,
+            "t0_0,2,1,3": 1
+        },
+        "dist": 1.23,
+        "noise": "sc"
+    },
+    {
+        "name": "swap 2xn alt",
+        "ref_ener": -1.8573730129353947,
+        "energy": -1.8555469240839737,
+        "optimizer": "L_BFGS_B",
+        "gate_count": {
+            "ry": 4,
+            "rx": 4,
+            "ZZ": 2,
+            "t0_0,2,1,3": 1
+        },
+        "dist": 1.23,
+        "noise": "sc"
+    },
+    {
+        "name": "swap 2xn alt",
+        "ref_ener": -1.8573730129353947,
+        "energy": -1.848273750417213,
+        "optimizer": "L_BFGS_B",
+        "gate_count": {
+            "ry": 4,
+            "rx": 4,
+            "ZZ": 2,
+            "t0_0,2,1,3": 1
+        },
+        "dist": 1.23,
+        "noise": "sc"
+    },
+    {
+        "name": "swap 2xn alt",
+        "ref_ener": -1.8573730129353947,
+        "energy": -1.8392520519136193,
+        "optimizer": "L_BFGS_B",
+        "gate_count": {
+            "ry": 4,
+            "rx": 4,
+            "ZZ": 2,
+            "t0_0,2,1,3": 1
+        },
+        "dist": 1.23,
+        "noise": "sc"
+    },
+    {
+        "name": "swap 2xn alt",
+        "ref_ener": -1.8573730129353947,
+        "energy": -1.8214387650984705,
+        "optimizer": "L_BFGS_B",
+        "gate_count": {
+            "ry": 4,
+            "rx": 4,
+            "ZZ": 2,
+            "t0_0,2,1,3": 1
+        },
+        "dist": 1.23,
+        "noise": "sc"
+    },
+    {
+        "name": "swap 2xn alt",
+        "ref_ener": -1.8573730129353947,
+        "energy": -1.8039280412146856,
+        "optimizer": "L_BFGS_B",
+        "gate_count": {
+            "ry": 4,
+            "rx": 4,
+            "ZZ": 2,
+            "t0_0,2,1,3": 1
+        },
+        "dist": 1.23,
+        "noise": "sc"
+    },
+    {
+        "name": "swap 2xn alt",
+        "ref_ener": -1.8573730129353947,
+        "energy": -1.7697942504368938,
+        "optimizer": "L_BFGS_B",
+        "gate_count": {
+            "ry": 4,
+            "rx": 4,
+            "ZZ": 2,
+            "t0_0,2,1,3": 1
+        },
+        "dist": 1.23,
+        "noise": "sc"
+    },
+    {
+        "name": "swap 2xn alt",
+        "ref_ener": -1.8573730129353947,
+        "energy": -1.689412475861424,
+        "optimizer": "L_BFGS_B",
+        "gate_count": {
+            "ry": 4,
+            "rx": 4,
+            "ZZ": 2,
+            "t0_0,2,1,3": 1
+        },
+        "dist": 1.23,
+        "noise": "sc"
+    }
+]

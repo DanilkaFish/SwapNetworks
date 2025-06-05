@@ -14,7 +14,6 @@ def static_vars(**kwargs):
         return func
     return decorate
 
-
 def lad2maj(ladder_excitations: ArrayLike[LadExcitation], 
                 name: str="t_"
                 ) -> Dict[MajExcitation, Parameter]:
@@ -25,6 +24,7 @@ def lad2maj(ladder_excitations: ArrayLike[LadExcitation],
         
     maj_exc_par: Dict[MajExcitation, Parameter] = {}
     for op in ladder_exc_par:
+        # print(op)
         for majop in op.maj_range():
             if majop in maj_exc_par:
                 raise KeyError("twice simplification")

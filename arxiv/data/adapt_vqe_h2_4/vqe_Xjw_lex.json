@@ -1,0 +1,122 @@
+[
+    {
+        "name": "jw_lex",
+        "ref_ener": -1.8716797649675618,
+        "energy": -1.8456249165605956,
+        "optimizer": "L_BFGS_B",
+        "gate_count": {
+            "PauliEvolution": 18,
+            "x": 2
+        },
+        "dist": 0.735,
+        "noise": "X"
+    },
+    {
+        "name": "jw_lex",
+        "ref_ener": -1.8716797649675618,
+        "energy": -1.8474065866111793,
+        "optimizer": "L_BFGS_B",
+        "gate_count": {
+            "PauliEvolution": 18,
+            "x": 2
+        },
+        "dist": 0.735,
+        "noise": "X"
+    },
+    {
+        "name": "jw_lex",
+        "ref_ener": -1.8716797649675618,
+        "energy": -1.8548506528914128,
+        "optimizer": "L_BFGS_B",
+        "gate_count": {
+            "PauliEvolution": 18,
+            "x": 2
+        },
+        "dist": 0.735,
+        "noise": "X"
+    },
+    {
+        "name": "jw_lex",
+        "ref_ener": -1.8716797649675618,
+        "energy": -1.8593076039959966,
+        "optimizer": "L_BFGS_B",
+        "gate_count": {
+            "PauliEvolution": 18,
+            "x": 2
+        },
+        "dist": 0.735,
+        "noise": "X"
+    },
+    {
+        "name": "jw_lex",
+        "ref_ener": -1.8716797649675618,
+        "energy": -1.862002200039375,
+        "optimizer": "L_BFGS_B",
+        "gate_count": {
+            "PauliEvolution": 18,
+            "x": 2
+        },
+        "dist": 0.735,
+        "noise": "X"
+    },
+    {
+        "name": "jw_lex",
+        "ref_ener": -1.8716797649675618,
+        "energy": -1.8646985653544506,
+        "optimizer": "L_BFGS_B",
+        "gate_count": {
+            "PauliEvolution": 18,
+            "x": 2
+        },
+        "dist": 0.735,
+        "noise": "X"
+    },
+    {
+        "name": "jw_lex",
+        "ref_ener": -1.8716797649675618,
+        "energy": -1.8673389172310844,
+        "optimizer": "L_BFGS_B",
+        "gate_count": {
+            "PauliEvolution": 18,
+            "x": 2
+        },
+        "dist": 0.735,
+        "noise": "X"
+    },
+    {
+        "name": "jw_lex",
+        "ref_ener": -1.8716797649675618,
+        "energy": -1.8673688988432169,
+        "optimizer": "L_BFGS_B",
+        "gate_count": {
+            "PauliEvolution": 18,
+            "x": 2
+        },
+        "dist": 0.735,
+        "noise": "X"
+    },
+    {
+        "name": "jw_lex",
+        "ref_ener": -1.8716797649675618,
+        "energy": -1.869068607229616,
+        "optimizer": "L_BFGS_B",
+        "gate_count": {
+            "PauliEvolution": 18,
+            "x": 2
+        },
+        "dist": 0.735,
+        "noise": "X"
+    },
+    {
+        "name": "jw_lex",
+        "ref_ener": -1.8716797649675618,
+        "energy": -1.8700880548833028,
+        "optimizer": "L_BFGS_B",
+        "gate_count": {
+            "PauliEvolution": 18,
+            "x": 2
+        },
+        "dist": 0.735,
+        "noise": "X"
+    }
+]

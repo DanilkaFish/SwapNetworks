@@ -1,0 +1,106 @@
+[
+    {
+        "name": "bk_lex",
+        "ref_ener": -1.8573730129353947,
+        "energy": -1.857125740358117,
+        "optimizer": "L_BFGS_B",
+        "gate_count": {
+            "cx": 26,
+            "ry": 12,
+            "x": 3
+        },
+        "dist": 1.23,
+        "noise": "sc"
+    },
+    {
+        "name": "bk_lex",
+        "ref_ener": -1.8573730129353947,
+        "energy": -1.8549026942759337,
+        "optimizer": "L_BFGS_B",
+        "gate_count": {
+            "cx": 26,
+            "ry": 12,
+            "x": 3
+        },
+        "dist": 1.23,
+        "noise": "sc"
+    },
+    {
+        "name": "bk_lex",
+        "ref_ener": -1.8573730129353947,
+        "energy": -1.8450747276703847,
+        "optimizer": "L_BFGS_B",
+        "gate_count": {
+            "cx": 26,
+            "ry": 12,
+            "x": 3
+        },
+        "dist": 1.23,
+        "noise": "sc"
+    },
+    {
+        "name": "bk_lex",
+        "ref_ener": -1.8573730129353947,
+        "energy": -1.8329088748835656,
+        "optimizer": "L_BFGS_B",
+        "gate_count": {
+            "cx": 26,
+            "ry": 12,
+            "x": 3
+        },
+        "dist": 1.23,
+        "noise": "sc"
+    },
+    {
+        "name": "bk_lex",
+        "ref_ener": -1.8573730129353947,
+        "energy": -1.8089689372278561,
+        "optimizer": "L_BFGS_B",
+        "gate_count": {
+            "cx": 26,
+            "ry": 12,
+            "x": 3
+        },
+        "dist": 1.23,
+        "noise": "sc"
+    },
+    {
+        "name": "bk_lex",
+        "ref_ener": -1.8573730129353947,
+        "energy": -1.7855422824941936,
+        "optimizer": "L_BFGS_B",
+        "gate_count": {
+            "cx": 26,
+            "ry": 12,
+            "x": 3
+        },
+        "dist": 1.23,
+        "noise": "sc"
+    },
+    {
+        "name": "bk_lex",
+        "ref_ener": -1.8573730129353947,
+        "energy": -1.7401866159510866,
+        "optimizer": "L_BFGS_B",
+        "gate_count": {
+            "cx": 26,
+            "ry": 12,
+            "x": 3
+        },
+        "dist": 1.23,
+        "noise": "sc"
+    },
+    {
+        "name": "bk_lex",
+        "ref_ener": -1.8573730129353947,
+        "energy": -1.6350577922954403,
+        "optimizer": "L_BFGS_B",
+        "gate_count": {
+            "cx": 26,
+            "ry": 12,
+            "x": 3
+        },
+        "dist": 1.23,
+        "noise": "sc"
+    }
+]
