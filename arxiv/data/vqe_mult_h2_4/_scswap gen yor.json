@@ -1,0 +1,114 @@
+[
+    {
+        "name": "swap gen yor",
+        "ref_ener": -1.8573730129353947,
+        "energy": -1.8572352092520414,
+        "optimizer": "L_BFGS_B",
+        "gate_count": {
+            "x": 2,
+            "id": 2,
+            "t0_0,1": 2,
+            "t0_0,2,1,3": 1
+        },
+        "dist": 1.23,
+        "noise": "sc"
+    },
+    {
+        "name": "swap gen yor",
+        "ref_ener": -1.8573730129353947,
+        "energy": -1.8559958290210283,
+        "optimizer": "L_BFGS_B",
+        "gate_count": {
+            "x": 2,
+            "id": 2,
+            "t0_0,1": 2,
+            "t0_0,2,1,3": 1
+        },
+        "dist": 1.23,
+        "noise": "sc"
+    },
+    {
+        "name": "swap gen yor",
+        "ref_ener": -1.8573730129353947,
+        "energy": -1.8505060077217956,
+        "optimizer": "L_BFGS_B",
+        "gate_count": {
+            "x": 2,
+            "id": 2,
+            "t0_0,1": 2,
+            "t0_0,2,1,3": 1
+        },
+        "dist": 1.23,
+        "noise": "sc"
+    },
+    {
+        "name": "swap gen yor",
+        "ref_ener": -1.8573730129353947,
+        "energy": -1.8436861079730924,
+        "optimizer": "L_BFGS_B",
+        "gate_count": {
+            "x": 2,
+            "id": 2,
+            "t0_0,1": 2,
+            "t0_0,2,1,3": 1
+        },
+        "dist": 1.23,
+        "noise": "sc"
+    },
+    {
+        "name": "swap gen yor",
+        "ref_ener": -1.8573730129353947,
+        "energy": -1.8301864283308864,
+        "optimizer": "L_BFGS_B",
+        "gate_count": {
+            "x": 2,
+            "id": 2,
+            "t0_0,1": 2,
+            "t0_0,2,1,3": 1
+        },
+        "dist": 1.23,
+        "noise": "sc"
+    },
+    {
+        "name": "swap gen yor",
+        "ref_ener": -1.8573730129353947,
+        "energy": -1.8168715975056524,
+        "optimizer": "L_BFGS_B",
+        "gate_count": {
+            "x": 2,
+            "id": 2,
+            "t0_0,1": 2,
+            "t0_0,2,1,3": 1
+        },
+        "dist": 1.23,
+        "noise": "sc"
+    },
+    {
+        "name": "swap gen yor",
+        "ref_ener": -1.8573730129353947,
+        "energy": -1.790787107929309,
+        "optimizer": "L_BFGS_B",
+        "gate_count": {
+            "x": 2,
+            "id": 2,
+            "t0_0,1": 2,
+            "t0_0,2,1,3": 1
+        },
+        "dist": 1.23,
+        "noise": "sc"
+    },
+    {
+        "name": "swap gen yor",
+        "ref_ener": -1.8573730129353947,
+        "energy": -1.728649406119011,
+        "optimizer": "L_BFGS_B",
+        "gate_count": {
+            "x": 2,
+            "id": 2,
+            "t0_0,1": 2,
+            "t0_0,2,1,3": 1
+        },
+        "dist": 1.23,
+        "noise": "sc"
+    }
+]

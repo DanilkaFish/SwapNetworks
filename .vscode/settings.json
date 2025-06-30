@@ -1,7 +1,6 @@
 {
     "python.defaultInterpreterPath": "~/.venvs/sn312/bin/python3",
     "editor.mouseWheelScrollSensitivity": 3,
-    "cmake.sourceDirectory": "/home/danilkafish/Projects/SwapNetworks/qiskit-aer",
     // "python.languageServer": "Pylance",
     // "terminal.integrated.scrollback": 50000
 }

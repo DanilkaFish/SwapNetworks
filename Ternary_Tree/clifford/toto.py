@@ -194,13 +194,13 @@ def num_anticom(n):
             if counts2 > 0 :
                 print(counts2)
 
-from tqdm import tqdm
+# from tqdm import tqdm
 
 
 if __name__ == "__main__":
     n = 4
-    # gen_dict = {0 : "YYZI",1: "YYIZ",2: "XXZI", 3: "XXIZ", 4: "ZIXX", 5: "IZXX", 6: "ZIYY",7: "IZYY"}
-    gen_dict = {0 : "XXXY",1: "XXYX",2: "XYXX", 3: "YXXX", 4: "YYYX", 5: "YYXY", 6: "YXYY",7: "XYYY"}
+    gen_dict = {0 : "YYZI",1: "YYIZ",2: "XXZI", 3: "XXIZ", 4: "ZIXX", 5: "IZXX", 6: "ZIYY",7: "IZYY"}
+    # gen_dict = {0 : "XXXY",1: "XXYX",2: "XYXX", 3: "YXXX", 4: "YYYX", 5: "YYXY", 6: "YXYY",7: "XYYY"}
     # gen_dict = {0 : "ZIZI",1: "ZIIZ",2: "IZZI", 3: "IZIZ", 4: "XXZI", 5: "XXIZ", 6: "YYZI", 7: "YYIZ"}
     # gen_dict = {0 : "XIII",1: "YIII",2: "ZXII", 3: "ZYII", 4: "ZZXI", 5: "ZZYI", 6: "ZZZX", 7: "ZZZY", 8: "ZZZZ"}
     # gen_dict = {0 : "YZXI",1: "XZYI",2: "IYZX", 3: "IXZY"}
@@ -218,42 +218,61 @@ if __name__ == "__main__":
     # cg.transform_maj('h', (1,))
     # cg.transform_maj('h', (2,))
     # cg.transform_maj('h', (3,))
-    # ---------------------------------------------
-    cg.transform_maj("cx", (2,3))
-    cg.transform_maj("cx", (0,1))
-    cg.transform_maj('x', (3,))
-    cg.transform_maj('h', (3,))
-    cg.transform_maj('x', (1,))
-    cg.transform_maj('h', (1,))
-    cg.transform_maj("cx", (0,2))
-    print(cg)
-    cg.transform_maj("cx", (0,1))
-    print(cg)
-    cg.transform_maj("cx", (0,3))
-    print(cg)
-    cg.transform_maj("cx", (0,1))
-    print(cg)
-    cg.transform_maj('h', (2,))
-    cg.transform_maj("cx", (0,2))
-    print(cg)
-    cg.transform_maj("cx", (0,1))
-    print(cg)
-    cg.transform_maj("cx", (0,3))
-    print(cg)
-    cg.transform_maj('h', (3,))
-    cg.transform_maj("cx", (0,1))
-    print(cg)
-    cg.transform_maj("cx", (0,2))
-    cg.transform_maj('h', (2,))
+    # -------------------short--------------------
+    cg.transform_maj("Z", (0,))
+    cg.transform_maj("Y", (0,))
+    cg.transform_maj("Y", (2,))
+    cg.transform_maj("Z", (3,))
 
-    cg.transform_maj("cx", (0,2))
+    cg.transform_maj("cx", (1,2))
+    cg.transform_maj("cx", (0,1))
+    cg.transform_maj("cx", (2,3))
     print(cg)
-    cg.transform_maj('x', (3,))
-    cg.transform_maj('h', (1,))
-    cg.transform_maj('x', (1,))
     cg.transform_maj("cx", (2,3))
     cg.transform_maj("cx", (0,1))
+    cg.transform_maj("cx", (1,2))
+    cg.transform_maj("cx", (3,0))
+    cg.transform_maj("cx", (0,1))
+    cg.transform_maj("cx", (2,3))
     print(cg)
+
+
+    # ---------------------------------------------
+    # cg.transform_maj("cx", (2,3))
+    # cg.transform_maj("cx", (0,1))
+    # cg.transform_maj('x', (3,))
+    # cg.transform_maj('h', (3,))
+    # cg.transform_maj('x', (1,))
+    # cg.transform_maj('h', (1,))
+    # cg.transform_maj("cx", (0,2))
+    # print(cg)
+    # cg.transform_maj("cx", (0,1))
+    # print(cg)
+    # cg.transform_maj("cx", (0,3))
+    # print(cg)
+    # cg.transform_maj("cx", (0,1))
+    # print(cg)
+    # cg.transform_maj('h', (2,))
+    # cg.transform_maj("cx", (0,2))
+    # print(cg)
+    # cg.transform_maj("cx", (0,1))
+    # print(cg)
+    # cg.transform_maj("cx", (0,3))
+    # print(cg)
+    # cg.transform_maj('h', (3,))
+    # cg.transform_maj("cx", (0,1))
+    # print(cg)
+    # cg.transform_maj("cx", (0,2))
+    # cg.transform_maj('h', (2,))
+
+    # cg.transform_maj("cx", (0,2))
+    # print(cg)
+    # cg.transform_maj('x', (3,))
+    # cg.transform_maj('h', (1,))
+    # cg.transform_maj('x', (1,))
+    # cg.transform_maj("cx", (2,3))
+    # cg.transform_maj("cx", (0,1))
+    # print(cg)
     # # ---------------------------------------------
     # # cg.transform_maj('h', (0,))
     # # cg.transform_maj('h', (1,))

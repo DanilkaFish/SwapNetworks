@@ -1,0 +1,202 @@
+[
+    {
+        "name": "bk_lex",
+        "ref_ener": -1.8716797649675652,
+        "energy": 0.4850551404987345,
+        "optimizer": "L_BFGS_B",
+        "gate_count": {
+            "cx": 224,
+            "ry": 55,
+            "h": 46,
+            "s": 21,
+            "sdg": 21,
+            "rz": 13,
+            "x": 5,
+            "rx": 4,
+            "sx": 1,
+            "sxdg": 1
+        },
+        "dist": 0.735,
+        "noise": "sc"
+    },
+    {
+        "name": "bk_lex",
+        "ref_ener": -1.8716797649675652,
+        "energy": -0.21718622188190556,
+        "optimizer": "L_BFGS_B",
+        "gate_count": {
+            "cx": 224,
+            "ry": 55,
+            "h": 46,
+            "s": 21,
+            "sdg": 21,
+            "rz": 13,
+            "x": 5,
+            "rx": 4,
+            "sx": 1,
+            "sxdg": 1
+        },
+        "dist": 0.735,
+        "noise": "sc"
+    },
+    {
+        "name": "bk_lex",
+        "ref_ener": -1.8716797649675652,
+        "energy": -0.7725607392531307,
+        "optimizer": "L_BFGS_B",
+        "gate_count": {
+            "cx": 224,
+            "ry": 55,
+            "h": 46,
+            "s": 21,
+            "sdg": 21,
+            "rz": 13,
+            "x": 5,
+            "rx": 4,
+            "sx": 1,
+            "sxdg": 1
+        },
+        "dist": 0.735,
+        "noise": "sc"
+    },
+    {
+        "name": "bk_lex",
+        "ref_ener": -1.8716797649675652,
+        "energy": -1.1356134695393512,
+        "optimizer": "L_BFGS_B",
+        "gate_count": {
+            "cx": 224,
+            "ry": 55,
+            "h": 46,
+            "s": 21,
+            "sdg": 21,
+            "rz": 13,
+            "x": 5,
+            "rx": 4,
+            "sx": 1,
+            "sxdg": 1
+        },
+        "dist": 0.735,
+        "noise": "sc"
+    },
+    {
+        "name": "bk_lex",
+        "ref_ener": -1.8716797649675652,
+        "energy": -1.3502556462712356,
+        "optimizer": "L_BFGS_B",
+        "gate_count": {
+            "cx": 224,
+            "ry": 55,
+            "h": 46,
+            "s": 21,
+            "sdg": 21,
+            "rz": 13,
+            "x": 5,
+            "rx": 4,
+            "sx": 1,
+            "sxdg": 1
+        },
+        "dist": 0.735,
+        "noise": "sc"
+    },
+    {
+        "name": "bk_lex",
+        "ref_ener": -1.8716797649675652,
+        "energy": -1.47019863494318,
+        "optimizer": "L_BFGS_B",
+        "gate_count": {
+            "cx": 224,
+            "ry": 55,
+            "h": 46,
+            "s": 21,
+            "sdg": 21,
+            "rz": 13,
+            "x": 5,
+            "rx": 4,
+            "sx": 1,
+            "sxdg": 1
+        },
+        "dist": 0.735,
+        "noise": "sc"
+    },
+    {
+        "name": "bk_lex",
+        "ref_ener": -1.8716797649675652,
+        "energy": -1.535876458949283,
+        "optimizer": "L_BFGS_B",
+        "gate_count": {
+            "cx": 224,
+            "ry": 55,
+            "h": 46,
+            "s": 21,
+            "sdg": 21,
+            "rz": 13,
+            "x": 5,
+            "rx": 4,
+            "sx": 1,
+            "sxdg": 1
+        },
+        "dist": 0.735,
+        "noise": "sc"
+    },
+    {
+        "name": "bk_lex",
+        "ref_ener": -1.8716797649675652,
+        "energy": -1.571287350937388,
+        "optimizer": "L_BFGS_B",
+        "gate_count": {
+            "cx": 224,
+            "ry": 55,
+            "h": 46,
+            "s": 21,
+            "sdg": 21,
+            "rz": 13,
+            "x": 5,
+            "rx": 4,
+            "sx": 1,
+            "sxdg": 1
+        },
+        "dist": 0.735,
+        "noise": "sc"
+    },
+    {
+        "name": "bk_lex",
+        "ref_ener": -1.8716797649675652,
+        "energy": -1.590254368599522,
+        "optimizer": "L_BFGS_B",
+        "gate_count": {
+            "cx": 224,
+            "ry": 55,
+            "h": 46,
+            "s": 21,
+            "sdg": 21,
+            "rz": 13,
+            "x": 5,
+            "rx": 4,
+            "sx": 1,
+            "sxdg": 1
+        },
+        "dist": 0.735,
+        "noise": "sc"
+    },
+    {
+        "name": "bk_lex",
+        "ref_ener": -1.8716797649675652,
+        "energy": -1.600359086128304,
+        "optimizer": "L_BFGS_B",
+        "gate_count": {
+            "cx": 224,
+            "ry": 55,
+            "h": 46,
+            "s": 21,
+            "sdg": 21,
+            "rz": 13,
+            "x": 5,
+            "rx": 4,
+            "sx": 1,
+            "sxdg": 1
+        },
+        "dist": 0.735,
+        "noise": "sc"
+    }
+]

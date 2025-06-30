@@ -7,6 +7,7 @@ from qiskit_nature.second_q.drivers import PySCFDriver
 from qiskit_nature.second_q.transformers import ActiveSpaceTransformer
 from qiskit_nature.second_q.problems import ElectronicBasis
 
+
 from ..utils import lad2maj, LadExcitation, DoubleLadExcitation, SingleLadExcitation
 from pyscf import gto, scf, cc
 
@@ -100,7 +101,5 @@ class AbstractUCC(ABC):
     def get_double_excitations(self) -> list[DoubleLadExcitation]:
         pass
 
-    @abstractmethod
-    def swap2xn(self) -> QuantumCircuit:
-        pass
+
 

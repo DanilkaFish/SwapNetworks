@@ -1,8 +1,14 @@
 from __future__ import annotations
 from functools import reduce
 from typing import Tuple, List, Dict, Optional
+import logging
+
+from numpy import pi
+logger = logging.getLogger(__name__)
+# from .logger import logger, x
 
 
+<<<<<<< HEAD
 from .abstractucc import AbstractUCC
 from ..qiskit_interface import QiskitCirc 
 from ..utils import CircWrapper, LadExcImpl, Pauli, Parameter, alpha2beta
@@ -13,6 +19,49 @@ from ..utils import SingleLadExcitation, DoubleLadExcitation,  LadExcitation
 class UpGCCSD(AbstractUCC):
     def __init__(self,  **kwargs):
         super().__init__(**kwargs)
+=======
+from .abstractucc import AbstractUCC, Molecule
+from ..qiskit_interface import QiskitCirc
+from ..utils.circ_wrapper import ExcitationImpl
+from ..utils import CircWrapper, Pauli, Parameter, alpha2beta
+from ..utils import lad2lad, lad2maj, MajoranaContainer, MajExcitation 
+from ..utils import SingleLadExcitation, DoubleLadExcitation,  LadExcitation
+
+class LadExcImpl:
+    @staticmethod
+    def YORDAN():
+        return "double_ex_yordan"    
+
+    @staticmethod
+    def CNOT12():
+        return "double_ex_12cnot" 
+    
+    @staticmethod
+    def CNOT12xyz():
+        return "double_ex_12cnot" 
+
+    # @staticmethod
+    # def CNOT12zyx():
+    #     return "double_ex_12cnot_alt" 
+    
+    @staticmethod
+    def SINGLE():
+        return "single_ex"
+    
+    # @staticmethod
+    # def SINGLE_ALT():
+    #     return "single_ex_alt"
+    
+    @staticmethod
+    def SHORT():
+        return "double_ex_short"
+     
+    
+class UpGCCSD(AbstractUCC):
+
+    def __init__(self, molecule: Molecule=Molecule()):
+        super().__init__(molecule)
+>>>>>>> asus
 
     def get_alpha_excitations(self) -> List[SingleLadExcitation]:
         """
@@ -36,35 +85,32 @@ class UpGCCSD(AbstractUCC):
         operators
         """
         alpha = range(self.n_spatial)
-        beta_index_offset = self.n_spatial
-        ab = [DoubleLadExcitation((a + beta_index_offset, a), (b + beta_index_offset, b))
+        bio = self.n_spatial
+        ab = [DoubleLadExcitation((a + bio, a), (b + bio, b))
               for a in alpha for b in alpha if a < b]
         return ab
 
     def swap2xn(self, 
                 number_of_layers: int=1,
-                method_name: str=LadExcImpl.CNOT12(),
-                circ: Optional[CircWrapper]=None
+                method_name: str=LadExcImpl.CNOT12xyz(),
+                encoding: str="xyz", 
+                circ: Optional[QiskitCirc]=None
                 ) -> Tuple[CircWrapper, MajoranaContainer]:
-                
+        logger.info("Swap2xn circuit generation...")
+        encoding = encoding.lower()
+        # method_name = getattr(LadExcImpl, method_name)()
         n = self.n_qubits
+        circ = circ
         if circ is None:
             circ = QiskitCirc(n)
-        mtoq = MajoranaContainer.jw(n)
+        mtoq = MajoranaContainer.jw(n, encoding=encoding)
         single_ladder_exc = self.get_alpha_excitations() + self.get_beta_excitations()
         double_ladder_exc = self.get_double_excitations()
 
         def init_state():
             num_electrons = self.n_alpha  
-            for i in range(self.n_qubits):
-                if (mtoq.get_by_qubs(i)[0] < 2*num_electrons) or (self.n_spatial * 2 <= 
-                        mtoq.get_by_qubs(i)[0]  < 2*self.n_spatial + 2*num_electrons):
-                    circ.x(i)
-                else:
-                    circ.id(i)
-            for i in range(2):
-                for j in range(i*n//2, i*n//2 + n//2 - 1, 2):
-                    mswap(j, 1, j + 1, 0)
+            nels = [i for i in range(num_electrons)] + [i + n//2 for i in range(num_electrons)]
+            ExcitationImpl.majorana_init_state(nels, circ, mtoq, encoding)
                     
         def single_exc_layer():
             func = lambda i: MajExcitation((mtoq.get_by_qubs(i)[0], mtoq.get_by_qubs(i)[1]))
@@ -95,7 +141,6 @@ class UpGCCSD(AbstractUCC):
 
         def append_lad_D(qubits: List[int]):
             return _append_lad(qubits,  circ, mtoq, method_name, dp_lad_exc)    
-        
 
         # circuit generation
         init_state()
@@ -105,12 +150,17 @@ class UpGCCSD(AbstractUCC):
             # sp_maj_exc: Dict[MajExcitation, Parameter] = lad2maj(single_ladder_exc, name="t" + str(k)+ "_")
             dp_lad_exc: Dict[LadExcitation, Parameter] = lad2lad(double_ladder_exc, name="t" + str(k)+ "_")
             if n == 4:
+<<<<<<< HEAD
+=======
+                single_exc_layer()
+>>>>>>> asus
                 double_exc_layer(0)
             else:
                 for i in range(n//2):
                     single_exc_layer()
                     double_exc_layer(i)
                     mswap_layer(i+1)
+        logger.info(f"sxn: \n{circ}")
         return circ, mtoq
     
     def swap_gen(self, 
@@ -118,6 +168,7 @@ class UpGCCSD(AbstractUCC):
                 method_name: str=LadExcImpl.YORDAN(),
                 circ: Optional[CircWrapper]=None
                 ) -> Tuple[CircWrapper, MajoranaContainer]:
+        logger.info("Fermionic swap circuit generation...")
         n = self.n_qubits
         if circ is None:
             circ = QiskitCirc(n)
@@ -156,13 +207,10 @@ class UpGCCSD(AbstractUCC):
                 append_lad_S(i)
             for i in range(1, n-1, 2):
                 append_lad_S(i)
-                
 
         def fswap(fq, circ=circ):
-            # list_trans = [(fq, 0, fq + 1, 0), (fq, 1, fq + 1, 1)]
             _mswap(fq, 0, fq + 1, 0, circ, mtoq)
             _mswap(fq, 1, fq + 1, 1, circ, mtoq)
-            # circ.fswap([fq, fq + 1])
 
         def fswap_layer():
             for i in range(1, n-1, 2):
@@ -189,13 +237,14 @@ class UpGCCSD(AbstractUCC):
             # sp_lad_exc: Dict[LadExcitation, Parameter] = lad2lad(single_ladder_exc, name="t" + str(k)+ "_")
             dp_lad_exc: Dict[LadExcitation, Parameter] = lad2lad(double_ladder_exc, name="t" + str(k)+ "_")
             if n == 4:
-                # single_exc_layer(0)
+                # single_exc_layer()
                 double_exc_layer(0)
             else:
                 for i in range(n//2):
                     double_exc_layer(i)
                     single_exc_layer()
                     fswap_layer()
+        logger.info(f"generalized:\n{circ}")
         # print(circ)
         return circ, mtoq
     
@@ -213,6 +262,154 @@ class UpGCCSD(AbstractUCC):
         return mtoq
     
     
+class UCCSD(AbstractUCC):
+    def __init__(self,  **kwargs):
+        super().__init__(**kwargs)
+
+    def get_alpha_excitations(self) -> List[SingleLadExcitation]:
+        """
+        Method to get spin preserving single excitation operators via ladder
+        operators for alpha orbitals
+        """
+        alpha = range(self.n_spatial)
+        return [SingleLadExcitation((i,), (j,)) for i in alpha for j in alpha if i > j]
+ 
+    def get_beta_excitations(self) -> List[SingleLadExcitation]:
+        """
+        Method to get spin preserving single excitation operators via ladder
+        operators for beta orbitals
+        """
+        beta = range(self.n_spatial, 2*self.n_spatial)
+        return [SingleLadExcitation((i,), (j,)) for i in beta for j in beta if i > j]
+
+    def get_double_excitations(self) -> List[DoubleLadExcitation]:
+        """
+        Method to get spin preserving pair double excitation operators via ladder
+        operators
+        """
+        alpha = range(self.n_spatial)
+        bio = self.n_spatial
+        aa = []
+        bb = []
+        for a in alpha:
+            for b in alpha[a + 1:]:
+                for c in alpha[b + 1:]:
+                    for d in alpha[c + 1:]:
+                        aa.append(DoubleLadExcitation((a, b),(c, d) ))
+                        # aa.append(DoubleLadExcitation((a, c),(b, d) ))
+                        # aa.append(DoubleLadExcitation((a, d),(b, c) ))
+                        bb.append(DoubleLadExcitation((a + bio, b + bio),(c + bio, d + bio) ))
+                        # bb.append(DoubleLadExcitation((a + bio, c + bio),(b + bio, d + bio) ))
+                        # bb.append(DoubleLadExcitation((a + bio, d + bio),(b + bio, c + bio) ))
+        ab = []
+        for a in alpha:
+            for b in alpha[a + 1:]:
+                for c in alpha:
+                    for d in alpha[c + 1:]:
+                        ab.append(DoubleLadExcitation((a, c + bio), (b, d + bio) ))
+        return aa + ab + bb
+    
+
+    # def cyclic_algorithm(self,
+    #                     method_name: str=LadExcImpl.CNOT12(),
+    #                     circ: Optional[CircWrapper]=None
+    #                     ):
+    #     n = self.n_qubits
+    #     if circ is None:
+    #         circ = QiskitCirc(n)
+    #     mtoq = MajoranaContainer.jw(n)
+    #     single_ladder_exc = self.get_alpha_excitations() + self.get_beta_excitations()
+    #     double_ladder_exc = self.get_double_excitations()
+
+    #     def init_state():
+    #         num_electrons = self.n_alpha  
+    #         for i in range(self.n_qubits):
+    #             if (mtoq.get_by_qubs(i)[0] < 2*num_electrons) or (self.n_spatial * 2 <= 
+    #                     mtoq.get_by_qubs(i)[0]  < 2*self.n_spatial + 2*num_electrons):
+    #                 circ.x(i)
+    #             else:
+    #                 circ.id(i)
+    #         for i in range(2):
+    #             for j in range(i*n//2, i*n//2 + n//2 - 1, 2):
+    #                 mswap(j, 1, j + 1, 0)
+
+    #     def mswap(qub1, disp1, qub2, disp2):
+    #         _mswap(qub1, disp1, qub2, disp2, circ, mtoq)
+        
+    #     def append_maj_S(ls: MajExcitation):
+    #         return _append_maj_S(ls, sp_maj_exc, circ, mtoq)
+            
+    #     def append_lad_D(i,j):
+    #         return _append_lad([i, i + 1, j, j + 1], circ, mtoq, method_name, dp_lad_exc)
+        
+    #     def single_exc_layer():
+    #         func = lambda i: MajExcitation((mtoq.get_by_qubs(i)[0], mtoq.get_by_qubs(i)[1]))
+    #         _ = [append_maj_S(func(i)) for i in range(n)]
+
+    #     def tau_left_rigth(qub, side=0):
+    #         mswap(qub + 1, side, qub + 2, side)
+    #         mswap(qub + 0, side, qub + 1, side)
+    #         mswap(qub + 2, side, qub + 3, side)
+    #         mswap(qub + 1, side, qub + 2, side)
+
+    #     def tau_up_down(qub):
+    #         mswap(qub + 1, 0, qub + 1, 1)
+    #         mswap(qub + 0, 0, qub + 0, 1)
+
+    #     def cycl_on_against(qub_min, qub_max, against=True):
+    #         n = qub_max - qub_min
+    #         for i in range(n):
+    #             if against:
+    #                 if i % 2 == 0:
+    #                     for qub in range(qub_min, qub_max, 2):
+    #                         for qub2 in range(qub_min, qub_max, 2):
+    #                             if qub != qub2:
+    #                                 append_lad_D(qub, qub2)
+    #                         tau_left_rigth(qub, side=0)
+    #                         single_exc_layer()
+    #                     tau_up_down(qub_max)
+    #                 else:
+    #                     for qub in range(qub_max - 2, qub_min - 2, -2):
+    #                         for qub2 in range(qub_min, qub_max, 2):
+    #                             if qub != qub2:
+    #                                 append_lad_D(qub, qub2)
+    #                         tau_left_rigth(qub, side=1)
+    #                         single_exc_layer()
+    #                     tau_up_down(qub_min)
+    #             else:
+    #                 if i % 2 == 0:
+    #                     for qub in range(qub_max - 2, qub_min - 2, -2):
+    #                         for qub2 in range(qub_min, qub_max, 2):
+    #                             if qub != qub2:
+    #                                 append_lad_D(qub, qub2)
+    #                         tau_left_rigth(qub, side=0)
+    #                         single_exc_layer()
+    #                     tau_up_down(qub_min)
+    #                 else:
+    #                     for qub in range(qub_min, qub_max, 2):
+    #                         for qub2 in range(qub_min, qub_max, 2):
+    #                             if qub != qub2:
+    #                                 append_lad_D(qub, qub2)
+    #                         tau_left_rigth(qub, side=1)
+    #                         single_exc_layer()
+    #                     tau_up_down(qub_max)
+
+    #     # sp_maj_exc = alpha2beta(alpha, self.n_qubits)
+    #     sp_maj_exc: Dict[MajExcitation, Parameter] = lad2maj(single_ladder_exc, name="t_")
+    #     dp_lad_exc: Dict[LadExcitation, Parameter] = lad2lad(double_ladder_exc, name="t_")
+        
+    #     qub_min = 0
+    #     qub_max = n - 2
+    #     while qub_min < n - 2:
+    #         cycl_on_against(qub_min, qub_max, True)
+    #         cycl_on_against(qub_min, qub_max, False)
+    #         qub_min += 2
+    #     # print(sp_maj_exc)
+    #     # print(dp_lad_exc)
+    #     return circ, mtoq
+        # append_lad_D(qub_min, qub_max)
+        # single_exc_layer(qub_min)
+
 def _mswap(qub1, disp1, qub2, disp2, circ: CircWrapper, mtoq: MajoranaContainer):
     circ.mswap(mtoq.transpose(qub1, disp1, qub2, disp2))
     
@@ -233,22 +430,29 @@ def _append_lad(qubits: Tuple[int,...],
                 method_name: str,
                 lad_exc: Dict[LadExcitation, Parameter]) -> bool:
     maj_set = []
-    list_signs = getattr(CircWrapper, "get_pauli_" + method_name)()
+    list_signs = getattr(ExcitationImpl, "get_pauli_" + method_name)()
     for i in qubits:
         maj_set = maj_set + list(mtoq.get_by_qubs(i))
     maj_set = list(sorted(maj_set))
-    try:
-        if len(qubits) == 4:
-            exc = DoubleLadExcitation((maj_set[4]//2, maj_set[0]//2), (maj_set[6]//2, maj_set[2]//2))
-        else:
-            exc = SingleLadExcitation((maj_set[2]//2,), (maj_set[0]//2,))
-        maj_exc: List[MajExcitation] = lad2maj([exc])
-        for maj in maj_exc:
-            pauli = reduce(lambda x,y: x * y, [mtoq[q] for q in maj.op])
-            label = pauli.get_label_carr(qubits)
-            list_signs[label] = (list_signs[label] * maj.sign * 1j**pauli.pow ).imag
-            if len(pauli.get_label_qubs()[0]) > len(label):
-                raise KeyError
-        getattr(circ, method_name)(qubits, lad_exc.pop(exc), list_signs)
-    except KeyError:
-        return False
+    if len(qubits) == 4:
+        excs = []
+        excs.append(DoubleLadExcitation((maj_set[4]//2, maj_set[0]//2), (maj_set[6]//2, maj_set[2]//2)))
+        # excs.append(DoubleLadExcitation((maj_set[2]//2, maj_set[0]//2), (maj_set[6]//2, maj_set[4]//2)))
+        # excs.append(DoubleLadExcitation((maj_set[6]//2, maj_set[0]//2), (maj_set[2]//2, maj_set[4]//2)))
+        method = circ.double_excitation
+    else:
+        excs= [SingleLadExcitation((maj_set[2]//2,), (maj_set[0]//2,))]
+        method = circ.single_excitation
+    for exc in excs:
+        try:
+            maj_exc: List[MajExcitation] = lad2maj([exc])
+            for maj in maj_exc:
+                pauli = reduce(lambda x,y: x * y, [mtoq[q] for q in maj.op])
+                label = pauli.get_label_carr(qubits)
+                list_signs[label] = (list_signs[label] * maj.sign * 1j**pauli.pow ).imag
+                if len(pauli.get_label_qubs()[0]) > len(label):
+                    raise KeyError
+            logger.info(f"{qubits}")
+            method(method_name, qubits, lad_exc.pop(exc), list_signs)
+        except KeyError:
+            pass

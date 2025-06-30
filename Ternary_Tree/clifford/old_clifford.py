@@ -5,7 +5,17 @@ dict_prod_coef = {"II" : ["I",1] , "XX" :  ["I",1] , "YY" :  ["I",1] ,"ZZ" :  ["
              "XY" :  ["Z", 1j] ,"YX" : ["Z", -1j],"XZ" : ["Y",-1j], "ZX" : ["Y",1j],"YZ" : ["X",1j],"ZY" : ["X",-1j],
             "IX" : ["X",1], "XI" : ["X",1], "YI" : ["Y",1],"IY" : ["Y",1],"IZ" : ["Z",1],"ZI" : ["Z",1]}
 
-dict_cx_trans = {"II": "II", "IX": "IX", "ZI": "ZI", "ZX": "ZX", "XI": "XX", "XX": "XI", "IZ": "ZZ", "ZZ": "IZ", "YI": "YX", "YX": "YI", "XZ": "YY", "YY": "XZ", 
+dict_cx_trans = {"II": "II", 
+                 "IX": "IX", 
+                 "ZI": "ZI", 
+                 "ZX": "ZX", 
+                 "XI": "XX", 
+                 "XX": "XI", 
+                 "IZ": "ZZ", 
+                 "ZZ": "IZ", 
+                 "YI": "YX", 
+                 "YX": "YI", 
+                 "XZ": "YY", "YY": "XZ", 
                  "XY": "YZ", "YZ": "XY", "ZY": "IY", "IY":"ZY"}
 def prod(pauli1, pauli2):
     ops = ""

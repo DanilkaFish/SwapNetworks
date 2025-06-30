@@ -91,7 +91,7 @@ class DoubleLadExcitation(LadExcitation):
         a_i^+ a_j^+ a_k a_l - a_i a_j a_k^+ a_l^+ = (i, j, k, l)
     """
     def __init__(self, init: Tuple[int, int], finit: Tuple[int, int], sign: int=1):
-        self.op = (*init, *finit )
+        self.op = (*sorted(init), *sorted(finit) )
         self.sign = self.sign * sign
     
     def maj_range(self):

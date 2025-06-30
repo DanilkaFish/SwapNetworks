@@ -1,0 +1,182 @@
+[
+    {
+        "name": "bk",
+        "ref_ener": -1.8716797649675605,
+        "energy": -1.8353276931121894,
+        "optimizer": "L_BFGS_B",
+        "gate_count": {
+            "PauliEvolution": 18,
+            "x": 5
+        },
+        "dist": 0.735,
+        "noise": "Z"
+    },
+    {
+        "name": "bk",
+        "ref_ener": -1.8716797649675605,
+        "energy": -1.8395530991536897,
+        "optimizer": "L_BFGS_B",
+        "gate_count": {
+            "PauliEvolution": 18,
+            "x": 5
+        },
+        "dist": 0.735,
+        "noise": "Z"
+    },
+    {
+        "name": "bk",
+        "ref_ener": -1.8716797649675605,
+        "energy": -1.8422350917531627,
+        "optimizer": "L_BFGS_B",
+        "gate_count": {
+            "PauliEvolution": 18,
+            "x": 5
+        },
+        "dist": 0.735,
+        "noise": "Z"
+    },
+    {
+        "name": "bk",
+        "ref_ener": -1.8716797649675605,
+        "energy": -1.8439359382043028,
+        "optimizer": "L_BFGS_B",
+        "gate_count": {
+            "PauliEvolution": 18,
+            "x": 5
+        },
+        "dist": 0.735,
+        "noise": "Z"
+    },
+    {
+        "name": "bk",
+        "ref_ener": -1.8716797649675605,
+        "energy": -1.8450139751047139,
+        "optimizer": "L_BFGS_B",
+        "gate_count": {
+            "PauliEvolution": 18,
+            "x": 5
+        },
+        "dist": 0.735,
+        "noise": "Z"
+    },
+    {
+        "name": "bk",
+        "ref_ener": -1.8716797649675605,
+        "energy": -1.8456970240767385,
+        "optimizer": "L_BFGS_B",
+        "gate_count": {
+            "PauliEvolution": 18,
+            "x": 5
+        },
+        "dist": 0.735,
+        "noise": "Z"
+    },
+    {
+        "name": "bk",
+        "ref_ener": -1.8716797649675605,
+        "energy": -1.8461297125247533,
+        "optimizer": "L_BFGS_B",
+        "gate_count": {
+            "PauliEvolution": 18,
+            "x": 5
+        },
+        "dist": 0.735,
+        "noise": "Z"
+    },
+    {
+        "name": "bk",
+        "ref_ener": -1.8716797649675605,
+        "energy": -1.8534086801725622,
+        "optimizer": "L_BFGS_B",
+        "gate_count": {
+            "PauliEvolution": 18,
+            "x": 5
+        },
+        "dist": 0.735,
+        "noise": "Z"
+    },
+    {
+        "name": "bk",
+        "ref_ener": -1.8716797649675605,
+        "energy": -1.8579789862174576,
+        "optimizer": "L_BFGS_B",
+        "gate_count": {
+            "PauliEvolution": 18,
+            "x": 5
+        },
+        "dist": 0.735,
+        "noise": "Z"
+    },
+    {
+        "name": "bk",
+        "ref_ener": -1.8716797649675605,
+        "energy": -1.8609145941758314,
+        "optimizer": "L_BFGS_B",
+        "gate_count": {
+            "PauliEvolution": 18,
+            "x": 5
+        },
+        "dist": 0.735,
+        "noise": "Z"
+    },
+    {
+        "name": "bk",
+        "ref_ener": -1.8716797649675605,
+        "energy": -1.862791949491723,
+        "optimizer": "L_BFGS_B",
+        "gate_count": {
+            "PauliEvolution": 18,
+            "x": 5
+        },
+        "dist": 0.735,
+        "noise": "Z"
+    },
+    {
+        "name": "bk",
+        "ref_ener": -1.8716797649675605,
+        "energy": -1.8643720758495679,
+        "optimizer": "L_BFGS_B",
+        "gate_count": {
+            "PauliEvolution": 18,
+            "x": 5
+        },
+        "dist": 0.735,
+        "noise": "Z"
+    },
+    {
+        "name": "bk",
+        "ref_ener": -1.8716797649675605,
+        "energy": -1.8669117258812873,
+        "optimizer": "L_BFGS_B",
+        "gate_count": {
+            "PauliEvolution": 18,
+            "x": 5
+        },
+        "dist": 0.735,
+        "noise": "Z"
+    },
+    {
+        "name": "bk",
+        "ref_ener": -1.8716797649675605,
+        "energy": -1.8685220121619333,
+        "optimizer": "L_BFGS_B",
+        "gate_count": {
+            "PauliEvolution": 18,
+            "x": 5
+        },
+        "dist": 0.735,
+        "noise": "Z"
+    },
+    {
+        "name": "bk",
+        "ref_ener": -1.8716797649675605,
+        "energy": -1.8695425476168692,
+        "optimizer": "L_BFGS_B",
+        "gate_count": {
+            "PauliEvolution": 18,
+            "x": 5
+        },
+        "dist": 0.735,
+        "noise": "Z"
+    }
+]

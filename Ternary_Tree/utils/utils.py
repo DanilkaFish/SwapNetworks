@@ -14,7 +14,6 @@ def static_vars(**kwargs):
         return func
     return decorate
 
-
 def lad2maj(ladder_excitations: ArrayLike[LadExcitation], 
                 name: str="t_"
                 ) -> Dict[MajExcitation, Parameter]:

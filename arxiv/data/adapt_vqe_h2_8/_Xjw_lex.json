@@ -1,0 +1,182 @@
+[
+    {
+        "name": "jw_lex",
+        "ref_ener": -1.871679764967563,
+        "energy": -1.8317207344998625,
+        "optimizer": "L_BFGS_B",
+        "gate_count": {
+            "PauliEvolution": 18,
+            "x": 2
+        },
+        "dist": 0.735,
+        "noise": "X"
+    },
+    {
+        "name": "jw_lex",
+        "ref_ener": -1.871679764967563,
+        "energy": -1.8373103595123812,
+        "optimizer": "L_BFGS_B",
+        "gate_count": {
+            "PauliEvolution": 18,
+            "x": 2
+        },
+        "dist": 0.735,
+        "noise": "X"
+    },
+    {
+        "name": "jw_lex",
+        "ref_ener": -1.871679764967563,
+        "energy": -1.8408315318470696,
+        "optimizer": "L_BFGS_B",
+        "gate_count": {
+            "PauliEvolution": 18,
+            "x": 2
+        },
+        "dist": 0.735,
+        "noise": "X"
+    },
+    {
+        "name": "jw_lex",
+        "ref_ener": -1.871679764967563,
+        "energy": -1.8430538357964188,
+        "optimizer": "L_BFGS_B",
+        "gate_count": {
+            "PauliEvolution": 18,
+            "x": 2
+        },
+        "dist": 0.735,
+        "noise": "X"
+    },
+    {
+        "name": "jw_lex",
+        "ref_ener": -1.871679764967563,
+        "energy": -1.8444580811350568,
+        "optimizer": "L_BFGS_B",
+        "gate_count": {
+            "PauliEvolution": 18,
+            "x": 2
+        },
+        "dist": 0.735,
+        "noise": "X"
+    },
+    {
+        "name": "jw_lex",
+        "ref_ener": -1.871679764967563,
+        "energy": -1.8473120522301594,
+        "optimizer": "L_BFGS_B",
+        "gate_count": {
+            "PauliEvolution": 18,
+            "x": 2
+        },
+        "dist": 0.735,
+        "noise": "X"
+    },
+    {
+        "name": "jw_lex",
+        "ref_ener": -1.871679764967563,
+        "energy": -1.854006923028335,
+        "optimizer": "L_BFGS_B",
+        "gate_count": {
+            "PauliEvolution": 18,
+            "x": 2
+        },
+        "dist": 0.735,
+        "noise": "X"
+    },
+    {
+        "name": "jw_lex",
+        "ref_ener": -1.871679764967563,
+        "energy": -1.8583910818816,
+        "optimizer": "L_BFGS_B",
+        "gate_count": {
+            "PauliEvolution": 18,
+            "x": 2
+        },
+        "dist": 0.735,
+        "noise": "X"
+    },
+    {
+        "name": "jw_lex",
+        "ref_ener": -1.871679764967563,
+        "energy": -1.8611906566939183,
+        "optimizer": "L_BFGS_B",
+        "gate_count": {
+            "PauliEvolution": 18,
+            "x": 2
+        },
+        "dist": 0.735,
+        "noise": "X"
+    },
+    {
+        "name": "jw_lex",
+        "ref_ener": -1.871679764967563,
+        "energy": -1.8629733443140113,
+        "optimizer": "L_BFGS_B",
+        "gate_count": {
+            "PauliEvolution": 18,
+            "x": 2
+        },
+        "dist": 0.735,
+        "noise": "X"
+    },
+    {
+        "name": "jw_lex",
+        "ref_ener": -1.871679764967563,
+        "energy": -1.8657937024785491,
+        "optimizer": "L_BFGS_B",
+        "gate_count": {
+            "PauliEvolution": 18,
+            "x": 2
+        },
+        "dist": 0.735,
+        "noise": "X"
+    },
+    {
+        "name": "jw_lex",
+        "ref_ener": -1.871679764967563,
+        "energy": -1.8678121480985577,
+        "optimizer": "L_BFGS_B",
+        "gate_count": {
+            "PauliEvolution": 18,
+            "x": 2
+        },
+        "dist": 0.735,
+        "noise": "X"
+    },
+    {
+        "name": "jw_lex",
+        "ref_ener": -1.871679764967563,
+        "energy": -1.8690922741572735,
+        "optimizer": "L_BFGS_B",
+        "gate_count": {
+            "PauliEvolution": 18,
+            "x": 2
+        },
+        "dist": 0.735,
+        "noise": "X"
+    },
+    {
+        "name": "jw_lex",
+        "ref_ener": -1.871679764967563,
+        "energy": -1.8699036910152462,
+        "optimizer": "L_BFGS_B",
+        "gate_count": {
+            "PauliEvolution": 18,
+            "x": 2
+        },
+        "dist": 0.735,
+        "noise": "X"
+    },
+    {
+        "name": "jw_lex",
+        "ref_ener": -1.871679764967563,
+        "energy": -1.869924837201125,
+        "optimizer": "L_BFGS_B",
+        "gate_count": {
+            "PauliEvolution": 18,
+            "x": 2
+        },
+        "dist": 0.735,
+        "noise": "X"
+    }
+]
