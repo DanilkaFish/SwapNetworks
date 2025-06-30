@@ -7,12 +7,19 @@ from qiskit.circuit import Parameter, QuantumCircuit, ParameterExpression
 from qiskit.circuit.library import PauliEvolutionGate
 from qiskit.quantum_info import Pauli as qiskit_pauli
 
-from .pauli import Pauli
+from .pauli import Pauli, MajoranaContainer
 from .parameter import Parameter as MyParameter
 from .utils import static_vars
 
+import logging
+
+logger = logging.getLogger(__name__)
 
 class CircWrapper:
+    @property
+    def num_qubits(self):
+        pass
+
     @abstractmethod
     def mswap(self, pauli: Pauli):
         pass
@@ -22,15 +29,15 @@ class CircWrapper:
         pass
 
     @abstractmethod
-    def rx(self, par: float | MyParameter):
+    def rx(self, par: float | MyParameter, qub):
         pass
     
     @abstractmethod
-    def ry(self, par: float | MyParameter):
+    def ry(self, par: float | MyParameter, qub):
         pass
 
     @abstractmethod
-    def rz(self, par: float | MyParameter):
+    def rz(self, par: float | MyParameter, qub):
         pass
     
     @abstractmethod
@@ -53,7 +60,7 @@ class CircWrapper:
         pass
 
     @abstractmethod
-    def single_excitation(self, qubits, parameter: MyParameter, list_signs):
+    def single_excitation(self, qubits, parameter, list_signs):
         pass
 
     @abstractmethod
@@ -70,17 +77,51 @@ def to_qiskit_parameter(par: MyParameter) -> ParameterExpression:
     return to_qiskit_parameter.d_par.setdefault(par.name, par.coef * Parameter(par.name))
 
 
-# def mswap(self, pauli: Pauli) -> None:
-#     par = (1j**pauli.pow).imag * pi/4
-#     label, qubits = pauli.get_label_qubs()
-#     op = qiskit_pauli(label)
-#     gate = PauliEvolutionGate(op, par)
-#     gate.name = label
-#     self.append(gate, qubits)
-#     self.paulis.append((pauli, par))
-
 class ExcitationImpl:
-    
+
+    @staticmethod
+    def jw_init_state(electrons, circ: CircWrapper, mtoq: MajoranaContainer, encoding="xyz"):
+        n = circ.num_qubits
+        if encoding[-1] == "z":
+            prep_method = lambda qub, angle: circ.rx(pi + angle, qub)
+        elif encoding[-1] == "y":
+            prep_method = lambda qub, angle: circ.ry(pi/2 + angle, qub)
+        elif encoding[-1] == "x":
+            prep_method = lambda qub, angle: circ.rz(pi/2 + angle, qub)
+        if encoding[0:2] in {"xy", "yz", "zx"}:
+            angle = 0
+        else:
+            angle = pi
+
+        for i in range(n):
+            if mtoq.get_by_qubs(i)[0]/2 in electrons:
+                prep_method(i, angle)
+            else:
+                prep_method(i, angle + pi)
+
+    @staticmethod
+    def majorana_init_state(electrons: List[int], circ: CircWrapper, mtoq: MajoranaContainer, encoding: str="xyz"):
+        n = circ.num_qubits
+        if encoding[-1] == "z":
+            prep_method = lambda qub, angle: circ.rx(pi + angle, qub)
+        elif encoding[-1] == "y":
+            prep_method = lambda qub, angle: circ.ry(pi/2 + angle, qub)
+        elif encoding[-1] == "x":
+            prep_method = lambda qub, angle: circ.rz(pi/2 + angle, qub)
+        if encoding[0:2] in {"xy", "yz", "zx"}:
+            angle = 0
+        else:
+            angle = pi
+
+        for i in range(n):
+            if mtoq.get_by_qubs(i)[0]/2 in electrons:
+                prep_method(i, angle)
+            else:
+                prep_method(i, angle + pi)
+        for i in range(2):
+            for j in range(i*n//2, i*n//2 + n//2 - 1, 2):
+                circ.mswap(mtoq.transpose(j, 1, j + 1, 0))
+        logger.info(f"preparing majorana init state for {encoding=} and {electrons=}...")
     @staticmethod
     def get_pauli_single_ex():
         return {"XY": 1, "YX": 1}

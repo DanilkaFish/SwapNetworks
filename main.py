@@ -1,23 +1,37 @@
 from typing import List
 import numpy as np
 from copy import deepcopy
-# from qiskit_algorithms.optimizers import SPSA ,CG, SLSQP, L_BFGS_B, COBYLA
-from qiskit_algorithms.optimizers import CG, SLSQP, L_BFGS_B, COBYLA, SPSA
-
 import json
+
+from qiskit_algorithms.optimizers import CG, SLSQP, L_BFGS_B, COBYLA, SPSA
+from qiskit_nature.second_q.operators import FermionicOp
+
 from copy import deepcopy
 from Ternary_Tree.ucc.abstractucc import Molecule
 from Ternary_Tree.qiskit_interface.circuit_provider import *
 from my_utils import Timer
 import multiprocessing as mp
-
+from Ternary_Tree import logger
 import sys
-from pyscf import lib
-log = lib.logger.Logger(sys.stdout, 4)
-log.info('info level')
-log.verbose = 3
-log.info('info level')
-log.note('note level')
+# from pyscf import lib
+
+import logging
+
+# logger.setLevel(logging.INFO)
+
+# logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+handler = logging.StreamHandler()
+handler.setFormatter(logging.Formatter('%(levelname)s %(message)s'))
+logger.addHandler(handler)
+logger.setLevel(logging.INFO)
+# logger.info("hello")
+# logger.warning("warn hello")
+# log = lib.logger.Logger(sys.stdout, 4)
+# log.info('info level')
+# log.verbose = 3
+# log.info('info level')
+# log.note('note level')
 
 class H2_H2(Molecule):
     def __init__(self, R: float):
@@ -51,7 +65,6 @@ def perturabation(n=n, a=0.1):
 optimizers = [(L_BFGS_B(maxiter=80, ftol=0.0000001), 'L_BFGS_B')]
 
 
-R = np.linspace(0.8,1.8,16)
 class vqeData:
     def __init__(self, 
                  file_name_to_read: str,
@@ -59,7 +72,7 @@ class vqeData:
                   optimizer: any,
                   reps: int=1,
                   noise_type: str="",
-                  probs: np.ndarray=1 - np.flip(np.geomspace(0.00002, (0.001), 1)),
+                  probs: np.ndarray=1 - np.flip(np.geomspace(0.00002, (0.001), 15)),
                   device: str="CPU",
                   ):
         self.file_name_to_read = file_name_to_read 
@@ -77,47 +90,51 @@ class vqeData:
         self.circ_prov.update_molecule(self.molecule)
         self.ref_value = numpy_energy(self.circ_prov.fermionic_op, self.circ_prov.uccgsd)
 
+def eval_additional_observable(circuit: QuantumCircuit, parameters, estimator,  mapper ):
+    num_spin_orbitals = circuit.num_qubits
+    def num_observable(num_spin_orbitals, mapper):
+        ferm_observable_N = FermionicOp(
+            {f"+_{i} -_{i}": 1 for i in range(num_spin_orbitals)},
+            num_spin_orbitals=num_spin_orbitals
+        )
+        return mapper.map(ferm_observable_N)
+    circuit = circuit.assign_parameters(parameters)
+    n_obs = num_observable(num_spin_orbitals, mapper)
+    res = estimator.run([circuit]*2, observables=[n_obs, n_obs @ n_obs]).result()
+    return list(res.values) + [res.values[1] - res.values[0]**2]
+
+
 @Timer.attach_timer("thread_timer")
 def to_thread(namet, vqe_data: vqeData, r:float=0, is_rust=False):
     init_point = None
     probs = vqe_data.probs
-    # probs = [0]
-    # if vqe_data.noise_type != "":
-    #     probs = vqe_data.probs
-    #     try:
-    #         with open(get_file_name(vqe_data.file_name_to_read, "", name), "r") as file:
-    #             init_point = json.load(file)[0]["param"]
-    #             if isinstance(init_point, float):
-    #                 init_point = np.array([init_point])
-    #     except FileNotFoundError:
-    #         print("RUNNING NOISY SIM WITHOUT INIT POINT")
     data = []
-    # print(namet)
-    name, circ, op = vqe_data.circ_prov.get_circ(namet)
+    name, circ, op_mapper = vqe_data.circ_prov.get_circ(namet)
     mapper=JordanWignerMapper()
     if namet == Circuits.bk():
         mapper = BravyiKitaevMapper()
     if is_rust:
         name = name + "_lex"
-    for prob in probs:
-        circs = CircSim(circ, op, prob, vqe_data.noise_type, init_point)
-        # s = "1" + "2"
+    for index, prob in enumerate(probs):
+        circs = CircSim(circ, op_mapper[0], prob, vqe_data.noise_type, init_point)
+        # energy, parameters = circs.run_adapt_vqe(vqe_data.optimizer[0], 
+                                                #  vqe_data.device, 
+                                                #  reps=1, 
+                                                #  is_rust=is_rust, 
+                                                #  cp=vqe_data.circ_prov, 
+                                                #  mapper=mapper)
 
-        energy, parameters = circs.run_adapt_vqe(vqe_data.optimizer[0], 
-                                                 vqe_data.device, 
-                                                 reps=1, 
-                                                 is_rust=is_rust, 
-                                                 cp=vqe_data.circ_prov, 
-                                                 mapper=mapper)
-
-        # energy, parameters = circs.run_qiskit_vqe(vqe_data.optimizer[0], vqe_data.device, reps=1)
+        energy, parameters, est = circs.run_qiskit_vqe(vqe_data.optimizer[0], vqe_data.device, reps=1)
+        additional_res = eval_additional_observable(circs.circ, parameters, est, op_mapper[1])
+        logger.info(f"{energy:.5f} hf: {name=}, {noise=}, {index=}")
         data.append({
             "name": name, 
             "ref_ener": vqe_data.ref_value, 
             "energy": energy, 
-            # "param": parameters, 
+            "param": parameters, 
+            "addition_res:": additional_res,
             "optimizer": vqe_data.optimizer[1],
-            "gate_count": circ.count_ops(),
+            "gate_count": circs.circ.count_ops(),
             "dist": r,
             "noise": vqe_data.noise_type
         })
@@ -131,29 +148,29 @@ def run_vqe(name: str, vqe_data: vqeData, data: dict, r:float=0, is_rust=False):
         data.setdefault(name+vqe_data.noise_type, result)
     else:
         data[name + vqe_data.noise_type] = data[name + vqe_data.noise_type] + result
-    print("thread_timer" + ": ", Timer.timers["thread_timer"])
+    logger.info(f"thread_timer: {Timer.timers["thread_timer"]:.4f} sec")
     return result
 
 if __name__ == "__main__":
     mult = [0.01, 0.1, 0.5,   1, 2, 3, 5, 10]
-    # for noise in ["D", "X", "Y", "Z"]:
+    for noise in ["D", "X", "Y", "Z"]:
     # for noise in ["", "D", "X","Y","Z"]:
-    for noise in ["sc", ]:
+    # for noise in ["X", ]:
     
         vqe_data=vqeData(
-                "data/adapt_vqe_h2_8/",
-                H2_8,
+                "data/LiH_8",
+                LiH_8,
                 optimizers[0],
                 reps=1,
-                probs=mult,
-                # probs=1 - np.flip(np.geomspace(0.00001, (0.006), 12)),
+                # probs=mult,
+                probs=1 - np.flip(np.geomspace(0.00001, (0.006), 10)),
                 noise_type=noise,
                 device="CPU",
             )
 
         # circ_names = Circuits.get_circs_names()[:]
-        circ_names = Circuits.get_circs_names()[:2] + Circuits.get_circs_names()[4:] +  [Circuits.swap_2xn_alt()]
-        # circ_names = Circuits.get_circs_names()[2:4]
+        # circ_names = Circuits.get_circs_names()[:2] + Circuits.get_circs_names()[4:] +  [Circuits.swap_2xn_alt()]
+        circ_names = Circuits.get_circs_names()
         # namet = Circuits.swap_2xn_alt()
         # ## circ_names = circ_names[:2] + circ_names[-3:] 
         # ## circ_names = circ_names[2:3]
@@ -178,12 +195,10 @@ if __name__ == "__main__":
         # vqe_data.update_prov()
         procs = []
         for name in circ_names:
-            if (name == "bk_lex" or name == "jw_lex"):
-                procs.append(mp.Process(target=run_vqe, args=(name[0:2], vqe_data, data, r, True) ))
-            else:
-                procs.append(mp.Process(target=run_vqe, args=(name, vqe_data, data, r) ))
-        # procs.append(mp.Process(target=run_vqe, args=(name, vqe_data, data, r, True)))
-        # procs.append(mp.Process(target=run_vqe, args=(name, vqe_data, data, r, True)))
+            # if (name == "bk_lex" or name == "jw_lex"):
+                # procs.append(mp.Process(target=run_vqe, args=(name[0:2], vqe_data, data, r, True) ))
+            # else:
+            procs.append(mp.Process(target=run_vqe, args=(name, vqe_data, data, r) ))
         for proc in procs:
             proc.start()
         for proc in procs:

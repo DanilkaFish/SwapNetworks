@@ -144,9 +144,10 @@ class MajoranaContainer(PauliContainer):
     @classmethod
     def jw(cls, n_qubits: int, encoding="xyz"):
         qubs = list(range(2*n_qubits))
-        X = Pauli.from_str(str[0]).bsf
-        Y = Pauli.from_str(str[1]).bsf
-        Z = Pauli.from_str(str[2]).bsf
+        encoding = encoding.upper()
+        X = Pauli.from_str(encoding[0]).bsf
+        Y = Pauli.from_str(encoding[1]).bsf
+        Z = Pauli.from_str(encoding[2]).bsf
         bsfx = np.zeros(n_qubits*2, dtype=bool)
         bsfy = np.zeros(n_qubits*2, dtype=bool)
         pauli_list = []

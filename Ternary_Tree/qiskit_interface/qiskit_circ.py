@@ -18,13 +18,19 @@ def to_qiskit_parameter(par: MyParameter) -> ParameterExpression:
     return to_qiskit_parameter.d_par.setdefault(par.name, par.coef * Parameter(par.name))
 
 
-class QiskitCirc(CircWrapper, QuantumCircuit):
-    def __init__(self, qc, name=None):
+class QiskitCirc(QuantumCircuit, CircWrapper):
+    def __init__(self, n, name=None):
+        self._num_qubits = n
         self.paulis = []
         self.swaps = []
         self.excitation_pos = dict()
-        super().__init__(qc, name=name)
+        super().__init__(n, name=name)
+        logger.info(f"{self.num_qubits=}")
 
+    @property
+    def num_qubits(self):
+        return self._num_qubits
+    
     def rotation(self, 
               pauli: Pauli,
               par: MyParameter,
@@ -79,7 +85,7 @@ class QiskitCirc(CircWrapper, QuantumCircuit):
         parameter =  to_qiskit_parameter(par)
         q0, q1 = 0,1
         circ = QuantumCircuit(2)
-        getattr(CircWrapper, method_name)(circ, q0, q1, parameter, list_signs)
+        getattr(ExcitationImpl, method_name)(circ, q0, q1, parameter, list_signs)
         self.compose(circ, qubits=qubits, inplace=True, wrap=True)
         # if list(circ.parameters)[0] not in self.excitation_pos:
         #     self.excitation_pos[list(circ.parameters)[0]] = [len(self) - 1]
@@ -90,7 +96,7 @@ class QiskitCirc(CircWrapper, QuantumCircuit):
         parameter = to_qiskit_parameter(par)
         q0, q1, q2, q3 = 0,1,2,3
         circ = QuantumCircuit(4)
-        getattr(CircWrapper, method_name)(circ, q0, q1, q2, q3, parameter, list_signs)
+        getattr(ExcitationImpl, method_name)(circ, q0, q1, q2, q3, parameter, list_signs)
         circ.name = par.name
         self.compose(circ, qubits=qubits, inplace=True, wrap=True)
         self.excitation_pos[circ.parameters[0]] = [len(self) - 1]

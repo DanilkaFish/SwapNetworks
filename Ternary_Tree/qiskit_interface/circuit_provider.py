@@ -20,6 +20,7 @@ from qiskit_aer.noise import (NoiseModel, QuantumError, kraus_error, RelaxationN
     pauli_error, depolarizing_error, thermal_relaxation_error)
 from qiskit_aer import AerSimulator
 from qiskit_aer.primitives import Estimator
+from qiskit_aer.primitives.sampler import Sampler
 from qiskit.primitives import BackendEstimator
 from qiskit.transpiler import generate_preset_pass_manager
 from qiskit_algorithms import NumPyMinimumEigensolver
@@ -33,7 +34,10 @@ from .qiskit_circ import QiskitCirc, to_excitaions
 # from logger import logger
 
 logger = logging.getLogger(__name__)
-
+handler = logging.StreamHandler()
+handler.setFormatter(logging.Formatter('%(levelname)s %(message)s'))
+logger.addHandler(handler)
+logger.setLevel(logging.INFO)
 
 noise_dict_qiskit = {"I": IGate(),"X": XGate(), "Y": YGate(), "Z": ZGate()}
 tensors_dict = {"X": np.array([[0,1], [1,0]]),"Y":  np.array([[0,-1j], [1j,0]]), "Z":  np.array([[1,0], [0,-1]]),
@@ -48,8 +52,8 @@ def get_file_name(name, noise, method):
     return name + f"_{noise}" + method +".json"
 
 class SwapCircNames:
-    SWAP2XN = ("swap2xn", LadExcImpl.CNOT12())
-    SWAP2XN_ALT = ("swap2xn_alt", LadExcImpl.CNOT12_ALT())
+    SWAP2XN = ("swap2xn", LadExcImpl.CNOT12xyz())
+    # SWAP2XN_ALT = ("swap2xn_alt", LadExcImpl.CNOT12zyx())
     SWAPGENYORDAN = ("swap_gen", LadExcImpl.YORDAN())
     SWAPGENSHORT = ("swap_gen", LadExcImpl.SHORT())
         
@@ -98,7 +102,7 @@ class Circuits:
         circs.append(Circuits.swap_2xn())
         circs.append(Circuits.swap_gen_short())
         circs.append(Circuits.swap_gen_yor())
-        circs.append(Circuits.swap_2xn_alt())
+        # circs.append(Circuits.swap_2xn_alt())
         return circs
 
 
@@ -114,7 +118,7 @@ def eq_alpha_beta(qc, reps=1):
 
 def print_params(ansatz):
     print(ansatz.count_ops())
-    print(ansatz.depth())
+    # print(ansatz.depth())
     
 
 class CircuitProvider:
@@ -154,7 +158,6 @@ class CircuitProvider:
     def get_swap_circuit(self, name: Tuple[str,str]) -> Tuple[QuantumCircuit, SparsePauliOp]:
         method, double = name
         cirq, mtoq = getattr(self.uccgsd, method)(self.reps, double)
-        print_params(cirq)
         return cirq, ucc_ham(self.fermionic_op, mtoq)
     
     def get_ucc(self, qubit_mapper,  init=False):
@@ -172,7 +175,6 @@ class CircuitProvider:
             ) 
         
     def get_circ_via_mapping(self, qubit_mapper,  init=True):
-        logger.info(f"generating circuit via {qubit_mapper=}")
         qc = self.get_ucc(qubit_mapper, init)
         eq_alpha_beta(qc, reps=self.reps)
         qc = qc.decompose(reps=1)
@@ -201,7 +203,6 @@ class CircuitProvider:
         circ = QuantumCircuit.from_instructions(init, qubits=circ.qubits)
         rq = list(range(nq))
         parr = []
-        # print(qc.decompose(reps=1))
         for gate in pauli:
             for pauli, coef in zip(gate.operation.operator.paulis, gate.operation.operator.coeffs):
                 parr.append((str(pauli), list(reversed(rq)), coef*gate.params[0]))
@@ -223,6 +224,7 @@ class CircuitProvider:
     
 
     def get_rust_circ(self, qubit_mapper: FermionicMapper):
+        logger.info("runnint rust sythesis")
         circ = HartreeFock(self.uccgsd.n_spatial, (self.uccgsd.n_alpha, self.uccgsd.n_beta), qubit_mapper)
         circ._build()
         
@@ -231,6 +233,7 @@ class CircuitProvider:
         rq = list(range(nq))
         parr = []
         for gate in qc.decompose(reps=1):
+            
             for pauli, coef in zip(gate.operation.operator.paulis, gate.operation.operator.coeffs):
                 parr.append((str(pauli), list(reversed(rq)), coef*gate.params[0]))
         circ.compose(synth_pauli_network_rustiq(nq, 
@@ -246,7 +249,6 @@ class CircuitProvider:
             ansatz = pass_manager.run(qc)
         else:
             ansatz = transpile(circ.decompose(reps=3), basis_gates=self.basis_gates, optimization_level=3).decompose(reps=3)
-        print_params(ansatz)
         return circ
 
     def get_circ_op(self, name):
@@ -264,8 +266,8 @@ class CircuitProvider:
             return (self.get_rust_circ(JordanWignerMapper()), jw_ham(self.fermionic_op))
         elif name == Circuits.bk_lex():
             return (self.get_rust_circ(BravyiKitaevMapper()), bk_ham(self.fermionic_op))
-        elif name == Circuits.swap_2xn_alt():
-            return self.get_swap_circuit(SwapCircNames.SWAP2XN_ALT)
+        # elif name == Circuits.swap_2xn_alt():
+        #     return self.get_swap_circuit(SwapCircNames.SWAP2XN_ALT)
         
     def get_circ(self, name) -> Tuple[str, QuantumCircuit, SparsePauliOp]:
         return name, *self.get_circ_op(name)
@@ -286,6 +288,7 @@ class CircSim:
         else:
             self.init_point = init_point
         self.noise_par = noise_par
+        self.circ = transpile(self.circ, basis_gates=[*s_basis, *d_basis], optimization_level=3)
         if noise_type == "_sc":
             instr_dur = []
             td = 68
@@ -307,8 +310,6 @@ class CircSim:
                                   )
             # self.circ.excitation_pos = ep
             # self.circ.delay(100, unit="dt")
-            print(self.circ.duration)
-            print(self.circ.count_ops())
         self.noise_type = noise_type
 
     def run_qiskit_vqe(self, optimizer, device="CPU", reps=1):
@@ -333,8 +334,8 @@ class CircSim:
             _res = vqe.compute_minimum_eigenvalue(operator=self.op)
             if result.eigenvalue.real > _res.eigenvalue.real:
                 result = _res
-        print(f"VQE on Aer qasm simulator (with noise): {result.eigenvalue.real:.5f}")
-        return result.eigenvalue.real, list(result.optimal_parameters.values())
+        # print(f"VQE on Aer qasm simulator (with noise): {result.eigenvalue.real:.5f}")
+        return result.eigenvalue.real, list(result.optimal_parameters.values()), est
         
     def run_adapt_vqe(self, optimizer, device="CPU", reps=1, is_rust=False, cp: CircuitProvider=None, mapper=None):
         par_used = {par: np.random.random() - 0.5 for par in self.circ.parameters if par not in self.circ.excitation_pos}
@@ -402,26 +403,26 @@ class CircSim:
                 counter += 1
             # for index, par in enumerate(qc.parameters):
             par_used = result.optimal_parameters
-            print(qc.count_ops())
-            print(en)
+            # print(qc.count_ops())
+            # print(en)
             get_param(0)
         return _res.eigenvalue.real, list(_res.optimal_parameters.values())
     
 def jw_ham(fermionic_op):
     mapper = JordanWignerMapper()
     qubit_jw_op = mapper.map(fermionic_op)
-    return qubit_jw_op
+    return qubit_jw_op, mapper
 
 def bk_ham(fermionic_op):
     mapper = BravyiKitaevMapper()
     qubit_bk_op = mapper.map(fermionic_op)
-    return qubit_bk_op
+    return qubit_bk_op, mapper
 
 def ucc_ham(fermionic_op, mtoq: MajoranaContainer):
     mapper = MajoranaMapper(mtoq)
-    return mapper.map(fermionic_op)
+    return mapper.map(fermionic_op), mapper
 
-def get_qiskit_device_noise_estimator(noise_op,  prob, device, s_basic=["u"], d_basis=["cx"]):
+def get_qiskit_device_noise_estimator(noise_op,  prob, device, s_basic=["u"], d_basis=["cx"], shots=None) ->Estimator:
     basis_gates = s_basic + d_basis
     noise_model = NoiseModel(basis_gates=basis_gates)
     if noise_op=="D":
@@ -433,9 +434,20 @@ def get_qiskit_device_noise_estimator(noise_op,  prob, device, s_basic=["u"], d_
         op = tensors_dict[noise_op]
         I = tensors_dict["I"]
         error2 = kraus_error([np.sqrt(prob) * np.kron(I, I), np.sqrt(1-prob) * np.kron(op, op)])
-
     noise_model.add_all_qubit_quantum_error(error2, d_basis)
-    noisy_estimator = Estimator(
+
+    if shots is not None:
+        noisy_estimator = Estimator(
+                run_options={"seed": 170, "shots": shots, },
+                backend_options={
+                        "noise_model": noise_model,
+                        "basis_gates": basis_gates,
+                        "method": "density_matrix",
+                        "device": device,
+                        },
+            )
+    else:
+        noisy_estimator = Estimator(
                 run_options={"seed": 170, "shots": None, },
                 approximation=True,
                 backend_options={
@@ -445,11 +457,13 @@ def get_qiskit_device_noise_estimator(noise_op,  prob, device, s_basic=["u"], d_
                         "device": device,
                         },
             )
+
+    
     return noisy_estimator
 
 def numpy_energy(fermionic_op, ucc):
     numpy_solver = NumPyMinimumEigensolver()
-    result = numpy_solver.compute_minimum_eigenvalue(operator=bk_ham(fermionic_op))
+    result = numpy_solver.compute_minimum_eigenvalue(operator=bk_ham(fermionic_op)[0])
     ref_value = result.eigenvalue.real
     print(f"Reference value: {ref_value + ucc.mol.nuclear_repulsion_energy:.5f}")
     print(f"Reference value: {ref_value:.5f}")
@@ -464,7 +478,6 @@ def hf(ansatz, op):
     state = Statevector(state)
     state = state.evolve(qc)
     energy = state.expectation_value(op)
-    print("nulpar = ", energy)
     return energy
 
 

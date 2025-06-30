@@ -6,6 +6,7 @@ from qiskit.circuit import Parameter, QuantumCircuit
 from qiskit_nature.second_q.drivers import PySCFDriver
 from qiskit_nature.second_q.transformers import ActiveSpaceTransformer
 
+
 from ..utils import lad2maj, LadExcitation, DoubleLadExcitation, SingleLadExcitation
 
 
@@ -62,14 +63,14 @@ class AbstractUCC(ABC):
     def n_spin(self) -> int:
         return self.n_qubits
     
-    # def get_excitations(self, name: str='t_') -> Dict[LadExcitation, Parameter]:
-    #     """
-    #     Method to get parametrized UpCCGSD excitations via majorana operators
-    #     """
-    #     ladder_exc = self.get_alpha_excitations()
-    #     ladder_exc += self.get_beta_excitations()
-    #     ladder_exc += self.get_double_excitations()
-    #     return lad2maj(ladder_exc)
+    def get_excitations(self, name: str='t_') -> Dict[LadExcitation, Parameter]:
+        """
+        Method to get parametrized UpCCGSD excitations via majorana operators
+        """
+        ladder_exc = self.get_alpha_excitations()
+        ladder_exc += self.get_beta_excitations()
+        ladder_exc += self.get_double_excitations()
+        return lad2maj(ladder_exc)
 
     @abstractmethod
     def get_alpha_excitations(self) -> list[SingleLadExcitation]:
