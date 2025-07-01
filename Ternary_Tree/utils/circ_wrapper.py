@@ -24,25 +24,14 @@ class LadExcImpl:
         return "double_ex_short"
      
 
-class Parameter:
-    """
-        var = coef * name
-    """
-    def __init__(self, name: str='t'):
-        self.name = name
-        self.coef = 1
 
-    def __repr__(self):
-        return self.name
-        
-    def __str__(self):
-        return self.name
     
+from .utils import static_vars, Parameter
+
 MyParameter = Parameter
 
 
 from .pauli import Pauli, MajoranaContainer
-from .utils import static_vars
 
 import logging
 

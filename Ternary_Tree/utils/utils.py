@@ -3,10 +3,30 @@ from typing import Dict
 from copy import deepcopy
 from numpy.typing import ArrayLike
 
-from .circ_wrapper import Parameter
 from .excitation import LadExcitation, MajExcitation, SingleLadExcitation
 from time import time
 
+
+class Parameter:
+    """
+        var = coef * name
+    """
+    def __init__(self, name: str='t', coef=1):
+        self.name = name
+        self.coef = coef
+
+    def __repr__(self):
+        return self.name
+        
+    def __str__(self):
+        return self.name
+        
+    def __mul__(self, val):
+        return Parameter(self.name, self.coef*val)
+        
+    def __rmul__(self, val):
+        return Parameter(self.name, self.coef*val)
+        
 def static_vars(**kwargs):
     def decorate(func):
         for k in kwargs:

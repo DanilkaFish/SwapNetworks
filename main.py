@@ -67,7 +67,6 @@ optimizers = [(L_BFGS_B(maxiter=80, ftol=0.0000001), 'L_BFGS_B')]
 
 class vqeData:
     def __init__(self, 
-                 file_name_to_read: str,
                  file_name_to_write: str,
                   molecule: Molecule,
                   optimizer: any,
@@ -76,7 +75,7 @@ class vqeData:
                   probs: np.ndarray=1 - np.flip(np.geomspace(0.00002, (0.001), 15)),
                   device: str="CPU",
                   ):
-        self.file_name_to_read = file_name_to_read 
+        self.file_name = file_name_to_write 
         self.molecule = molecule 
         self.optimizer = optimizer 
         self.reps = reps
@@ -172,7 +171,7 @@ if __name__ == "__main__":
 
         # circ_names = Circuits.get_circs_names()[:]
         # circ_names = Circuits.get_circs_names()[:2] + Circuits.get_circs_names()[4:] +  [Circuits.swap_2xn_alt()]
-        circ_names = Circuits.get_circs_names()
+        circ_names = Circuits.get_circs_names()[:-2]
         # namet = Circuits.swap_2xn_alt()
         # ## circ_names = circ_names[:2] + circ_names[-3:] 
         # ## circ_names = circ_names[2:3]
@@ -209,5 +208,5 @@ if __name__ == "__main__":
             proc.close()
             
         for name in circ_names:
-            with open(get_file_name(vqe_data.file_name_to_read, vqe_data.noise_type, name), 'w') as file:
+            with open(get_file_name(vqe_data.file_name, vqe_data.noise_type, name), 'w') as file:
                 json.dump(data[name + vqe_data.noise_type], file, indent=4)

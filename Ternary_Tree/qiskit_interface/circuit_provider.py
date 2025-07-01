@@ -27,7 +27,8 @@ from qiskit_algorithms import NumPyMinimumEigensolver
 
 from ..ucc.abstractucc import Molecule
 from ..ucc.upgccsd import UpGCCSD, LadExcImpl
-from ..utils import MajoranaContainer, MajoranaMapper
+# from ..utils import MajoranaContainer, MajoranaMapper
+from .mapper import MajoranaMapper, MajoranaContainer
 from ..qiskit_interface import VQEV1 as VQE
 from .qiskit_circ import QiskitCirc, to_excitaions
 
@@ -91,6 +92,13 @@ class Circuits:
     def swap_gen_short():
         return "swap gen short"
     
+    @staticmethod
+    def swap_2xn_short():
+        return "swap 2xn short"
+    
+    @staticmethod
+    def swap_2xn_yor():
+        return "swap 2xn yor"
     
     @staticmethod
     def get_circs_names():
@@ -102,6 +110,8 @@ class Circuits:
         circs.append(Circuits.swap_2xn())
         circs.append(Circuits.swap_gen_short())
         circs.append(Circuits.swap_gen_yor())
+        circs.append(Circuits.swap_2xn_short())
+        circs.append(Circuits.swap_2xn_yor())
         # circs.append(Circuits.swap_2xn_alt())
         return circs
 
@@ -261,6 +271,10 @@ class CircuitProvider:
         elif name == Circuits.swap_gen_yor():
             return self.get_swap_circuit(SwapCircNames.SWAPGENYORDAN)
         elif name == Circuits.swap_gen_short():
+            return self.get_swap_circuit(SwapCircNames.SWAPGENSHORT)
+        elif name == Circuits.swap_2xn_yor():
+            return self.get_swap_circuit(SwapCircNames.SWAPGENYORDAN)
+        elif name == Circuits.swap_2xn_short():
             return self.get_swap_circuit(SwapCircNames.SWAPGENSHORT)
         elif name == Circuits.jw_lex():
             return (self.get_rust_circ(JordanWignerMapper()), jw_ham(self.fermionic_op))
