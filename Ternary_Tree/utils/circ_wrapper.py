@@ -24,11 +24,9 @@ class LadExcImpl:
         return "double_ex_short"
      
 
-
     
-from .utils import static_vars, Parameter
-
-MyParameter = Parameter
+from .utils import static_vars
+from .utils import Parameter as MyParameter
 
 
 from .pauli import Pauli, MajoranaContainer

@@ -11,7 +11,7 @@ from Ternary_Tree.ucc.abstractucc import Molecule
 from Ternary_Tree.qiskit_interface.circuit_provider import *
 from my_utils import Timer
 import multiprocessing as mp
-from Ternary_Tree import logger
+# from Ternary_Tree import logger
 import sys
 # from pyscf import lib
 
@@ -46,6 +46,7 @@ class H2_H2(Molecule):
 H2_4 = Molecule(geometry='H 0 0 0; H 0 0 0.7349', num_electrons=(1,1), active_orbitals=[0,1], basis='sto-3g')
 H2_8 = Molecule(geometry='H 0 0 0; H 0 0 0.7349', num_electrons=(1,1), active_orbitals=[0,1,2,3], basis='6-31g')
 LiH_8 = Molecule(geometry='H 0 0 0; Li 0 0 1.5459', num_electrons=(2,2), active_orbitals=[0,1,2,5], basis='sto-3g')
+LiH_10 = Molecule(geometry='H 0 0 0; Li 0 0 1.5459', num_electrons=(2,2), active_orbitals=[0,1,2,3,5], basis='sto-3g')
 DH4 = H2_H2(1.23)
         
 
@@ -62,7 +63,7 @@ def perturabation(n=n, a=0.01):
         k += 1
         yield a/k**0.3
     
-optimizers = [(L_BFGS_B(maxiter=80, ftol=0.0000001), 'L_BFGS_B')]
+optimizers = [(L_BFGS_B(maxiter=250, ftol=0.00000001), 'L_BFGS_B')]
 
 
 class vqeData:
@@ -153,25 +154,31 @@ def run_vqe(name: str, vqe_data: vqeData, data: dict, r:float=0, is_rust=False):
     return result
 
 if __name__ == "__main__":
-    mult = [0.01, 0.1, 0.5,   1, 2, 3, 5, 10]
-    for noise in ["D", "X", "Y", "Z"]:
-    # for noise in ["", "D", "X","Y","Z"]:
-    # for noise in ["X", ]:
-    
+    mult = [0.01, 0.1, 0.5,   1, 2, 3, 5]
+    # for noise in ["D", "X", "Y", "Z"]:
+    for noise in ["D", "X","Y","Z"]:
+    # for noise in ["Y"]:
+    # for noise in ["", ]:
+        if noise == "sc":
+            probs = mult
+        else:
+            probs = 1 - np.flip(np.geomspace(0.000002, (0.002), 10))
         vqe_data=vqeData(
                 "data/LiH_8",
                 LiH_8,
                 optimizers[0],
                 reps=1,
-                # probs=mult,
-                probs=1 - np.flip(np.geomspace(0.00001, (0.006), 10)),
+                probs=probs,
                 noise_type=noise,
                 device="CPU",
             )
 
         # circ_names = Circuits.get_circs_names()[:]
         # circ_names = Circuits.get_circs_names()[:2] + Circuits.get_circs_names()[4:] +  [Circuits.swap_2xn_alt()]
-        circ_names = Circuits.get_circs_names()[:-2]
+        # circ_names = Circuits.get_circs_names()[2:4] + Circuits.get_circs_names()[5:]
+        # circ_names = Circuits.get_circs_names()[-3:-2]
+        circ_names = Circuits.get_circs_names()[-2:]
+        # circ_names = Circuits.get_circs_names()[-2:]
         # namet = Circuits.swap_2xn_alt()
         # ## circ_names = circ_names[:2] + circ_names[-3:] 
         # ## circ_names = circ_names[2:3]

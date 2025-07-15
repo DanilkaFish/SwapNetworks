@@ -37,7 +37,6 @@ class MajExcitation:
     def op(self, op: Tuple[int,...]):
         self._op = tuple(sorted(op))
         self.sign = _parity(op)
-    
 
     
 class LadExcitation(ABC):

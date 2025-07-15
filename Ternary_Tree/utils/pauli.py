@@ -183,11 +183,17 @@ class MajoranaContainer(PauliContainer):
         return pauli
     
     def renumerate(self, list_enum):
+        r"""
+            pauli[ list_enum[i] ] = pauli[ i ] -- wrong
+        """
         _paulis = [None]*len(list_enum)
+        _qubs = [None]*len(list_enum)
         for index, num in enumerate(list_enum):
-            _paulis[num] = self._paulis[index]
-            self.qubs[index] = num
+            _paulis[self.qubs[num]] = self._paulis[self.qubs[index]]
+            _qubs[index] = self.qubs[num]
+        
         self._paulis = _paulis
+        self.qubs = _qubs
             
     def get_by_qubs(self, qub: int) -> Tuple[int,int]:
         return (self.qubs[2*qub], self.qubs[2*qub + 1])
@@ -195,9 +201,11 @@ class MajoranaContainer(PauliContainer):
     def __str__(self):
         s: str = ""
         for index, pauli in enumerate(self._paulis):
-            s += f"{self.qubs[index] + 1} : " + f"{index + 1} : " + str(pauli) + '\n'
+            s += f"{self.qubs[index]} : " + f"{index} : " + str(pauli) + '\n'
         return s
     
+    def __repr__(self):
+        return str(self)
     
 if __name__ == "__main__":
     pl1 = Pauli.from_str("XY")

@@ -35,10 +35,7 @@ from .qiskit_circ import QiskitCirc, to_excitaions
 # from logger import logger
 
 logger = logging.getLogger(__name__)
-handler = logging.StreamHandler()
-handler.setFormatter(logging.Formatter('%(levelname)s %(message)s'))
-logger.addHandler(handler)
-logger.setLevel(logging.INFO)
+
 
 noise_dict_qiskit = {"I": IGate(),"X": XGate(), "Y": YGate(), "Z": ZGate()}
 tensors_dict = {"X": np.array([[0,1], [1,0]]),"Y":  np.array([[0,-1j], [1j,0]]), "Z":  np.array([[1,0], [0,-1]]),
@@ -57,7 +54,8 @@ class SwapCircNames:
     # SWAP2XN_ALT = ("swap2xn_alt", LadExcImpl.CNOT12zyx())
     SWAPGENYORDAN = ("swap_gen", LadExcImpl.YORDAN())
     SWAPGENSHORT = ("swap_gen", LadExcImpl.SHORT())
-        
+    SWAP2XNYORDAN = ("swap2xnferm", LadExcImpl.YORDAN())
+    SWAP2XNSHORT = ("swap2xnferm", LadExcImpl.SHORT())
 
 class Circuits:
     @staticmethod
@@ -163,7 +161,8 @@ class CircuitProvider:
             if el[0] < el[2]:
                 ls2.append(((el[3],el[2]), (el[1],el[0])))
         # return ls2
-        return ls2 + ls1
+        logger.info(f"{ls2=}")
+        return ls2 + ls1  
 
     def get_swap_circuit(self, name: Tuple[str,str]) -> Tuple[QuantumCircuit, SparsePauliOp]:
         method, double = name
@@ -273,9 +272,9 @@ class CircuitProvider:
         elif name == Circuits.swap_gen_short():
             return self.get_swap_circuit(SwapCircNames.SWAPGENSHORT)
         elif name == Circuits.swap_2xn_yor():
-            return self.get_swap_circuit(SwapCircNames.SWAPGENYORDAN)
+            return self.get_swap_circuit(SwapCircNames.SWAP2XNYORDAN)
         elif name == Circuits.swap_2xn_short():
-            return self.get_swap_circuit(SwapCircNames.SWAPGENSHORT)
+            return self.get_swap_circuit(SwapCircNames.SWAP2XNSHORT)
         elif name == Circuits.jw_lex():
             return (self.get_rust_circ(JordanWignerMapper()), jw_ham(self.fermionic_op))
         elif name == Circuits.bk_lex():
@@ -303,6 +302,8 @@ class CircSim:
             self.init_point = init_point
         self.noise_par = noise_par
         self.circ = transpile(self.circ, basis_gates=[*s_basis, *d_basis], optimization_level=3)
+        logger.info(f"circ number of operators = {self.circ.count_ops()}")
+
         if noise_type == "_sc":
             instr_dur = []
             td = 68
@@ -345,9 +346,11 @@ class CircSim:
         result = vqe.compute_minimum_eigenvalue(operator=self.op)
         for i in range(reps-1):
             vqe.initial_point = np.random.rand(len(self.init_point)) - 0.5
+            
             _res = vqe.compute_minimum_eigenvalue(operator=self.op)
             if result.eigenvalue.real > _res.eigenvalue.real:
                 result = _res
+                logger.info(f"{vqe.initial_point=}")
         # print(f"VQE on Aer qasm simulator (with noise): {result.eigenvalue.real:.5f}")
         return result.eigenvalue.real, list(result.optimal_parameters.values()), est
         
@@ -503,16 +506,20 @@ def get_noise_estiamtor_from_csv(mult, device):
     T1 = df["T1 (us)"]
     T2 = df["T2 (us)"]
     
-    T1 = max(T1[:])
+    # T1 = max(T1[:])
+
     T2 = 393.82
-    T1 = 375.73000470776617/mult
-    T2 = 545.89/mult
+    # 346.2494385084324","397.9230534511706
+    T1 = 346.2494385084324/mult
+    T2 = 397.9230534511706/mult
+    # T2 = 500.9230534511706/mult
     print("T1 = ", T1)
     print("T2 = ", T2)
     U = min(df["Pauli-X error "])*mult
-    CX = 0.001*mult
-    error1 = depolarizing_error(U, 1)
-    error2 = depolarizing_error(CX, 2)
+    U = 0.0003*mult
+    CX = 0.00096*mult
+    error1 = depolarizing_error(4./3*(1 - (1-U)**2), 1)
+    error2 = depolarizing_error(4./3*(1 - (1-CX)**2), 2)
     t1s = [T1 for prop in range(8)]
     t2s = [T2 for prop in range(8)]
     delay_pass = RelaxationNoisePass(

@@ -6,7 +6,8 @@ from numpy import array
 
 from Ternary_Tree.qiskit_interface.circuit_provider import get_file_name, Circuits
 from my_utils.tikz_graph import * 
-
+from scipy.stats import linregress
+from copy import deepcopy as copy
 
 def get_attrs(file_name, attrs: tuple):
     energy = []
@@ -14,145 +15,137 @@ def get_attrs(file_name, attrs: tuple):
     gate_count = ""
     datas = {i : [] for i in attrs}
     datas["gate_count"] = []
-    print(file_name)
     with open(file_name, 'r') as rf:
         data = json.load(rf)
         for obj in data:
-            # datas["gate_count"].append(obj["gate_count"]["cx"])
             for label in attrs:
-            # dic[obj["noise gates"]]
                 datas[label].append(obj[label])
-            # probs.append(obj["prob"])
     return datas
 
-
-def curve_plot():
-    jw_line = Line(None, None, Marks.triangle(), "blue", "JW")
-    bk_line = Line(None, None, Marks.triangle(), "red", "BK")
-    jw_opt_line = Line(None, None, Marks.square(), "blue", "JW opt")
-    bk_opt_line = Line(None, None, Marks.square(), "red", "BK opt")
-    swap2xn_line = Line(None, None, Marks.pentagon(), "green", "MSN")
-    swapgens_line = Line(None, None, Marks.pentagon(), "black", "FSN short")
-    swapgeny_line = Line(None, None, Marks.pentagon(), "gray", "FSN yor")
-    # ideal_line = Line(None, None, Marks.mro(), "black", "presice")
-    ccsd_line = Line(None, None, Marks.square(), "black", "CCSD")
-    # legends = ["JW", "BK","JW opt", "BK opt", "SWAP 2xn", "SWAP short", "SWAP yor"]
-    noises = ["D", "X", "Y", "Z"]
-    mol_name = "data/adapt_vqe_h2_8/" 
-    methods = Circuits.get_circs_names()
-    axes = []
-    for noise in noises:
-        lines=[jw_line, bk_line, jw_opt_line, bk_opt_line, swap2xn_line, swapgens_line, swapgeny_line,  ccsd_line]
-        for index, method in enumerate(methods[:]):
-            datas = get_attrs(get_file_name(mol_name, noise, method), ("ref_ener", "energy", "dist"))
-            lines[index].Y, lines[index].X = np.array(datas["energy"]), np.linspace(1,1.6,12)
-            # lines[index].Y, lines[index].X = np.array(datas["energy"]), np.array(datas["dist"])
-            # for y in lines[index].Y:
-                # if y :
-            lines[index].Y = -(lines[index].Y - np.array(datas["ref_ener"]))/np.array(datas["ref_ener"])
-
-            # lines[index].legend = legends[index] + f" ({gc["cx"]})"
-            # lines[index].legend = legends[index]
-        datas = get_attrs(get_file_name(mol_name, noise, methods[-1]), ("ref_ener", "dist"))
-        # lines[-2].Y, lines[-2].X = np.array(datas["ref_ener"]), np.array(datas["dist"])
-        lines[-1].Y, lines[-1].X = np.array([-4.618176584268548, -4.5267440656257065, -4.443973799442764, 
-                                             -4.372587187298123, -4.316057866013907, -4.267417963568857, 
-                                             -4.228030673716043, -4.195361580192051, -4.166272967536891, 
-                                             -4.139158229521049, -4.113257779037612, -4.088214875105436
-                                             ]), np.linspace(1,1.6,12)
-        lines[-1].Y = lines[-1].Y - np.array(datas["ref_ener"])
-        
-        axes.append(Axis(lines, "$\\lambda$", "$\Delta E/E_0$", AxisScale.usual()))
-    gd = GraphData(axes)
-    print(gd.generate_tikz())
+def energy_error_add_axes():
+    for index, method in enumerate(methods[:]):
+        # index = inde +  4
+        datas = get_attrs(get_file_name(mol_name, noise, method), ("ref_ener", "energy", "prob", "gate_count"))
+        if noise == "sc":
+            lines[index].Y, lines[index].X = np.array(datas["energy"]), np.array(datas["prob"])
+        else:
+            if noise == "D":
+                probs = np.array(datas["prob"])
+                inf = 1 - np.sqrt(1 - 3/4*(1 - probs))
+            else:
+                probs = np.array(datas["prob"])
+                inf = 1 - np.sqrt(1 - (1 - probs))
+            lines[index].Y, lines[index].X = np.array(datas["energy"]), inf
+        lines[index].Y = -abs(lines[index].Y - np.array(datas["ref_ener"]))/np.array(datas["ref_ener"])
+        lines[index].legend = legends[index] + f" cx={datas["gate_count"][0]["cx"]}"
+    axes.append(Axis(lines[:], "$\\lambda$", "$|E-E_0|$", AxisScale.usual(), xshift=num*8, title=noise))
     
+def dn_add_axes(ne=2):
+    for index, method in enumerate(methods[:]):
+    # index = inde +  4
+        datas = get_attrs(get_file_name(mol_name, noise, method), ("ref_ener", "energy", "prob", "gate_count", "addition_res:"))
+        ar = np.array(datas["addition_res:"])
+        n2 = ar[:,1] - 2*ne*ar[:,0] + ne*ne
+        if noise == "sc":
+            lines[index].Y, lines[index].X = n2, np.array([0.01, 0.1, 0.5, 1, 2, 3, 5])
+        else:
+            if noise == "D":
+                probs = np.array(datas["prob"])
+                inf = 1 - np.sqrt(1 - 3/4*(1 - probs))
+            else:
+                probs = np.array(datas["prob"])
+                inf = 1 - np.sqrt(1 - (1 - probs))
+            lines[index].Y, lines[index].X = n2, inf
+        lines[index].legend = legends[index] + f" cx={datas["gate_count"][index]["cx"]}"
+    axes.append(Axis(lines[:], "$1 -\\mathcal{{F}}$", f"$\\langle(n-{ne})^2\\rangle$", AxisScale.loglog(), xshift=num*8,yshift=-8, title=noise))
+
+def round_with_uncertainty(value, uncertainty):
+    if uncertainty == 0 or np.isnan(uncertainty):
+        return f"{value}", f"{uncertainty}"
     
+    exponent = int(np.floor(np.log10(abs(uncertainty))))
+    decimals = -exponent + 1 if exponent < 0 else 0
+    if (uncertainty * (decimals << 1) < 30 ):
+        # print(uncertainty * (1 << decimals) )
+        # decimals -= 1
+        pass
+    decimals -= 2
+    
+    rounded_uncertainty = round(uncertainty, decimals)
+    rounded_value = round(value, decimals)
+
+    fmt = f"{{:.{decimals}f}}"
+    return "$" + fmt.format(rounded_value) + "$"
+    # return "$" + fmt.format(rounded_value) + " \pm " + fmt.format(rounded_uncertainty) + "$"
+s = '\n'.join([
+    ">{\\centering\\arraybackslash}m{5em}", 
+    ">{\\centering\\arraybackslash}m{4em}", 
+    ">{\\centering\\arraybackslash}m{4em}", 
+    ">{\\centering\\arraybackslash}m{4em}", 
+    ">{\\centering\\arraybackslash}m{4em}", 
+    ">{\\centering\\arraybackslash}m{6em}"
+]
+)
+s = s 
+def plot_table():
+    table = Table("$E = \\beta p + E_0$", ["method", *[noise for noise in noises], "\\# CX gates"], align=s, bordered=False)
+    for index, method in enumerate(methods[:]):
+        B = []
+        for noise in noises:
+        # index = inde +  4
+            datas = get_attrs(get_file_name(mol_name, noise, method), ("ref_ener", "energy", "prob", "gate_count"))
+            liney, linex = -abs(np.array(datas["energy"]) - np.array(datas["ref_ener"]))/np.array(datas["ref_ener"]), np.array(datas["prob"])
+            liney = np.array(datas["energy"])
+            if noise == "sc":
+                pass
+            else:
+                if noise == "D":
+                    linex = 1 - np.sqrt(1 - 3/4*(1 - linex))
+                else:
+                    linex = 1 - np.sqrt(1 - (1 - linex))
+            liney = liney[3:]
+            # linex = np.log(linex[3:])
+            # liney = np.log(liney[3:])
+            linex = linex[3:]
+
+            # A,b = np.polyfit(linex, liney, 1)
+            result = linregress(linex, liney)
+            B.append(round_with_uncertainty(result.slope, result.stderr))
+            # B.append(round_with_uncertainty(result.intercept, result.intercept_stderr))
+        table.add_row(legends[index], *B, datas["gate_count"][0]["cx"])
+
+    print(table.generate_table())
+
 if __name__ == "__main__":
     jw_line = Line(None, None, Marks.triangle(), "blue", "JW")
     bk_line = Line(None, None, Marks.triangle(), "red", "BK")
-    jw_opt_line = Line(None, None, Marks.square(), "blue", "JW opt")
-    bk_opt_line = Line(None, None, Marks.square(), "red", "BK opt")
+    jw_opt_line = Line(None, None, Marks.square(), "blue", "JWO")
+    bk_opt_line = Line(None, None, Marks.square(), "red", "BKO")
     swap2xn_line = Line(None, None, Marks.pentagon(), "black", "MSN")
-    swapgens_line = Line(None, None, Marks.pentagon(), "orange", "FSN short")
-    swapgeny_line = Line(None, None, Marks.pentagon(), "green", "FSN yor")
-    swap2xnalt_line = Line(None, None, Marks.pentagon(), "black", "MSN")
-    legends = ["JW", "BK","JW opt", "BK opt", "MSN", "FSN short", "FSN yor", "MSN zyx"][:]
-    # legends = legends[:2] + legends[4:]
+    swapgens_line = Line(None, None, Marks.pentagon(), "orange", "FSN S")
+    swapgeny_line = Line(None, None, Marks.pentagon(), "green", "FSN Y")
+    swap2xnshort_line = Line(None, None, Marks.pentagon(), "black, dashed", "MSN S")
+    swap2xnyor_line = Line(None, None, Marks.pentagon(), "gray, dashed,line width=0.5pt", "MSN Y")
+    legends = ["JW", "BK","JW opt", "BK opt", "FSN short", "FSN yor", "MSN short", "MSN yor"]
     mol_name = "datah2h2ExcSolProb/DH4" 
     mol_name = "datah2h2noise_level/DH4" 
     mol_name = "data/adapt_vqe_h2_8/"
     mol_name = "data/vqe_sc2/"
-    mol_name = "data/vqe_mult_h2_8/"
+    mol_name = "data/H2_4"
     # -1.8716797649675656
     # mol_name, ref_en = ("datah2_4/H2_4", -1.8573730129353947)
     # mol_name, ref_en = ("data02/H2_8", -1.8716797649675656)
-    noises = ["D", "Y", "sc"]
-    noises = ["X","Z"]
+    # noises = ["sc"]
+    # noises = ["X","Z"]
     noises = ["D","X","Y","Z"]
-    noises = ["sc"]
-    # noises = ["D", "Z"][0:1]
-    methods = Circuits.get_circs_names() + ["swap 2xn alt"]
+    methods = Circuits.get_circs_names()[:4] + Circuits.get_circs_names()[5:] 
     # methods = methods[:2] + methods[4:]
     axes = []
-    for noise in noises:
-        lines = [jw_line, bk_line, jw_opt_line, bk_opt_line, swap2xn_line, swapgens_line, swapgeny_line, swap2xnalt_line][:]
-        # lines=lines[:2] + lines[4:]
-        for index, method in enumerate(methods[:]):
-            # index = inde +  4
-            datas = get_attrs(get_file_name(mol_name, noise, method), ("ref_ener", "energy"))
-            lines[index].Y, lines[index].X = np.array(datas["energy"]), np.array([0.01, 0.1, 0.5,1, 2, 3, 5, 10])
-            # np.flip(np.geomspace(0.00001, (0.006), 10))
-            lines[index].Y = -abs(lines[index].Y - np.array(datas["ref_ener"]))/np.array(datas["ref_ener"])
-            # if noise in {"D", "sc"}:
-            #     lines[index].X = 1 - np.sqrt(1 - 3 * lines[index].X/4)
-            # else:
-            #     lines[index].X = 1 - np.sqrt(1 - 4 * lines[index].X/4)
-                
-            lines[index].legend = legends[index ] 
-            # + f" ({datas["gate_count"][0]})"
-            # lines[index].legend = legends[index]
-        axes.append(Axis(lines[:], "$\\lambda$", "$|E-E_0|$", "log" + AxisScale.loglog()))
-    gd = GraphData(axes)
-    print(gd.generate_tikz())
-    
-    
-if __name__ == "__main__":
-    jw_line = Line(None, None, Marks.triangle(), "blue", "JW")
-    bk_line = Line(None, None, Marks.triangle(), "red", "BK")
-    jw_opt_line = Line(None, None, Marks.square(), "blue", "JW opt")
-    bk_opt_line = Line(None, None, Marks.square(), "red", "BK opt")
-    swap2xn_line = Line(None, None, Marks.pentagon(), "green", "MSN")
-    swapgens_line = Line(None, None, Marks.pentagon(), "black", "FSN short")
-    swapgeny_line = Line(None, None, Marks.pentagon(), "gray", "FSN yor")
-    legends = ["JW", "BK","JW opt", "BK opt", "MSN", "FSN short", "FSN yor"]
-    # legends = legends[:2] + legends[4:]
-    mol_name = "datah2h2ExcSolProb/DH4" 
-    mol_name = "datah2h2noise_level/DH4" 
-    # -1.8716797649675656
-    # mol_name, ref_en = ("datah2_4/H2_4", -1.8573730129353947)
-    # mol_name, ref_en = ("data02/H2_8", -1.8716797649675656)
-    noises = ["D", "Y", "sc"]
-    noises = ["X","Z"]
-    # noises = ["D", "Z"][0:1]
-    methods = Circuits.get_circs_names()[-3:]
-    # methods = methods[:2] + methods[4:]
-    axes = []
-    for noise in noises:
-        lines = [jw_line, bk_line, jw_opt_line, bk_opt_line, swap2xn_line, swapgens_line, swapgeny_line][-3:]
-        # lines=lines[:2] + lines[4:]
-        for index, method in enumerate(methods[:]):
-            # index = inde +  4
-            datas = get_attrs(get_file_name(mol_name, noise, method), ("ref_ener", "energy", "prob"))
-            lines[index].Y, lines[index].X = np.array(datas["energy"]), 1 - np.array(datas["prob"])
-            lines[index].Y = -abs(lines[index].Y - np.array(datas["ref_ener"]))/np.array(datas["ref_ener"])
-            if noise in {"D", "sc"}:
-                lines[index].X = 1 - np.sqrt(1 - 3 * lines[index].X/4)
-            else:
-                lines[index].X = 1 - np.sqrt(1 - 4 * lines[index].X/4)
-                
-            lines[index].legend = legends[index + 4] + f" ({datas["gate_count"][0]})"
-            # lines[index].legend = legends[index]
-        axes.append(Axis(lines, "$\\lambda$", "$|E-E_0|$", "log" + AxisScale.loglog()))
-    gd = GraphData(axes)
-    print(gd.generate_tikz())
-    # curve_plot()
+    plot_table()
+    # for num, noise in enumerate(noises):
+        # lines = copy([jw_line, bk_line, jw_opt_line, bk_opt_line,  swapgens_line, swapgeny_line, swap2xnshort_line, swap2xnyor_line][:])
+        # energy_error_add_axes()
+    #     # dn_add_axes(4)
+
+    # gd = GraphData(axes)
+    # print(gd.generate_tikz())
