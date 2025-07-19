@@ -56,6 +56,8 @@ class SwapCircNames:
     SWAPGENSHORT = ("swap_gen", LadExcImpl.SHORT())
     SWAP2XNYORDAN = ("swap2xnferm", LadExcImpl.YORDAN())
     SWAP2XNSHORT = ("swap2xnferm", LadExcImpl.SHORT())
+    SWAPGENMAJYORDAN = ("swapgenmaj", LadExcImpl.YORDAN())
+    SWAPGENMAJSHORT = ("swapgenmaj", LadExcImpl.SHORT())
 
 class Circuits:
     @staticmethod
@@ -97,6 +99,14 @@ class Circuits:
     @staticmethod
     def swap_2xn_yor():
         return "swap 2xn yor"
+
+    @staticmethod
+    def swap_gen_maj_yor():
+        return "swap gen maj yor"    
+
+    @staticmethod
+    def swap_gen_maj_short():
+        return "swap gen maj short"
     
     @staticmethod
     def get_circs_names():
@@ -110,19 +120,20 @@ class Circuits:
         circs.append(Circuits.swap_gen_yor())
         circs.append(Circuits.swap_2xn_short())
         circs.append(Circuits.swap_2xn_yor())
-        # circs.append(Circuits.swap_2xn_alt())
+        circs.append(Circuits.swap_gen_maj_short())
+        circs.append(Circuits.swap_gen_maj_yor())
         return circs
 
 
 def eq_alpha_beta(qc, reps=1):
     n = qc.num_qubits
     k = n//2
-    params = []
-    for i in range(reps):
-        theta = ParameterVector("θ" + str(i), qc.num_parameters - k*(k-1)//2)
-        params = params + [theta[i - k*(k-1)//2] for i in range(k*(k-1), 3*k*(k-1)//2)] +\
-             [theta[i] for i in range(k*(k-1)//2)] + [theta[i] for i in range(k*(k-1)//2)] 
-    qc.assign_parameters(params, inplace=True)
+    # params = []
+    # for i in range(reps):
+    #     theta = ParameterVector("θ" + str(i), qc.num_parameters - k*(k-1)//2)
+    #     params = params + [theta[i - k*(k-1)//2] for i in range(k*(k-1), 3*k*(k-1)//2)] +\
+    #          [theta[i] for i in range(k*(k-1)//2)] + [theta[i] for i in range(k*(k-1)//2)] 
+    # qc.assign_parameters(params, inplace=True)
 
 def print_params(ansatz):
     print(ansatz.count_ops())
@@ -161,7 +172,6 @@ class CircuitProvider:
             if el[0] < el[2]:
                 ls2.append(((el[3],el[2]), (el[1],el[0])))
         # return ls2
-        logger.info(f"{ls2=}")
         return ls2 + ls1  
 
     def get_swap_circuit(self, name: Tuple[str,str]) -> Tuple[QuantumCircuit, SparsePauliOp]:
@@ -279,6 +289,10 @@ class CircuitProvider:
             return (self.get_rust_circ(JordanWignerMapper()), jw_ham(self.fermionic_op))
         elif name == Circuits.bk_lex():
             return (self.get_rust_circ(BravyiKitaevMapper()), bk_ham(self.fermionic_op))
+        elif name == Circuits.swap_gen_maj_yor():
+            return self.get_swap_circuit(SwapCircNames.SWAPGENMAJYORDAN)
+        elif name == Circuits.swap_gen_maj_short():
+            return self.get_swap_circuit(SwapCircNames.SWAPGENMAJSHORT)
         # elif name == Circuits.swap_2xn_alt():
         #     return self.get_swap_circuit(SwapCircNames.SWAP2XN_ALT)
         
@@ -497,27 +511,42 @@ def hf(ansatz, op):
     energy = state.expectation_value(op)
     return energy
 
+def mean(df, name="CZ error"):
+    # Извлекаем и разбираем колонку "CZ error"
+    cz_column = df[name].dropna()
 
+    # Список для хранения всех значений ошибок CZ
+    cz_errors = []
+
+    # Парсинг строки формата "X:Y;Z:W" и извлечение только значений Y, W, ...
+    for row in cz_column:
+        pairs = row.split(';')
+        for pair in pairs:
+            if ':' in pair:
+                _, value = pair.split(':')
+                cz_errors.append(float(value))
+
+    # Рассчитываем среднее значение ошибок CZ
+    average_cz_error = sum(cz_errors) / len(cz_errors)
+
+    return average_cz_error
 def get_noise_estiamtor_from_csv(mult, device):
-    file_name = "/home/danilkafish/Projects/SwapNetworks/Ternary_Tree/qiskit_interface/ibm_aachen_calibrations_2025-04-30T10_50_40Z.csv"
+    file_name = "/home/danilkaf/projects/SwapNetworks/Ternary_Tree/qiskit_interface/ibm_kingston_calibrations_2025-07-02T15_30_16Z.csv"
     basis_gates = ["cz", "rzz", "rx", "rz"]
     noise_model = NoiseModel(basis_gates=basis_gates)
     df = pd.read_csv(file_name)
     T1 = df["T1 (us)"]
     T2 = df["T2 (us)"]
-    
-    # T1 = max(T1[:])
-
-    T2 = 393.82
-    # 346.2494385084324","397.9230534511706
-    T1 = 346.2494385084324/mult
-    T2 = 397.9230534511706/mult
-    # T2 = 500.9230534511706/mult
-    print("T1 = ", T1)
-    print("T2 = ", T2)
-    U = min(df["Pauli-X error "])*mult
-    U = 0.0003*mult
-    CX = 0.00096*mult
+    T1 = T1.mean()/mult
+    T2 = T2.mean()/mult
+    logger.info(f"{T1=}")
+    logger.info(f"{T2=}")
+    U = df["Pauli-X error"].mean()*mult
+    logger.info(f"{U=}")
+    # U = 0.0003*mult
+    CX = mean(df)*mult
+    # U = mean(df)*mult
+    logger.info(f"{CX=}")
     error1 = depolarizing_error(4./3*(1 - (1-U)**2), 1)
     error2 = depolarizing_error(4./3*(1 - (1-CX)**2), 2)
     t1s = [T1 for prop in range(8)]

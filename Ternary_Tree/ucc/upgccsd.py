@@ -77,6 +77,101 @@ class UpGCCSD(AbstractUCC):
               for a in alpha for b in alpha if a < b]
         return ab
 
+    def swapgenmaj(self, 
+            number_of_layers: int=1, 
+            method_name: str=LadExcImpl.YORDAN(),
+            circ: Optional[CircWrapper]=None
+            ) -> Tuple[CircWrapper, MajoranaContainer]:
+ 
+        logger.info("Generalized Majorana swap circuit generation...")
+        n = self.n_qubits
+        if circ is None:
+            circ = QiskitCirc(n)
+        mtoq = MajoranaContainer.jw(n)
+        if ((n == 8 or n == 10) and self.n_alpha != 1):
+            list_enum = [i for i in range(n*2)]
+            for i in range(0, 2*n, n):
+                for j in range(2):
+                    list_enum[2 + i + j], list_enum[4 + i + j] = list_enum[4 + i + j], list_enum[2 + i + j]
+                    # list_enum[3 + i + j], list_enum[5 + i + j] = list_enum[5 + i + j], list_enum[3 + i + j]
+            mtoq.renumerate(list_enum)
+
+        logger.info(f"{mtoq=}")
+        list_enum = []
+        for j in range(n//4):
+            for i in range(2*j, 2*j + 2):
+                list_enum.extend([2*i, 2*i + 1])
+            for i in range(2*j, 2*j + 2):
+                list_enum.extend([2*i + n, 2 * i + n + 1])
+        if (n%4 != 0):
+            list_enum.extend([n - 2, n -1, 2*n-2, 2*n - 1])
+        mtoq.renumerate(list_enum)
+
+        single_ladder_exc = self.get_alpha_excitations() + self.get_beta_excitations()
+        double_ladder_exc = self.get_double_excitations()
+        
+        def append_lad_D(i):
+            return _append_lad([i, i + 1, i + 2, i + 3], circ, mtoq, method_name, dp_lad_exc )
+
+        def init_state():
+            num_electrons = self.n_alpha  
+            for i in range(self.n_qubits):
+                if (mtoq.get_by_qubs(i)[0] < 2*num_electrons) or (self.n_spatial * 2 <= 
+                        mtoq.get_by_qubs(i)[0]  < 2*self.n_spatial + 2*num_electrons):
+                    circ.x(i)
+                else:
+                   circ.id(i)
+                   
+        def append_maj_S(ls: MajExcitation):
+            return _append_maj_S(ls, sp_maj_exc, circ, mtoq)
+               
+        def single_exc_layer():
+                    func = lambda i: MajExcitation((mtoq.get_by_qubs(i)[0], mtoq.get_by_qubs(i)[1]))
+                    _ = [append_maj_S(func(i)) for i in range(n)]
+
+        def mswap(qub1, disp1, qub2, disp2):
+            return _mswap(qub1, disp1, qub2, disp2, circ, mtoq)
+        
+        def mswap_single_exc_layer(parity):
+            parity = parity % 2
+            for i in range(parity, n - 1, 2):
+                mswap(i,0,i + 1, 1)
+            single_exc_layer()
+            for i in range(parity, n - 1, 2):
+                mswap(i,1,i + 1, 0)
+                mswap(i,0,i,1)
+                mswap(i + 1,0,i + 1,1)
+            
+
+        def double_exc_layer(parity):
+            if (parity % 2 == 0):
+                for i in range(0, n-3,4):
+                    append_lad_D(i)
+            else:
+                for i in range(2, n-3,4):
+                    append_lad_D(i)
+                
+            for i in range(0, n-3,4):
+                append_lad_D(i)
+
+        init_state()
+        for k in range(number_of_layers):
+            sp_maj_exc = lad2maj(self.get_alpha_excitations() + self.get_beta_excitations(), name="t" + str(k)+ "_")
+            dp_lad_exc: Dict[LadExcitation, Parameter] = lad2lad(double_ladder_exc, name="t" + str(k)+ "_")
+            if n == 0:
+                double_exc_layer(0)
+            else:
+                for i in range(n//2):
+                    double_exc_layer(i)
+                    mswap_single_exc_layer(0)
+                    mswap_single_exc_layer(1)
+        # logger.info(f"circuit_params sxn ferm::\n{circ.decompose(reps=3).count_ops()}")
+        logger.info(f"gen maj:\n{circ.decompose()}")
+        logger.info(f"{dp_lad_exc=}")
+        logger.info(f"{sp_maj_exc=}")
+        return circ, mtoq
+    
+    
     def swap2xnferm(self, 
                 number_of_layers: int=1, 
                 method_name: str=LadExcImpl.YORDAN(),
@@ -89,7 +184,7 @@ class UpGCCSD(AbstractUCC):
         if circ is None:
             circ = QiskitCirc(n)
         mtoq = MajoranaContainer.jw(n)
-        if (n == 8 or n == 10):
+        if ((n == 8 or n == 10) and self.n_alpha != 1):
             list_enum = [i for i in range(n*2)]
             for i in range(0, 2*n, n):
                 for j in range(2):
@@ -157,7 +252,7 @@ class UpGCCSD(AbstractUCC):
                     double_exc_layer(i)
                     mswap_single_exc_layer(i)
         # logger.info(f"circuit_params sxn ferm::\n{circ.decompose(reps=3).count_ops()}")
-        # logger.info(f"2xn ferm:\n{circ}")
+        logger.info(f"2xn ferm:\n{circ}")
         logger.info(f"{dp_lad_exc=}")
         logger.info(f"{sp_maj_exc=}")
         return circ, mtoq
@@ -180,7 +275,6 @@ class UpGCCSD(AbstractUCC):
         single_ladder_exc = self.get_alpha_excitations() + self.get_beta_excitations()
         double_ladder_exc = self.get_double_excitations()
 
-        
         def init_state():
             num_electrons = self.n_alpha  
             nels = [i for i in range(num_electrons)] + [i + n//2 for i in range(num_electrons)]
@@ -219,8 +313,6 @@ class UpGCCSD(AbstractUCC):
         init_state()
         for k in range(number_of_layers):
             sp_maj_exc = lad2maj(self.get_alpha_excitations() + self.get_beta_excitations(), name="t" + str(k)+ "_")
-            # sp_maj_exc = alpha2beta(alpha, self.n_qubits)
-            # sp_maj_exc: Dict[MajExcitation, Parameter] = lad2maj(single_ladder_exc, name="t" + str(k)+ "_")
             dp_lad_exc: Dict[LadExcitation, Parameter] = lad2lad(double_ladder_exc, name="t" + str(k)+ "_")
             if n == 0:
                 single_exc_layer()
@@ -246,12 +338,11 @@ class UpGCCSD(AbstractUCC):
         if circ is None:
             circ = QiskitCirc(n)
         mtoq = MajoranaContainer.jw(n)
-        if (n == 8 or n == 10):
+        if ((n == 8 or n == 10) and self.n_alpha != 1):
             list_enum = [i for i in range(n*2)]
             for i in range(0, 2*n, n):
                 for j in range(2):
                     list_enum[2 + i + j], list_enum[4 + i + j] = list_enum[4 + i + j], list_enum[2 + i + j]
-                    # list_enum[3 + i + j], list_enum[5 + i + j] = list_enum[5 + i + j], list_enum[3 + i + j]
             mtoq.renumerate(list_enum)
         logger.info(f"{mtoq=}")
         list_enum = []
@@ -315,8 +406,6 @@ class UpGCCSD(AbstractUCC):
         init_state()
         for k in range(number_of_layers):
             sp_lad_exc = lad2lad(self.get_alpha_excitations() + self.get_beta_excitations(), name="t" + str(k)+ "_")
-            # sp_lad_exc = alpha2beta(alpha, self.n_qubits)
-            # sp_lad_exc: Dict[LadExcitation, Parameter] = lad2lad(single_ladder_exc, name="t" + str(k)+ "_")
             dp_lad_exc: Dict[LadExcitation, Parameter] = lad2lad(double_ladder_exc, name="t" + str(k)+ "_")
             if n == 0:
                 # single_exc_layer()
@@ -330,7 +419,6 @@ class UpGCCSD(AbstractUCC):
         # logger.info(f"circuit params generalized:\n{circ.decompose(reps=3).count_ops()}")
         logger.info(f"{dp_lad_exc=}")
         logger.info(f"{sp_lad_exc=}")
-        # print(circ)
         return circ, mtoq
     
     def get_jw_opt(self) -> MajoranaContainer:
@@ -496,6 +584,7 @@ class UCCSD(AbstractUCC):
         # single_exc_layer(qub_min)
 
 def _mswap(qub1, disp1, qub2, disp2, circ: CircWrapper, mtoq: MajoranaContainer):
+    # mtoq.transpose(qub1, disp1, qub2, disp2, unsigned=True)
     circ.mswap(mtoq.transpose(qub1, disp1, qub2, disp2))
     
 def _append_maj_S(ls: MajExcitation,
@@ -515,7 +604,6 @@ def _append_lad(qubits: Tuple[int,...],
                 method_name: str,
                 lad_exc: Dict[LadExcitation, Parameter]) -> bool:
     maj_set = []
-    list_signs = getattr(ExcitationImpl, "get_pauli_" + method_name)()
     for i in qubits:
         maj_set = maj_set + list(mtoq.get_by_qubs(i))
     maj_set = list(sorted(maj_set))
@@ -529,6 +617,7 @@ def _append_lad(qubits: Tuple[int,...],
         excs= [SingleLadExcitation((maj_set[2]//2,), (maj_set[0]//2,))]
         method = circ.single_excitation
     for exc in excs:
+        list_signs = getattr(ExcitationImpl, "get_pauli_" + method_name)()
         try:
             maj_exc: List[MajExcitation] = lad2maj([exc])
             for maj in maj_exc:
@@ -538,6 +627,9 @@ def _append_lad(qubits: Tuple[int,...],
                 if len(pauli.get_label_qubs()[0]) > len(label):
                     raise KeyError
             # logger.info(f"{qubits}")
+            # qubits[0], qubits[1] = qubits[1], qubits[0]
+            # qubits[2], qubits[3] = qubits[3], qubits[2]
+            # qubits = reversed(qubits)
             method(method_name, qubits, lad_exc.pop(exc), list_signs)
         except KeyError:
             pass

@@ -112,13 +112,16 @@ class PauliContainer:
     def __getitem__(self, i: int) -> Pauli:
         return self._paulis[i]
     
-    def transform(self, pauli: Pauli):
+    def transform(self, pauli: Pauli, unsigned=False):
         for index, pl in enumerate(self._paulis):
             new_pl1 = pl*pauli
             new_pl2 = pauli*pl
             if ((new_pl1.pow - new_pl2.pow) % 4 == 2):
                 self._paulis[index] = new_pl1
-
+        if unsigned:
+            for el in range(len(self._paulis)):
+                self._paulis[el].pow = 0
+                
     def cx_transform(self, ctrl, trg):
         for pauli in self._paulis:
             pauli.cx(ctrl, trg)
@@ -176,9 +179,9 @@ class MajoranaContainer(PauliContainer):
         return cls(pauli_list, qubs)
     
     
-    def transpose(self, qub1: int, i1: int, qub2: int,  i2: int) -> Pauli:
+    def transpose(self, qub1: int, i1: int, qub2: int,  i2: int, unsigned=False) -> Pauli:
         pauli: Pauli = self[self.qubs[2*qub1 + i1]] * self[self.qubs[2*qub2 + i2]]
-        self.transform(pauli)
+        self.transform(pauli, unsigned)
         self.qubs[2*qub1 + i1], self.qubs[2*qub2 + i2] = self.qubs[2*qub2 + i2], self.qubs[2*qub1 + i1] 
         return pauli
     
@@ -199,7 +202,7 @@ class MajoranaContainer(PauliContainer):
         return (self.qubs[2*qub], self.qubs[2*qub + 1])
     
     def __str__(self):
-        s: str = ""
+        s: str = "\n"
         for index, pauli in enumerate(self._paulis):
             s += f"{self.qubs[index]} : " + f"{index} : " + str(pauli) + '\n'
         return s

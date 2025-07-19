@@ -61,14 +61,14 @@ def res(angle):
     
 def scaleability():
     mol = Molecule(geometry='Li 0 0 0; Li 0 0 1.5459', num_electrons=(2,2), active_orbitals=[0,1,2,5], basis='6-311g')
-    circ_names = Circuits.get_circs_names()[-2:]
+    circ_names = Circuits.get_circs_names()[:2]
     double = {circ: [] for circ in circ_names}
     single = {circ: [] for circ in circ_names}
     depth = {circ: [] for circ in circ_names}
     num = {circ: [] for circ in circ_names}
     pauli_num = {circ: [] for circ in circ_names}
-    for i in range(4,30,2):
-        mol.active_orbitals = list(range(i))
+    for i in range(4,14,2):
+        mol = Molecule(geometry='Li 0 0 0; Li 0 0 1.5459', num_electrons=(2,2), active_orbitals=list(range(i)), basis='6-311g')
         try:
             logger.info(f"{i=}")
             circ_prov = CircuitProvider(reps=1, molecule=mol)
@@ -101,6 +101,12 @@ def scaleability():
 
 if __name__ == "__main__":
     # scaleability()
+    jw  = np.array([413, 1340, 3087, 5910, 10065])
+    bk  = np.array([394, 1528, 2881, 6064, 9546])
+    p =   np.array([60.0, 150.0, 280.0, 450.0, 660.0])
+    q = np.array([8,12,16,20,24])
+    print(" ".join([ f"({el[0]}, {el[1]})" for el in zip(q, jw/p)]))
+    print(" ".join([ f"({el[0]}, {el[1]})" for el in zip(q, bk/p)]))
     # ucc = UCCSD(molecule=H2_8)
     # circ, mapping = ucc.cyclic_algorithm()
     # pars = circ.parameters[:]
@@ -121,24 +127,24 @@ if __name__ == "__main__":
     #     swap = (4/6*i*i*i + i*i  + 1/3*i - 14)*4
     #     cycl_double.append(swap + 12*d)
     #     cycl_depth.append(swap/4*7 + 10*d)
-    dy = [109, 163, 217, 271, 325, 379, 433, 487, 541, 595, 649, 703]
-    ds = [85, 127, 169, 211, 253, 295, 337, 379, 421, 463, 505, 547]
-    gy = [108, 270, 504, 810, 1188, 1638, 2160, 2754, 3420, 4158, 4968, 5850]
-    gs = [102, 255, 476, 765, 1122, 1547, 2040, 2601, 3230, 3927, 4692, 5525] 
-    pauli = [60.0, 150.0, 280.0, 450.0, 660.0, 910.0, 1200.0, 1530.0, 1900.0, 2310.0, 2760.0, 3250.0]
-    depth_yor = ""
-    depth_short = ""
-    gate_short = ""
-    gate_yor = ""
-    for index, i in enumerate(range(4, 28, 2)):
-        depth_yor += f"({2*i}, {dy[index]}) "
-        depth_short += f"({2*i}, {ds[index]}) "
-        gate_yor += f"({2*i}, {gy[index]/pauli[index]:.5f}) "
-        gate_short += f"({2*i}, {gs[index]/pauli[index]:.5f}) "
-    print(f"{depth_yor=}")
-    print(f"{depth_short=}")
-    print(f"{gate_yor=}")
-    print(f"{gate_short=}")
+    # dy = [109, 163, 217, 271, 325, 379, 433, 487, 541, 595, 649, 703]
+    # ds = [85, 127, 169, 211, 253, 295, 337, 379, 421, 463, 505, 547]
+    # gy = [108, 270, 504, 810, 1188, 1638, 2160, 2754, 3420, 4158, 4968, 5850]
+    # gs = [102, 255, 476, 765, 1122, 1547, 2040, 2601, 3230, 3927, 4692, 5525] 
+    # pauli = [60.0, 150.0, 280.0, 450.0, 660.0, 910.0, 1200.0, 1530.0, 1900.0, 2310.0, 2760.0, 3250.0]
+    # depth_yor = ""
+    # depth_short = ""
+    # gate_short = ""
+    # gate_yor = ""
+    # for index, i in enumerate(range(4, 12, 2)):
+    #     depth_yor += f"({2*i}, {dy[index]}) "
+    #     depth_short += f"({2*i}, {ds[index]}) "
+    #     gate_yor += f"({2*i}, {gy[index]/pauli[index]:.5f}) "
+    #     gate_short += f"({2*i}, {gs[index]/pauli[index]:.5f}) "
+    # print(f"{depth_yor=}")
+    # print(f"{depth_short=}")
+    # print(f"{gate_yor=}")
+    # print(f"{gate_short=}")
         
     # print("cycl_depth",cycl_depth)
     # print("cycl_double",cycl_double)

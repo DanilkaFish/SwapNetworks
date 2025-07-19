@@ -90,20 +90,20 @@ class DoubleLadExcitation(LadExcitation):
         a_i^+ a_j^+ a_k a_l - a_i a_j a_k^+ a_l^+ = (i, j, k, l)
     """
     def __init__(self, init: Tuple[int, int], finit: Tuple[int, int], sign: int=1):
-        self.op = (*sorted(init), *sorted(finit) )
+        self.op = (*init, *finit )
         self.sign = self.sign * sign
     
     def maj_range(self):
         dcoef = [[1, 1j], [1, 1j], [1, -1j], [1, -1j]]
         for elems in itertools.product([0, 1], repeat=4):
-            coef = 1j
+            coef = 1
             for i in range(4):
                 coef *= (dcoef[i][elems[i] - 1])
-            if coef.imag == 0:
+            if coef.real == 0:
                 j = [2 * self.op[i] + elems[i] for i in range(4)]
                 if any(self.op.count(x) % 2 for x in set(self.op)):
-                    yield MajExcitation(j, 1j*coef.real)
-
+                    yield MajExcitation(j, coef)
+                    
 
 def _parity(t: tuple):
     if len(set(t)) == 1:

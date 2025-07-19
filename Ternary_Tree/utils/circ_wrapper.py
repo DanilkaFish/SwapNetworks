@@ -140,17 +140,11 @@ class ExcitationImpl:
             for j in range(i*n//2, i*n//2 + n//2 - 1, 2):
                 circ.mswap(mtoq.transpose(j, 1, j + 1, 0))
         logger.info(f"preparing majorana init state for {encoding=} and {electrons=}...")
+        
     @staticmethod
     def get_pauli_single_ex():
         return {"XY": 1, "YX": 1}
 
-    @staticmethod
-    def get_pauli_double_ex_short():
-        return  {"XXXY": 1, "XXYX": 1, "XYXX": 1, "YXXX": 1, "YYYX": 1, "YYXY": 1, "YXYY": 1, "XYYY": 1}
-    
-    @staticmethod
-    def get_pauli_double_ex_yordan():
-        return {"XXXY": 1, "XXYX": 1, "XYXX": 1, "YXXX": 1, "YYYX": 1, "YYXY": 1, "YXYY": 1, "XYYY": 1}
             
     @staticmethod
     def get_pauli_double_ex_12cnot():
@@ -186,29 +180,41 @@ class ExcitationImpl:
         circ.cz(q0, q1)
         circ.ry(-pi/2, q0)
 
+
+    @staticmethod
+    def get_pauli_double_ex_short():
+        return {'XXXY': 1, 'XXYX': 1, 'XYXX': -1, 'YXXX': -1, 'YYYX': -1, 'YYXY': -1, 'YXYY': 1, 'XYYY': 1}
+        # return  {"XXXY": 1, "XXYX": 1, "XYXX": -1, "YXXX": -1, "YYYX": -1, "YYXY": -1, "YXYY": 1, "XYYY": 1}
+    
     @staticmethod
     def double_ex_short(circ,
                         q0, q1, q2, q3,
                         parameter,
                         list_signs):
+        """
+            Implementation of exp(-parameter/8("XXXY + XXYX + XYXX + YXXX + YYYX + YYXY + YXYY + XYYY))
+        """
         circ.cx(q1, q0)
         circ.cx(q2, q3)
         circ.ry(pi/2, q2)
         circ.cx(q2, q1)
-        circ.ry( parameter*list_signs["XXXY"]*0.25, q2)
-        circ.ry(-parameter*list_signs["YXXX"]*0.25, q1)
+        circ.ry(parameter*list_signs["XYXX"]*0.25, q1)
+        circ.ry( parameter*list_signs["XXYX"]*0.25, q2)
+    
         circ.cx(q0, q1)
         circ.cx(q3, q2)
-        circ.ry( parameter*list_signs["YXYY"]*0.25, q1)
-        circ.ry(-parameter*list_signs["YYXY"]*0.25, q2)
+        circ.ry( parameter*list_signs["XXXY"]*0.25, q2)
+        circ.ry(parameter*list_signs["YXXX"]*0.25, q1)
+        
         circ.cx(q0, q2)
         circ.cx(q3, q1)
-        circ.ry( parameter*list_signs["XYYY"]*0.25, q1)
-        circ.ry(-parameter*list_signs["YYYX"]*0.25, q2)
+        circ.ry(parameter*list_signs["YYXY"]*0.25, q2)
+        circ.ry( parameter*list_signs["YXYY"]*0.25, q1)
+        
         circ.cx(q0, q1)
         circ.cx(q3, q2)
-        circ.ry(-parameter*list_signs["XYXX"]*0.25, q1)
-        circ.ry( parameter*list_signs["XXYX"]*0.25, q2)
+        circ.ry( parameter*list_signs["XYYY"]*0.25, q1)
+        circ.ry(parameter*list_signs["YYYX"]*0.25, q2)
         circ.cx(q0, q2)
         circ.cx(q3, q1)
         circ.cx(q2, q1)
@@ -216,6 +222,7 @@ class ExcitationImpl:
         circ.cx(q1, q0)
         circ.cx(q2, q3)
 
+        
     @staticmethod
     def double_ex_alt_opt(circ,
                         q0, q1, q2, q3,
@@ -247,6 +254,10 @@ class ExcitationImpl:
         circ.cx(q3, q2)
 
     @staticmethod
+    def get_pauli_double_ex_yordan():
+        return {"XXXY": -1, "XXYX": 1, "XYXX": -1, "YXXX": 1, "YYYX": 1, "YYXY": -1, "YXYY": 1, "XYYY": -1}
+    
+    @staticmethod
     def double_ex_yordan(circ,
                         q0, q1, q2, q3,
                         parameter,
@@ -256,15 +267,15 @@ class ExcitationImpl:
         circ.cx(q0, q2)
         circ.h(q1), circ.ry(list_signs["YXXX"]*parameter*0.25, q0)
         circ.cx(q0, q1)
-        circ.h(q3), circ.ry(-list_signs["XYXX"]*parameter*0.25, q0)
+        circ.h(q3), circ.ry(list_signs["XYXX"]*parameter*0.25, q0)
         circ.cx(q0, q3)
-        circ.ry(-list_signs["XYYY"]*parameter*0.25, q0)
+        circ.ry(list_signs["XYYY"]*parameter*0.25, q0)
         circ.cx(q0, q1)
         circ.h(q2), circ.ry(list_signs["YXYY"]*parameter*0.25, q0)
         circ.cx(q0, q2)
-        circ.ry(-list_signs["XXXY"]*parameter*0.25, q0)
+        circ.ry(list_signs["XXXY"]*parameter*0.25, q0)
         circ.cx(q0, q1)
-        circ.ry(-list_signs["YYXY"]*parameter*0.25, q0)
+        circ.ry(list_signs["YYXY"]*parameter*0.25, q0)
         circ.cx(q0, q3)
         circ.h(q3), circ.ry(list_signs["YYYX"]*parameter*0.25, q0)
         circ.cx(q0, q1)

@@ -26,7 +26,7 @@ class QiskitCirc(QuantumCircuit, CircWrapper):
         self.excitation_pos = dict()
         super().__init__(n, name=name)
         logger.info(f"{self.num_qubits=}")
-
+        
     @property
     def num_qubits(self):
         return self._num_qubits
@@ -52,7 +52,7 @@ class QiskitCirc(QuantumCircuit, CircWrapper):
         par = to_qiskit_parameter(par)
         label, qubits = pauli.get_label_qubs()
         op = qiskit_pauli(label)
-        gate = PauliEvolutionGate(op, par)
+        gate = PauliEvolutionGate(op, (1j**pauli.pow).real * par)
         gate.name = label
         self.append(gate, qubits)
         self.paulis.append((pauli, par))
