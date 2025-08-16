@@ -94,6 +94,13 @@ class CircWrapper:
   
 
 
+def cx_via_bridge(circ, a, b, c):
+    """Реализует CX(a -> c) через промежуточный b на линейной связи a-b-c."""
+    # Шаблон 4 CX (оптимальнее, чем 2 SWAP = 6 CX)
+    circ.cx(a, b)
+    circ.cx(b, c)
+    circ.cx(a, b)
+    circ.cx(b, c)
 
 class ExcitationImpl:
 
@@ -222,7 +229,39 @@ class ExcitationImpl:
         circ.cx(q1, q0)
         circ.cx(q2, q3)
 
-        
+
+    @staticmethod
+    def get_pauli_double_linear_short():
+        return {'XXXY': 1, 'XXYX': 1, 'XYXX': -1, 'YXXX': -1, 'YYYX': 1, 'YYXY': 1, 'YXYY': 1, 'XYYY': 1}
+    
+    @staticmethod
+    def double_linear_short(circ,
+                            q0, q1, q2, q3,
+                            parameter,
+                            list_signs):
+        circ.cx(q1, q0)
+        circ.cx(q2, q3)
+        circ.ry(pi/2, q2)
+        circ.cx(q2, q1)
+        circ.ry(parameter*list_signs["XYXX"]*0.25, q1)
+        circ.ry( parameter*list_signs["XXYX"]*0.25, q2)
+        circ.cx(q0, q1)
+        circ.cx(q3, q2)
+        circ.ry( parameter*list_signs["XXXY"]*0.25, q2)
+        circ.ry(parameter*list_signs["YXXX"]*0.25, q1)
+        circ.cx(q2, q1)
+        circ.ry(pi/2, q1)
+        circ.cx(q0, q1)
+        circ.cx(q3, q2)
+        circ.ry(pi/2, q2)
+        circ.cx(q1, q2)
+        circ.ry(parameter*list_signs["YYYX"]*0.25, q2)
+        circ.ry( parameter*list_signs["XYYY"]*0.25, q1)
+        circ.cx(q0, q1)
+        circ.cx(q3, q2)
+        circ.ry( parameter*list_signs["YYXY"]*0.25, q2)
+        circ.ry(parameter*list_signs["YXYY"]*0.25, q1)
+    
     @staticmethod
     def double_ex_alt_opt(circ,
                         q0, q1, q2, q3,
@@ -262,12 +301,21 @@ class ExcitationImpl:
                         q0, q1, q2, q3,
                         parameter,
                         list_signs):
+        
+        q0,q1 = q1,q0
+        nlist = {}
+        olist = ExcitationImpl.get_pauli_double_ex_yordan()
+        for key, val in list_signs.items():
+            nkey = key[1::-1] + key[2:]
+            nlist[nkey] = val * olist[key] * olist[nkey]
+        list_signs = nlist
         circ.cx(q0, q1), circ.cx(q2, q3)
         circ.x(q1), circ.x(q3)
         circ.cx(q0, q2)
         circ.h(q1), circ.ry(list_signs["YXXX"]*parameter*0.25, q0)
         circ.cx(q0, q1)
         circ.h(q3), circ.ry(list_signs["XYXX"]*parameter*0.25, q0)
+        # cx_via_bridge(circ, q0, q2, q3)
         circ.cx(q0, q3)
         circ.ry(list_signs["XYYY"]*parameter*0.25, q0)
         circ.cx(q0, q1)
@@ -276,6 +324,7 @@ class ExcitationImpl:
         circ.ry(list_signs["XXXY"]*parameter*0.25, q0)
         circ.cx(q0, q1)
         circ.ry(list_signs["YYXY"]*parameter*0.25, q0)
+        # cx_via_bridge(circ, q0, q2, q3)
         circ.cx(q0, q3)
         circ.h(q3), circ.ry(list_signs["YYYX"]*parameter*0.25, q0)
         circ.cx(q0, q1)
@@ -288,10 +337,23 @@ class ExcitationImpl:
         circ.cx(q0, q1), circ.cx(q2, q3)
 
     @staticmethod
+    def get_pauli_double_ex_12cnot():
+        return { "YYIZ" : 1, "XXIZ" : 1, "YYZI" : 1, "XXZI" : 1,"IZYY" : -1,"IZXX" : -1, "ZIYY" : -1,"ZIXX" : -1}
+    
+    @staticmethod
     def double_ex_12cnot(circ,
                         q0, q1, q2, q3,
                         parameter,
                         list_signs):
+        q2,q3 = q3,q2
+        olist = ExcitationImpl.get_pauli_double_ex_12cnot()
+        nlist = {}
+        for key, val in list_signs.items():
+            nkey = key[:2] + key[-1:-3:-1]
+            
+            nlist[nkey] = val * olist[key] * olist[nkey]
+            nlist[nkey] = val
+        list_signs = nlist
         circ.ry(pi/2, q2)
         circ.rz(pi/2, q3)
         circ.rz(pi/2, q0)
@@ -300,15 +362,15 @@ class ExcitationImpl:
         circ.cx(q0, q1), circ.cx(q2, q3)
         circ.ry( parameter*list_signs["XXZI"]*0.25, q0)
         circ.ry( parameter*list_signs["YYZI"]*0.25, q1)
-        circ.ry(-parameter*list_signs["IZYY"]*0.25, q2)
-        circ.ry(-parameter*list_signs["IZXX"]*0.25, q3)
+        circ.ry( parameter*list_signs["IZYY"]*0.25, q2)
+        circ.ry( parameter*list_signs["IZXX"]*0.25, q3)
         circ.cx(q0, q1), circ.cx(q2, q3)
         circ.cx(q1, q2), circ.cx(q3, q0)
         circ.cx(q0, q1), circ.cx(q2, q3)
         circ.ry( parameter*list_signs["XXIZ"]*0.25, q0)
         circ.ry( parameter*list_signs["YYIZ"]*0.25, q1)
-        circ.ry(-parameter*list_signs["ZIYY"]*0.25, q2)
-        circ.ry(-parameter*list_signs["ZIXX"]*0.25, q3)
+        circ.ry( parameter*list_signs["ZIYY"]*0.25, q2)
+        circ.ry( parameter*list_signs["ZIXX"]*0.25, q3)
         circ.cx(q0, q1), circ.cx(q2, q3)
         circ.cx(q3, q0)
         circ.ry(-pi/2, q2)
@@ -343,3 +405,5 @@ class ExcitationImpl:
         circ.cz(q3, q0)
         circ.rx(-pi/2, q0), circ.rx(-pi/2, q1), circ.rx(-pi/2, q2), circ.rx(-pi/2, q3) 
         circ.rz(-pi/2, q0), circ.ry(-pi/2, q1), circ.ry(-pi/2, q2), circ.rz(-pi/2, q3)
+        
+

@@ -2,7 +2,7 @@ from math import pi
 import itertools
 import numpy as np
 from scipy.linalg import expm
-from qiskit import QuantumCircuit
+from qiskit import QuantumCircuit, transpile
 from qiskit.quantum_info import Operator, Pauli
 from qiskit.quantum_info.operators import PauliList
 
@@ -87,6 +87,27 @@ def double_ex_short(circ, q0, q1, q2, q3, parameter, list_signs):
     circ.cx(q1, q0)
     circ.cx(q2, q3)
 
+def get_clif_circuit():
+    circ = QuantumCircuit(4)
+    circ.cx(3,2)
+    circ.cx(0,1)
+    circ.cx(1,2)
+    circ.ry(pi/2, 1)
+    circ.cx(2,3)
+    circ.cx(1,0)
+    # circ.rz(pi/2, 0)
+    # circ.rz(pi/2, 1)
+    # circ.rz(pi/2, 2)
+    # circ.rz(pi/2, 3)
+    # circ.cx(2,3)
+    # circ.cx(1,0)
+    # circ.ry(pi/2, 1)
+    # circ.cx(1,2)
+    # circ.cx(3,2)
+    # circ.cx(0,1)
+    return circ 
+
+
 def build_short_circuit(theta):
     qc = QuantumCircuit(4)
     qc.cx
@@ -133,25 +154,29 @@ def compare_unitaries(U1, U2, tol=1e-8):
 if __name__ == "__main__":
     theta = 0.2  # произвольный параметр
     # 1) Схема → унитарная матрица
-    for combo in itertools.product([-1,1], repeat=8):
-        signs = {key: combo[i] for i, key in enumerate(signs.keys())}
-        qc = build_short_circuit(theta)
-        qcy = build_yordan_circuit(theta)
-        U_circ = Operator(qc).data
-        U_circy = Operator(qcy).data
-        # 2) Гамильтониан → expm
-        H = hamiltonian_matrix(signs)
-        U_exp = unitary_from_exponential(H, theta)
+    # for combo in itertools.product([-1,1], repeat=8):
+    #     signs = {key: combo[i] for i, key in enumerate(signs.keys())}
+    #     qc = build_short_circuit(theta)
+    #     qcy = build_yordan_circuit(theta)
+    #     U_circ = Operator(qc).data
+    #     U_circy = Operator(qcy).data
+    #     # 2) Гамильтониан → expm
+    #     H = hamiltonian_matrix(signs)
+    #     U_exp = unitary_from_exponential(H, theta)
 
-        # 3) Сравнение
-        delta, phi = compare_unitaries(U_exp,  U_circ)
-        # print(f"||U_circ - ϕ·U_exp|| = {delta:.3e}")
-        # print(f"Глобальная фаза ϕ = {phi}")
-        if delta < 1e-6:
-            print(signs)
-            print(qc)
-            print("✔ Схема совпадает с экспонентой Гамильтониана (с учётом глобальной фазы).")
-            # break
-        else:
-            pass
-            # print("✘ Есть расхождение!")
+    #     # 3) Сравнение
+    #     delta, phi = compare_unitaries(U_exp,  U_circ)
+    #     # print(f"||U_circ - ϕ·U_exp|| = {delta:.3e}")
+    #     # print(f"Глобальная фаза ϕ = {phi}")
+    #     if delta < 1e-6:
+    #         print(signs)
+    #         print(qc)
+    #         print("✔ Схема совпадает с экспонентой Гамильтониана (с учётом глобальной фазы).")
+    #         # break
+    #     else:
+    #         pass
+    #         # print("✘ Есть расхождение!")
+    circ = get_clif_circuit()
+    print(circ)
+    print(transpile(circ,optimization_level=3).decompose())
+    # tra

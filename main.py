@@ -111,7 +111,8 @@ def to_thread(namet, vqe_data: vqeData, r:float=0, is_rust=False):
     probs = vqe_data.probs
     data = []
     name, circ, op_mapper = vqe_data.circ_prov.get_circ(namet)
-    mapper=JordanWignerMapper()
+    mapper = JordanWignerMapper()
+    
     if namet == Circuits.bk():
         mapper = BravyiKitaevMapper()
     if is_rust:
@@ -156,16 +157,17 @@ def run_vqe(name: str, vqe_data: vqeData, data: dict, r:float=0, is_rust=False):
 if __name__ == "__main__":
     mult = [0.00001, 0.001, 0.01, 0.1, 1]
     # for noise in ["D", "X", "Y", "Z"]:
-    for noise in ["sc","D", "X","Y","Z"]:
+    # for noise in ["sc","D", "X","Y","Z"]:
     # for noise in ["sc"]:
-    # for noise in ["", ]:
+    for noise in ["", ]:
         if noise == "sc":
             probs = mult
         else:
             probs = 1 - np.flip(np.geomspace(0.000001, (0.0002), 5))
+            probs = probs[:1]
         vqe_data=vqeData(
-                "data/H2_4",
-                H2_4,
+                "data_all-to-all/H2_8",
+                H2_8,
                 optimizers[0],
                 reps=1,
                 probs=probs,
@@ -177,11 +179,10 @@ if __name__ == "__main__":
         # circ_names = Circuits.get_circs_names()[:2] + Circuits.get_circs_names()[4:] +  [Circuits.swap_2xn_alt()]
         # circ_names = Circuits.get_circs_names()[0:4] + Circuits.get_circs_names()[5:]
         # circ_names = Circuits.get_circs_names()[-3:-2]
+        circ_names = Circuits.get_circs_names()[0:6]
     
-        circ_names = Circuits.get_circs_names()[-6:-5] + Circuits.get_circs_names()[-4:-3] + Circuits.get_circs_names()[-2:-1]
+        # circ_names = Circuits.get_circs_names()[-6:-5] + Circuits.get_circs_names()[-4:-3] + Circuits.get_circs_names()[-2:-1]
         # namet = Circuits.swap_2xn_alt()
-        # ## circ_names = circ_names[:2] + circ_names[-3:] 
-        # ## circ_names = circ_names[2:3]
         # name, circ, op = vqe_data.circ_prov.get_circ(namet)
         # # name, circ, op = vqe_data.circ_prov.get_circ(circ_names[-2])
         # sn = to_excitaions(circ, circ.excitation_pos, circ.excitation_pos)

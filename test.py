@@ -61,13 +61,13 @@ def res(angle):
     
 def scaleability():
     mol = Molecule(geometry='Li 0 0 0; Li 0 0 1.5459', num_electrons=(2,2), active_orbitals=[0,1,2,5], basis='6-311g')
-    circ_names = Circuits.get_circs_names()[:2]
+    circ_names = Circuits.get_circs_names()[5:6]
     double = {circ: [] for circ in circ_names}
     single = {circ: [] for circ in circ_names}
     depth = {circ: [] for circ in circ_names}
     num = {circ: [] for circ in circ_names}
     pauli_num = {circ: [] for circ in circ_names}
-    for i in range(4,14,2):
+    for i in range(4,26,2):
         mol = Molecule(geometry='Li 0 0 0; Li 0 0 1.5459', num_electrons=(2,2), active_orbitals=list(range(i)), basis='6-311g')
         try:
             logger.info(f"{i=}")
@@ -81,7 +81,7 @@ def scaleability():
                 double[name].append(circ.count_ops()["cx"])
                 single[name].append(circ.count_ops()["u3"])
                 depth[name].append(circ.depth())
-                pauli_num[name].append(i*(i-1)/2*10)
+                pauli_num[name].append(i*(i-1)/2*12)
                 # pauli_num.append(2*i*(2*i-1)/2*10)
                 # print(name, ":", circ.count_ops())
                 # print(name, ":", circ.depth())
@@ -100,13 +100,13 @@ def scaleability():
     # print(pauli_num)
 
 if __name__ == "__main__":
-    # scaleability()
-    jw  = np.array([413, 1340, 3087, 5910, 10065])
-    bk  = np.array([394, 1528, 2881, 6064, 9546])
-    p =   np.array([60.0, 150.0, 280.0, 450.0, 660.0])
-    q = np.array([8,12,16,20,24])
-    print(" ".join([ f"({el[0]}, {el[1]})" for el in zip(q, jw/p)]))
-    print(" ".join([ f"({el[0]}, {el[1]})" for el in zip(q, bk/p)]))
+    scaleability()
+    # jw  = np.array([413, 1340, 3087, 5910, 10065])
+    # bk  = np.array([394, 1528, 2881, 6064, 9546])
+    # p =   np.array([60.0, 150.0, 280.0, 450.0, 660.0])
+    # q = np.array([8,12,16,20,24])
+    # print(" ".join([ f"({el[0]}, {el[1]})" for el in zip(q, jw/p)]))
+    # print(" ".join([ f"({el[0]}, {el[1]})" for el in zip(q, bk/p)]))
     # ucc = UCCSD(molecule=H2_8)
     # circ, mapping = ucc.cyclic_algorithm()
     # pars = circ.parameters[:]

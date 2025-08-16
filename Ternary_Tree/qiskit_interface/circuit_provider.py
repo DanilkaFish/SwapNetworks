@@ -5,16 +5,19 @@ from numpy.random import shuffle
 import numpy as np
 import pandas as pd
 from qiskit_nature.second_q.mappers import JordanWignerMapper, BravyiKitaevMapper
+from qiskit_nature.second_q.operators import FermionicOp 
 from qiskit_nature.second_q.circuit.library import HartreeFock, UCC
 from qiskit_nature.second_q.mappers.fermionic_mapper import FermionicMapper
 
 from qiskit import transpile, QuantumCircuit
-from qiskit.quantum_info import SparsePauliOp, Statevector
+from qiskit.transpiler import CouplingMap
+from qiskit.quantum_info import SparsePauliOp, Statevector, Operator
 from qiskit.circuit import Parameter, ParameterVector, Delay
 # from qiskit.circuit.parametervector import 
 from qiskit.circuit.library.standard_gates import IGate, XGate, ZGate, YGate, RZZGate ,CZGate
 from qiskit.circuit.library import PauliEvolutionGate
 from qiskit.synthesis.evolution import synth_pauli_network_rustiq
+from qiskit.transpiler.passes.synthesis.hls_plugins import PauliEvolutionSynthesisRustiq
 from qiskit.providers.fake_provider import Fake20QV1, Fake5QV1, GenericBackendV2
 from qiskit_aer.noise import (NoiseModel, QuantumError, kraus_error, RelaxationNoisePass,
     pauli_error, depolarizing_error, thermal_relaxation_error)
@@ -50,7 +53,7 @@ def get_file_name(name, noise, method):
     return name + f"_{noise}" + method +".json"
 
 class SwapCircNames:
-    SWAP2XN = ("swap2xn", LadExcImpl.CNOT12xyz())
+    SWAP2XN = ("swap2xn12", LadExcImpl.CNOT12xyz())
     # SWAP2XN_ALT = ("swap2xn_alt", LadExcImpl.CNOT12zyx())
     SWAPGENYORDAN = ("swap_gen", LadExcImpl.YORDAN())
     SWAPGENSHORT = ("swap_gen", LadExcImpl.SHORT())
@@ -97,6 +100,10 @@ class Circuits:
         return "swap 2xn short"
     
     @staticmethod
+    def swap_2xn_12cnot():
+        return "swap 2xn short"
+    
+    @staticmethod
     def swap_2xn_yor():
         return "swap 2xn yor"
 
@@ -116,12 +123,12 @@ class Circuits:
         circs.append(Circuits.jw_lex())
         circs.append(Circuits.bk_lex())
         circs.append(Circuits.swap_2xn())
-        circs.append(Circuits.swap_gen_short())
         circs.append(Circuits.swap_gen_yor())
-        circs.append(Circuits.swap_2xn_short())
+        circs.append(Circuits.swap_gen_short())
         circs.append(Circuits.swap_2xn_yor())
-        circs.append(Circuits.swap_gen_maj_short())
+        circs.append(Circuits.swap_2xn_short())
         circs.append(Circuits.swap_gen_maj_yor())
+        circs.append(Circuits.swap_gen_maj_short())
         return circs
 
 
@@ -171,7 +178,15 @@ class CircuitProvider:
         for el in self.do:
             if el[0] < el[2]:
                 ls2.append(((el[3],el[2]), (el[1],el[0])))
+        # ls = [((3,2), ())]
         # return ls2
+        # if len(self.do) == 6:
+        #     return [((1, 5), (0, 4)), ((1,), (0,)), ((5,), (4,)), 
+        #             ((3, 7), (2, 6)), ((3,), (2,)), ((7,), (6,)),
+        #             ((3, 7), (0, 4)), ((3,), (0,)), ((7,), (4,)),
+        #             ((3, 7), (1, 5)), ((3,), (1,)), ((7,), (5,)),
+        #             ((2, 6), (0, 4)), ((2,), (0,)), ((6,), (4,)),
+        #             ((2, 6), (1, 5)), ((2,), (1,)), ((6,), (5,))]
         return ls2 + ls1  
 
     def get_swap_circuit(self, name: Tuple[str,str]) -> Tuple[QuantumCircuit, SparsePauliOp]:
@@ -225,15 +240,17 @@ class CircuitProvider:
         for gate in pauli:
             for pauli, coef in zip(gate.operation.operator.paulis, gate.operation.operator.coeffs):
                 parr.append((str(pauli), list(reversed(rq)), coef*gate.params[0]))
+        
         circ.compose(synth_pauli_network_rustiq(nq, 
                                                     parr, 
-                                                    optimize_count=True, 
-                                                    preserve_order=True, 
+                                                    optimize_count=False, 
+                                                    preserve_order=False, 
                                                     upto_phase=True, 
                                                     upto_clifford=False, 
-                                                    resynth_clifford_method=0
+                                                    resynth_clifford_method=1
                                                 ),
                                                 inplace=True)
+        
         # if pass_manager is not None:
         #     ansatz = pass_manager.run(qc)
         # else:
@@ -257,13 +274,15 @@ class CircuitProvider:
                 parr.append((str(pauli), list(reversed(rq)), coef*gate.params[0]))
         circ.compose(synth_pauli_network_rustiq(nq, 
                                                     parr, 
-                                                    optimize_count=True, 
+                                                    optimize_count=True,
                                                     preserve_order=True, 
                                                     upto_phase=True, 
                                                     upto_clifford=False, 
-                                                    resynth_clifford_method=0
+                                                    resynth_clifford_method=1
                                                 ),
                                                 inplace=True)
+
+        
         if pass_manager is not None:
             ansatz = pass_manager.run(qc)
         else:
@@ -275,8 +294,7 @@ class CircuitProvider:
             return (self.get_circ_via_mapping(JordanWignerMapper()), jw_ham(self.fermionic_op))
         elif name == Circuits.bk():
             return (self.get_circ_via_mapping(BravyiKitaevMapper()), bk_ham(self.fermionic_op))
-        elif name == Circuits.swap_2xn():
-            return self.get_swap_circuit(SwapCircNames.SWAP2XN)
+        
         elif name == Circuits.swap_gen_yor():
             return self.get_swap_circuit(SwapCircNames.SWAPGENYORDAN)
         elif name == Circuits.swap_gen_short():
@@ -293,11 +311,16 @@ class CircuitProvider:
             return self.get_swap_circuit(SwapCircNames.SWAPGENMAJYORDAN)
         elif name == Circuits.swap_gen_maj_short():
             return self.get_swap_circuit(SwapCircNames.SWAPGENMAJSHORT)
+        elif name == Circuits.swap_2xn():
+            return self.get_swap_circuit(SwapCircNames.SWAP2XN)
         # elif name == Circuits.swap_2xn_alt():
         #     return self.get_swap_circuit(SwapCircNames.SWAP2XN_ALT)
         
     def get_circ(self, name) -> Tuple[str, QuantumCircuit, SparsePauliOp]:
-        return name, *self.get_circ_op(name)
+        circ, op = self.get_circ_op(name)
+        # logger.info(f"\n{circ.decompose()}")
+
+        return name, circ, op
 
     def __iter__(self, name_list=Circuits.get_circs_names()):
         for name in name_list:
@@ -305,7 +328,7 @@ class CircuitProvider:
 
 
 class CircSim:
-    def __init__(self, circ: QiskitCirc, op, noise_par=0.9999, noise_type="D",  init_point=None, s_basis=["u"], d_basis=["cx"]):
+    def __init__(self, circ: QiskitCirc, op: SparsePauliOp, noise_par=0.9999, noise_type="D",  init_point=None, s_basis=["u3"], d_basis=["cx"]):
         self.circ = circ
         self.op = op
         # self.s_basis = []
@@ -315,13 +338,13 @@ class CircSim:
         else:
             self.init_point = init_point
         self.noise_par = noise_par
-        self.circ = transpile(self.circ, basis_gates=[*s_basis, *d_basis], optimization_level=3)
-        logger.info(f"circ number of operators = {self.circ.count_ops()}")
+        logger.info("starting transpilation")
+        instr_dur = []
 
-        if noise_type == "_sc":
+        if noise_type == "sc":
             instr_dur = []
             td = 68
-            ts = 10
+            ts = 0
             for i in range(circ.num_qubits):
                 instr_dur.append(("rx", [i], ts))
                 instr_dur.append(("rz", [i], ts))
@@ -329,18 +352,36 @@ class CircSim:
                     if i != j:
                         instr_dur.append(("rzz", [i, j], td))
                         instr_dur.append(("cz", [i, j], td))
-            # ep = self.circ.excitation_pos
-            self.circ = transpile(self.circ, 
+            
+            self.circ = transpile(self.circ.decompose(reps=3), 
                                   basis_gates=["cz", "rzz", "rx", "rz"], 
                                   optimization_level=3, 
+                                  coupling_map=coupling_map_2xn(self.circ.num_qubits//2),
                                   instruction_durations=instr_dur,
+                                  layout_method='trivial',  # or 'dense' if you prefer
+                                    routing_method='basic',
                                 #   dt=1,
                                   scheduling_method="asap"
                                   )
+        else:
+            self.circ = transpile(self.circ.decompose(reps=4), 
+                              basis_gates=[*s_basis, *d_basis], 
+                              optimization_level=2, 
+                                coupling_map=coupling_map_2xn(self.circ.num_qubits//2),
+                                layout_method='trivial',  # or 'dense' if you prefer
+                                routing_method='basic',
+                                seed_transpiler=42
+                              )
             # self.circ.excitation_pos = ep
             # self.circ.delay(100, unit="dt")
+            
+        logger.info(f"circ number of operators = {self.circ.count_ops()}")
+        if self.circ.layout is not None:
+            layout = self.circ.layout.final_index_layout()
+            self.op = self.op.apply_layout(layout)
         self.noise_type = noise_type
 
+    
     def run_qiskit_vqe(self, optimizer, device="CPU", reps=1):
         if self.noise_type == "":
             est = Estimator(
@@ -349,13 +390,14 @@ class CircSim:
                 backend_options={"device": device},
             )
         elif self.noise_type == "sc":
-            est = get_noise_estiamtor_from_csv(self.noise_par, device)
+            est = get_noise_estiamtor_from_csv(self.noise_par, device, self.circ.num_qubits)
         else:
             est = get_qiskit_device_noise_estimator(
                                                     noise_op=self.noise_type, 
                                                     prob=self.noise_par,
                                                     device=device
                                                     )
+        
         vqe = VQE(est, self.circ, optimizer=optimizer, initial_point=self.init_point)
         result = vqe.compute_minimum_eigenvalue(operator=self.op)
         for i in range(reps-1):
@@ -395,8 +437,8 @@ class CircSim:
                     qc = cp.optimize_circ(qc, qubit_mapper=mapper)
 
                 qc = qc.assign_parameters(par_used, inplace=False)
-                if self.noise_type == "sc":
-                    qc = transpile_to_sc(qc)
+                # if self.noise_type == "sc":
+                    # qc = transpile_to_sc(qc)
                 # print(qc.num_parameters)
                 vqe = VQE(est, qc, optimizer=optimizer, initial_point=[0])
                 res = vqe.compute_minimum_eigenvalue(operator=self.op)
@@ -438,7 +480,16 @@ class CircSim:
             # print(en)
             get_param(0)
         return _res.eigenvalue.real, list(_res.optimal_parameters.values())
-    
+
+def coupling_map_2xn(n):
+    cm = [(i, i + 1) for i in range(n-1)]
+    cm = cm + [(i, i + 1) for i in range(n, 2*n-1)]
+    cm = cm + [(i, 2*n - 1 - i) for i in range(0, n)]
+    cm = cm + [(j,i) for (i,j) in cm]
+    cm = CouplingMap(cm)
+    return None
+    return cm
+
 def jw_ham(fermionic_op):
     mapper = JordanWignerMapper()
     qubit_jw_op = mapper.map(fermionic_op)
@@ -530,7 +581,8 @@ def mean(df, name="CZ error"):
     average_cz_error = sum(cz_errors) / len(cz_errors)
 
     return average_cz_error
-def get_noise_estiamtor_from_csv(mult, device):
+
+def get_noise_estiamtor_from_csv(mult, device, nq):
     file_name = "/home/danilkaf/projects/SwapNetworks/Ternary_Tree/qiskit_interface/ibm_kingston_calibrations_2025-07-02T15_30_16Z.csv"
     basis_gates = ["cz", "rzz", "rx", "rz"]
     noise_model = NoiseModel(basis_gates=basis_gates)
@@ -549,8 +601,8 @@ def get_noise_estiamtor_from_csv(mult, device):
     logger.info(f"{CX=}")
     error1 = depolarizing_error(4./3*(1 - (1-U)**2), 1)
     error2 = depolarizing_error(4./3*(1 - (1-CX)**2), 2)
-    t1s = [T1 for prop in range(8)]
-    t2s = [T2 for prop in range(8)]
+    t1s = [T1 for prop in range(nq)]
+    t2s = [T2 for prop in range(nq)]
     delay_pass = RelaxationNoisePass(
         t1s=[np.inf if x is None else x*1000 for x in t1s],
         t2s=[np.inf if x is None else x*1000 for x in t2s],
