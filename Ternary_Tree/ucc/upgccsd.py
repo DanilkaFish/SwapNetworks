@@ -27,18 +27,10 @@ class LadExcImpl:
     @staticmethod
     def CNOT12xyz():
         return "double_ex_12cnot" 
-
-    # @staticmethod
-    # def CNOT12zyx():
-    #     return "double_ex_12cnot_alt" 
     
     @staticmethod
     def SINGLE():
         return "single_ex"
-    
-    # @staticmethod
-    # def SINGLE_ALT():
-    #     return "single_ex_alt"
     
     @staticmethod
     def SHORT():
@@ -324,7 +316,7 @@ class UpGCCSD(AbstractUCC):
                 for i in range(parity, n//2  - 1, 2):
                     mswap(i,0,i + 1, 1)
                 for i in range(n - 1 - parity, n//2 , -2):
-                    mswap(i,0,i - 1, 1)
+                    mswap(i, 0, i - 1, 1)
             else:
                 for i in range(parity, n//2 - 1, 2):
                     mswap(i,1,i + 1, 0)
@@ -334,7 +326,7 @@ class UpGCCSD(AbstractUCC):
                 for i in range(n - 1 - parity, n//2 , -2):
                     mswap(i,1,i - 1, 0)
                     mswap(i,0,i,1)
-                    mswap(i - 1,0,i - 1,1)
+                    mswap(i - 1,1,i - 1,0)
 
         def mswap(qub1, disp1, qub2, disp2):
             return _mswap(qub1, disp1, qub2, disp2, circ, mtoq)

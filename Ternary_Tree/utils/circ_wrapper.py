@@ -3,7 +3,28 @@ from __future__ import annotations
 from typing import Union, List, Dict
 from abc import abstractmethod
 from numpy import pi
+import scipy
 
+import numpy as np
+from qiskit.circuit import Gate
+from qiskit.circuit import QuantumCircuit
+
+def ms_matrix(theta, phi):
+    # exp(-i θ/2 (cosφ XX + sinφ YY))
+    xx = np.kron([[0,1],[1,0]], [[0,1],[1,0]])
+    yy = np.kron([[0,-1j],[1j,0]], [[0,-1j],[1j,0]])
+    h = np.cos(phi)*xx + np.sin(phi)*yy
+    return scipy.linalg.expm(-1j * theta/2 * h)
+
+class MS2Gate(Gate):
+    def __init__(self, theta, phi):
+        super().__init__("ms2", 2, [theta, phi])
+    def _define(self):
+        # не разлагаем, чтобы оставался один гейт
+        return None
+    def to_matrix(self):
+        return ms_matrix(*self.params)
+    
 
 
 class LadExcImpl:
@@ -341,7 +362,7 @@ class ExcitationImpl:
         return { "YYIZ" : 1, "XXIZ" : 1, "YYZI" : 1, "XXZI" : 1,"IZYY" : -1,"IZXX" : -1, "ZIYY" : -1,"ZIXX" : -1}
     
     @staticmethod
-    def double_ex_12cnot(circ,
+    def double_ex_12cnot(circ: QuantumCircuit,
                         q0, q1, q2, q3,
                         parameter,
                         list_signs):
@@ -359,6 +380,37 @@ class ExcitationImpl:
         circ.rz(pi/2, q0)
         circ.ry(pi/2, q0)
         circ.cx(q1, q2)
+        circ.cx(q0, q1), circ.cx(q2, q3)
+        circ.ry( parameter*list_signs["XXZI"]*0.25, q0)
+        circ.ry( parameter*list_signs["YYZI"]*0.25, q1)
+        circ.ry( parameter*list_signs["IZYY"]*0.25, q2)
+        circ.ry( parameter*list_signs["IZXX"]*0.25, q3)
+        circ.cx(q0, q1), circ.cx(q2, q3)
+        circ.cx(q1, q2), circ.cx(q3, q0)
+        circ.cx(q0, q1), circ.cx(q2, q3)
+        circ.ry( parameter*list_signs["XXIZ"]*0.25, q0)
+        circ.ry( parameter*list_signs["YYIZ"]*0.25, q1)
+        circ.ry( parameter*list_signs["ZIYY"]*0.25, q2)
+        circ.ry( parameter*list_signs["ZIXX"]*0.25, q3)
+        circ.cx(q0, q1), circ.cx(q2, q3)
+        circ.cx(q3, q0)
+        circ.ry(-pi/2, q2)
+        circ.ry(-pi/2, q0)
+        circ.rz(-pi/2, q3)
+        circ.rz(-pi/2, q0)
+
+    @staticmethod
+    def double_ex_12cnot_ion(circ: QuantumCircuit,
+                        q0, q1, q2, q3,
+                        parameter,
+                        list_signs):
+        from qiskit.circuit.library import MSGate
+        circ.cz(q1, q2)
+        if (list_signs["YYZI"] == -1):
+            pass
+        if (list_signs["XXZI"] == -1):
+            pass
+        ms = MSGate(num_qubits=2)
         circ.cx(q0, q1), circ.cx(q2, q3)
         circ.ry( parameter*list_signs["XXZI"]*0.25, q0)
         circ.ry( parameter*list_signs["YYZI"]*0.25, q1)

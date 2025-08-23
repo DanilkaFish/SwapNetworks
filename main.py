@@ -3,6 +3,7 @@ import numpy as np
 from copy import deepcopy
 import json
 
+from qiskit.quantum_info import DensityMatrix
 from qiskit_algorithms.optimizers import CG, SLSQP, L_BFGS_B, COBYLA, SPSA
 from qiskit_nature.second_q.operators import FermionicOp
 
@@ -91,7 +92,7 @@ class vqeData:
         self.circ_prov.update_molecule(self.molecule)
         self.ref_value = numpy_energy(self.circ_prov.fermionic_op, self.circ_prov.uccgsd)
 
-def eval_additional_observable(circuit: QuantumCircuit, parameters, estimator,  mapper ):
+def eval_additional_observable(circuit: QuantumCircuit, parameters, estimator: Estimator,  sim: AerSimulator, mapper ):
     num_spin_orbitals = circuit.num_qubits
     def num_observable(num_spin_orbitals, mapper):
         ferm_observable_N = FermionicOp(
@@ -99,10 +100,15 @@ def eval_additional_observable(circuit: QuantumCircuit, parameters, estimator,  
             num_spin_orbitals=num_spin_orbitals
         )
         return mapper.map(ferm_observable_N)
+    
     circuit = circuit.assign_parameters(parameters)
+    circuit.save_density_matrix() 
     n_obs = num_observable(num_spin_orbitals, mapper)
     res = estimator.run([circuit]*2, observables=[n_obs, n_obs @ n_obs]).result()
-    return list(res.values) + [res.values[1] - res.values[0]**2]
+    result = sim.run(circuit).result()
+    rho = result.data(0)['density_matrix']
+    purity = (rho.data @ rho.data).trace().real
+    return list(res.values) + [res.values[1] - res.values[0]**2] + [purity]
 
 
 @Timer.attach_timer("thread_timer")
@@ -126,13 +132,14 @@ def to_thread(namet, vqe_data: vqeData, r:float=0, is_rust=False):
                                                 #  cp=vqe_data.circ_prov, 
                                                 #  mapper=mapper)
 
-        energy, parameters, est = circs.run_qiskit_vqe(vqe_data.optimizer[0], vqe_data.device, reps=1)
-        additional_res = eval_additional_observable(circs.circ, parameters, est, op_mapper[1])
+        energy, parameters, est, sim, cb = circs.run_qiskit_vqe(vqe_data.optimizer[0], vqe_data.device, reps=1)
+        additional_res = eval_additional_observable(circs.circ, parameters, est, sim, op_mapper[1])
         logger.info(f"{energy:.5f} hf: {name=}, {noise=}, {index=}")
         data.append({
             "name": name, 
             "ref_ener": vqe_data.ref_value, 
             "energy": energy, 
+            "energy_array": cb.energy_array,
             "param": parameters, 
             "addition_res:": additional_res,
             "optimizer": vqe_data.optimizer[1],
@@ -157,47 +164,30 @@ def run_vqe(name: str, vqe_data: vqeData, data: dict, r:float=0, is_rust=False):
 if __name__ == "__main__":
     mult = [0.00001, 0.001, 0.01, 0.1, 1]
     # for noise in ["D", "X", "Y", "Z"]:
-    # for noise in ["sc","D", "X","Y","Z"]:
-    # for noise in ["sc"]:
-    for noise in ["", ]:
-        if noise == "sc":
-            probs = mult
+    for noise in ["sc", "ion", "D", "X","Y","Z"][1:2]:
+    # for noise in ["D"]:
+    # for noise in ["", ]:
+        if noise in {"sc", "ion"}:
+            probs = mult[:4]
         else:
             probs = 1 - np.flip(np.geomspace(0.000001, (0.0002), 5))
-            probs = probs[:1]
+            # probs = probs[:1]
         vqe_data=vqeData(
-                "data_all-to-all/H2_8",
+                "data_last/H2_8",
                 H2_8,
                 optimizers[0],
                 reps=1,
                 probs=probs,
                 noise_type=noise,
-                device="GPU",
+                device="CPU",
             )
 
-        # circ_names = Circuits.get_circs_names()[:]
-        # circ_names = Circuits.get_circs_names()[:2] + Circuits.get_circs_names()[4:] +  [Circuits.swap_2xn_alt()]
-        # circ_names = Circuits.get_circs_names()[0:4] + Circuits.get_circs_names()[5:]
-        # circ_names = Circuits.get_circs_names()[-3:-2]
-        circ_names = Circuits.get_circs_names()[0:6]
+        circ_names = Circuits.get_circs_names()[4:5]
     
-        # circ_names = Circuits.get_circs_names()[-6:-5] + Circuits.get_circs_names()[-4:-3] + Circuits.get_circs_names()[-2:-1]
-        # namet = Circuits.swap_2xn_alt()
-        # name, circ, op = vqe_data.circ_prov.get_circ(namet)
-        # # name, circ, op = vqe_data.circ_prov.get_circ(circ_names[-2])
-        # sn = to_excitaions(circ, circ.excitation_pos, circ.excitation_pos)
-        # # print(sn)
-        # # print(circ.decompose(reps=2))
-        # # print(transpile(sn, basis_gates=["rzz", "cz", "rx", "rz"], optimization_level=3))
-        # circs = CircSim(sn, op, 0.99999, vqe_data.noise_type)
-        # energy, parameters = circs.run_adapt_vqe(vqe_data.optimizer[0], 
-        #                                         vqe_data.device, 
-        #                                         reps=1, 
-        #                                         )
-        # circs.run_qiskit_vqe(vqe_data.optimizer[0], vqe_data.device,)
         
         manager = mp.Manager()
         data = manager.dict()
+        # data = {}
         # for r in R:
         r = 1.23
         # vqe_data.molecule.set_distance(r)
@@ -207,6 +197,7 @@ if __name__ == "__main__":
             # if (name == "bk_lex" or name == "jw_lex"):
                 # procs.append(mp.Process(target=run_vqe, args=(name[0:2], vqe_data, data, r, True) ))
             # else:
+            # run_vqe(name,vqe_data, data,r)
             procs.append(mp.Process(target=run_vqe, args=(name, vqe_data, data, r) ))
         for proc in procs:
             proc.start()

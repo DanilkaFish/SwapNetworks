@@ -66,13 +66,13 @@ def round_with_uncertainty(value, uncertainty):
     # if uncertainty == 0 or np.isnan(uncertainty):
     #     return f"{value}", f"{uncertainty}"
     
-    exponent = int(np.floor(np.log10(abs(uncertainty))))
-    decimals = -exponent + 1 if exponent < 0 else 0
-    if (uncertainty * (decimals << 1) < 30 ):
-        # print(uncertainty * (1 << decimals) )
-        # decimals -= 1
-        pass
-    decimals -= 2
+    # exponent = int(np.floor(np.log10(abs(uncertainty))))
+    # decimals = -exponent + 1 if exponent < 0 else 0
+    # if (uncertainty * (decimals << 1) < 30 ):
+    #     # print(uncertainty * (1 << decimals) )
+    #     # decimals -= 1
+    #     pass
+    decimals = 0
     if decimals < 0:
         decimals = 0
     rounded_uncertainty = round(uncertainty, decimals)
@@ -91,35 +91,46 @@ s = '\n'.join([
 ]
 )
 s = s 
-def plot_table():
-    table = Table("Noise susceptibility $\\chi$ for the H2, 8 qubits.", ["Method", *[noise for noise in noises], "\\# CX gates"], align=s, bordered=False)
+def plot_table(mol_name, gates, ne=None):
+    table = Table("Noise susceptibility $\\chi$ for the H2, 8 qubits.", 
+                  ["Method", *noises, "\\# CX gates"], 
+                  align=s, bordered=False)
     pre_table = []
     for index, method in enumerate(methods[:]):
         B = []
-        for noise in noises:
-        # index = inde +  4
-            datas = get_attrs(get_file_name(mol_name, noise, method), ("ref_ener", "energy", "prob", "gate_count"))
-            liney, linex = -abs(np.array(datas["energy"]) - np.array(datas["ref_ener"]))/np.array(datas["ref_ener"]), np.array(datas["prob"])
-            liney = np.array(datas["energy"])
-            if noise == "sc":
-                pass
-            else:
-                if noise == "D":
-                    linex = 1 - np.sqrt(1 - 3/4*(1 - linex))
+        for mol_name in mol_names:
+            # if index == 5:
+                # mol_name = "data_planar" + mol_name[15:]
+            for noise in noises:
+            # index = inde +  4
+                datas = get_attrs(get_file_name(mol_name, noise, method), ("ref_ener", "energy", "prob", "gate_count", "addition_res:"))
+                if ne is not None:
+                    ar = np.array(datas["addition_res:"])
+                    n2 = ar[:,1] - 2*ne*ar[:,0] + ne*ne
+                    liney, linex = np.sqrt(n2), np.array(datas["prob"])
                 else:
-                    linex = 1 - np.sqrt(1 - (1 - linex))
-            liney = liney[-4:]
-            # linex = np.log(linex[3:])
-            # liney = np.log(liney[3:])
-            linex = linex[-4:]
+                    liney, linex = np.array(datas["energy"]), np.array(datas["prob"])
 
-            # A,b = np.polyfit(linex, liney, 1)
-            result = linregress(linex, liney)
-            B.append(round_with_uncertainty(result.slope, result.stderr))
-            # B.append(round_with_uncertainty(result.intercept, result.intercept_stderr))
+                if noise in {"ion", "sc"}:
+                    pass
+                else:
+                    if noise == "D":
+                        linex = 1 - np.sqrt(1 - 3/4*(1 - linex))
+                    else:
+                        linex = 1 - np.sqrt(1 - (1 - linex))
+                liney = liney[-3:]
+                linex = linex[-3:]
+                # linex = np.log(linex[3:])
+                # liney = np.log(liney[3:])
+
+                # A,b = np.polyfit(linex, liney, 1)
+                result = linregress(linex, liney)
+                B.append(round_with_uncertainty(result.slope, result.stderr))
+                # B.append(round_with_uncertainty(result.intercept, result.intercept_stderr))
 
         # pre_table.append([legends[index], *B, datas["gate_count"][0]["cx"]])
-        pre_table.append([legends[index], *B, 100])
+        pre_table.append([legends[index], *B, gates[index]])
+
     for j in range(1, len(pre_table[0])):
         coef = 2**18
         index = -1
@@ -159,21 +170,30 @@ if __name__ == "__main__":
     swapgeny_line = Line(None, None, Marks.pentagon(), "green", "FSN Y")
     swap2xnshort_line = Line(None, None, Marks.pentagon(), "black, dashed", "MSN S")
     swap2xnyor_line = Line(None, None, Marks.pentagon(), "gray, dashed,line width=0.5pt", "MSN Y")
-    legends = ["JW", "BK","JW GdBM", "BK GdBM", "MSN S", "FSN Y", "MSN short", "MSN yor"]
+    legends = ["JW", "BK","JW GdBM", "BK GdBM",  "FSN a-t-a", 
+            #    "FSN $2\\times N$", 
+               "MSN $2\\times N$", "MSN yor"]
     mol_name = "datah2h2ExcSolProb/DH4" 
     mol_name = "datah2h2noise_level/DH4" 
     mol_name = "data/adapt_vqe_h2_8/"
-    mol_name = "data/vqe_sc2/"
-    mol_name = "data_all-to-all/LiH_8"
+    mol_names = ["data/LiH_10"]
+    # mol_name = "data_all-to-all/LiH_8"
+    # gates = ["49", "35", "21", "15", "15", "21", "16"]
+    gates = ["417", "394", "151", "132", "134", "170", "96"]
+
+    # mol_names = ["data_all-to-all/H2_4", "data_all-to-all/H2_8", "data_all-to-all/LiH_8"]
+    # mol_names = ["data_last/H2_4", "data_last/H2_8", "data_last/LiH_8"]
     # -1.8716797649675656
     # mol_name, ref_en = ("datah2_4/H2_4", -1.8573730129353947)
     # mol_name, ref_en = ("data02/H2_8", -1.8716797649675656)
-    # noises = ["sc"]
+    noises = ["sc"]
+    noises = ["ion"]
     # noises = ["X","Z"]
     noises = ["D","X","Y","Z"]
-    methods = Circuits.get_circs_names()[:6] 
+    methods = Circuits.get_circs_names()[:4] + Circuits.get_circs_names()[5:6] + Circuits.get_circs_names()[5:6] + Circuits.get_circs_names()[4:5] 
+    methods = Circuits.get_circs_names()[:4]
     axes = []
-    plot_table()
+    plot_table(mol_name=mol_name, gates=gates, ne=None)
     # for num, noise in enumerate(noises):
         # lines = copy([jw_line, bk_line, jw_opt_line, bk_opt_line,  swapgens_line, swapgeny_line, swap2xnshort_line, swap2xnyor_line][:])
         # energy_error_add_axes()
