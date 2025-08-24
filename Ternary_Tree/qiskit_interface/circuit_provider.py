@@ -64,6 +64,7 @@ class SwapCircNames:
     SWAP2XN = ("swap2xn12", LadExcImpl.CNOT12xyz())
     # SWAP2XN_ALT = ("swap2xn_alt", LadExcImpl.CNOT12zyx())
     SWAPGENYORDAN = ("swap_gen", LadExcImpl.YORDAN())
+    SWAPGENYORDAN2XN = ("swap_gen", LadExcImpl.YORDAN2XN())
     SWAPGENSHORT = ("swap_gen", LadExcImpl.SHORT())
     SWAP2XNYORDAN = ("swap2xnferm", LadExcImpl.YORDAN())
     SWAP2XNSHORT = ("swap2xnferm", LadExcImpl.SHORT())
@@ -100,6 +101,10 @@ class Circuits:
         return "swap gen yor"    
 
     @staticmethod
+    def swap_gen_yor_2xn():
+        return "swap gen yor 2xn"  
+    
+    @staticmethod
     def swap_gen_short():
         return "swap gen short"
     
@@ -130,8 +135,9 @@ class Circuits:
         circs.append(Circuits.bk())
         circs.append(Circuits.jw_lex())
         circs.append(Circuits.bk_lex())
-        circs.append(Circuits.swap_2xn())
         circs.append(Circuits.swap_gen_yor())
+        circs.append(Circuits.swap_gen_yor_2xn())
+        circs.append(Circuits.swap_2xn())
         circs.append(Circuits.swap_gen_short())
         circs.append(Circuits.swap_2xn_yor())
         circs.append(Circuits.swap_2xn_short())
@@ -296,6 +302,8 @@ class CircuitProvider:
         
         elif name == Circuits.swap_gen_yor():
             return self.get_swap_circuit(SwapCircNames.SWAPGENYORDAN)
+        elif name == Circuits.swap_gen_yor_2xn():
+            return self.get_swap_circuit(SwapCircNames.SWAPGENYORDAN2XN)
         elif name == Circuits.swap_gen_short():
             return self.get_swap_circuit(SwapCircNames.SWAPGENSHORT)
         elif name == Circuits.swap_2xn_yor():
@@ -330,8 +338,8 @@ class Callback:
         self._energy_array = []
 
     def __call__(self, step: int, params: np.ndarray, energy: float, metadata: dict):
-        sys.stdout.write(f"\rProgress: {step}, Energy: {energy}%")
-        sys.stdout.flush()
+        # sys.stdout.write(f"\rProgress: {step}, Energy: {energy}%")
+        # sys.stdout.flush()
         self._energy_array.append(energy)
 
     @property
@@ -650,8 +658,6 @@ def serialize_two_qubit_gates(circ: QuantumCircuit) -> QuantumCircuit:
     return qc
 
 
-
-
 def get_noise_estiamtor_from_csv(mult, device, nq, sim=False):
     file_name = "./Ternary_Tree/qiskit_interface/ibm_kingston_calibrations_2025-07-02T15_30_16Z.csv"
     basis_gates = ["cz", "rzz", "rx", "rz"]
@@ -659,18 +665,18 @@ def get_noise_estiamtor_from_csv(mult, device, nq, sim=False):
     df = pd.read_csv(file_name)
     T1 = df["T1 (us)"]
     T2 = df["T2 (us)"]
-    T1 = T1.mean()/mult
-    T2 = T2.mean()/mult
+    T1 = T1.mean() / mult
+    T2 = T2.mean() / mult
     logger.info(f"{T1=}")
     logger.info(f"{T2=}")
-    U = df["Pauli-X error"].mean()*mult
+    U = df["Pauli-X error"].mean() * mult
     logger.info(f"{U=}")
     # U = 0.0003*mult
-    CX = mean(df)*mult
+    CX = mean(df) * mult
     # U = mean(df)*mult
     logger.info(f"{CX=}")
-    error1 = depolarizing_error(4./3*(1 - (1-U)**2), 1)
-    error2 = depolarizing_error(4./3*(1 - (1-CX)**2), 2)
+    error1 = depolarizing_error(4./2 * U, 1)
+    error2 = depolarizing_error(4./3 * CX, 2)
     t1s = [T1 for prop in range(nq)]
     t2s = [T2 for prop in range(nq)]
     delay_pass = RelaxationNoisePass(
@@ -712,8 +718,9 @@ def get_ion_noise_estimator(mult, device, nq, sim=False):
     CX = 0.0062*mult
     U = 0.0002*mult
     logger.info(f"real {CX=}")
-    error1 = depolarizing_error(4./3*(1 - (1-U)**2), 1)
-    error2 = depolarizing_error(16./15*(1 - (1-CX)**2), 2)
+    error1 = depolarizing_error(4./2*U, 1)
+
+    error2 = depolarizing_error(4/3*CX, 2)
     t1s = [T1 for prop in range(nq)]
     t2s = [T2 for prop in range(nq)]
     delay_pass = RelaxationNoisePass(

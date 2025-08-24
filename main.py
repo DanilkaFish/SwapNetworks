@@ -136,7 +136,7 @@ def run_vqe(name: str, vqe_data: vqeData, data: dict, r:float=0):
     return result
 
 if __name__ == "__main__":
-    mult = [0.00001, 0.0005, 0.001, 0.005, 1][1:-1]
+    mult = [0.00001, 0.0005, 0.001, 0.005, 1][0:-1]
     # for noise in ["D", "X", "Y", "Z"]:
     for noise in ["sc", "ion", "D", "X","Y","Z"][1:2]:
     # for noise in ["D"]:
@@ -155,8 +155,8 @@ if __name__ == "__main__":
                 device="CPU",
             )
 
-        circ_names = Circuits.get_circs_names()[4:5]
-    
+        circ_names = Circuits.get_circs_names()[0:4] 
+        # + Circuits.get_circs_names()[6:7]
         
         manager = mp.Manager()
         data = manager.dict()

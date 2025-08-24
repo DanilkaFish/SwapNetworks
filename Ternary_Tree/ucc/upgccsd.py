@@ -21,6 +21,10 @@ class LadExcImpl:
         return "double_ex_yordan"    
 
     @staticmethod
+    def YORDAN2XN():
+        return "double_ex_yordan_2xn"   
+    
+    @staticmethod
     def CNOT12():
         return "double_ex_12cnot" 
     
@@ -497,7 +501,8 @@ class UpGCCSD(AbstractUCC):
                     double_exc_layer(i)
                     single_exc_layer()
                     fswap_layer()
-        # logger.info(f"generalized:\n{circ}")
+        logger.info(f"generalized:\n{circ.decompose().count_ops()=}")
+        logger.info(f"generalized:\n{circ.decompose()}")
         logger.info(f"{dp_lad_exc=}")
         logger.info(f"{sp_lad_exc=}")
         return circ, mtoq

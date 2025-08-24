@@ -37,6 +37,10 @@ class LadExcImpl:
         return "double_ex_yordan"    
 
     @staticmethod
+    def YORDAN2XN():
+        return "double_ex_yordan_2xn"
+    
+    @staticmethod
     def CNOT12():
         return "double_ex_12cnot" 
 
@@ -325,6 +329,48 @@ class ExcitationImpl:
         q0,q1 = q1,q0
         nlist = {}
         olist = ExcitationImpl.get_pauli_double_ex_yordan()
+        for key, val in list_signs.items():
+            nkey = key[1::-1] + key[2:]
+            nlist[nkey] = val * olist[key] * olist[nkey]
+        list_signs = nlist
+        circ.cx(q0, q1), circ.cx(q2, q3)
+        circ.x(q1), circ.x(q3)
+        circ.cx(q0, q2)
+        circ.h(q1), circ.ry(list_signs["YXXX"]*parameter*0.25, q0)
+        circ.cx(q0, q1)
+        circ.h(q3), circ.ry(list_signs["XYXX"]*parameter*0.25, q0)
+        circ.cx(q0, q3)
+        circ.ry(list_signs["XYYY"]*parameter*0.25, q0)
+        circ.cx(q0, q1)
+        circ.h(q2), circ.ry(list_signs["YXYY"]*parameter*0.25, q0)
+        circ.cx(q0, q2)
+        circ.ry(list_signs["XXXY"]*parameter*0.25, q0)
+        circ.cx(q0, q1)
+        circ.ry(list_signs["YYXY"]*parameter*0.25, q0)
+        circ.cx(q0, q3)
+        circ.h(q3), circ.ry(list_signs["YYYX"]*parameter*0.25, q0)
+        circ.cx(q0, q1)
+        circ.h(q1), circ.ry(list_signs["XXYX"]*parameter*0.25, q0)
+        circ.rz(pi/2, q2)
+        circ.cx(q0, q2)
+        circ.rz(pi/2, q2), circ.rz(-pi/2, q0)
+        circ.ry(pi/2, q2)
+        circ.x(q1), circ.x(q3)
+        circ.cx(q0, q1), circ.cx(q2, q3)
+
+    @staticmethod
+    def get_pauli_double_ex_yordan_2xn():
+        return {"XXXY": -1, "XXYX": 1, "XYXX": -1, "YXXX": 1, "YYYX": 1, "YYXY": -1, "YXYY": 1, "XYYY": -1}
+    
+    @staticmethod
+    def double_ex_yordan_2xn(circ,
+                        q0, q1, q2, q3,
+                        parameter,
+                        list_signs):
+        
+        q0,q1 = q1,q0
+        nlist = {}
+        olist = ExcitationImpl.get_pauli_double_ex_yordan_2xn()
         for key, val in list_signs.items():
             nkey = key[1::-1] + key[2:]
             nlist[nkey] = val * olist[key] * olist[nkey]
