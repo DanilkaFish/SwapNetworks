@@ -4,6 +4,9 @@ import logging
 from numpy.random import shuffle
 import numpy as np
 import pandas as pd
+import sys
+
+
 from qiskit_nature.second_q.mappers import JordanWignerMapper, BravyiKitaevMapper
 from qiskit_nature.second_q.operators import FermionicOp 
 from qiskit_nature.second_q.circuit.library import HartreeFock, UCC
@@ -14,6 +17,11 @@ from qiskit.transpiler import CouplingMap
 from qiskit.quantum_info import SparsePauliOp, Statevector, Operator
 from qiskit.circuit import Parameter, ParameterVector, Delay
 # from qiskit.circuit.parametervector import 
+from qiskit_algorithms.gradients import (
+    ParamShiftEstimatorGradient,      # analytic (parameter-shift), hardware-friendly
+    FiniteDiffEstimatorGradient,      # numeric finite difference
+    SPSAEstimatorGradient             # stochastic gradient for noisy hardware
+)
 from qiskit.circuit.library.standard_gates import IGate, XGate, ZGate, YGate, RZZGate ,CZGate
 from qiskit.circuit.library import PauliEvolutionGate
 from qiskit.synthesis.evolution import synth_pauli_network_rustiq
@@ -322,6 +330,8 @@ class Callback:
         self._energy_array = []
 
     def __call__(self, step: int, params: np.ndarray, energy: float, metadata: dict):
+        sys.stdout.write(f"\rProgress: {step}, Energy: {energy}%")
+        sys.stdout.flush()
         self._energy_array.append(energy)
 
     @property
@@ -432,6 +442,10 @@ class CircSim:
                                                     )
         cb = Callback()
         vqe = VQE(est, self.circ, optimizer=optimizer, initial_point=self.init_point, callback=cb)
+        grad = ParamShiftEstimatorGradient(est)
+        grad = None
+        grad = FiniteDiffEstimatorGradient(est, method="forward", epsilon=1e-7)
+        vqe = VQE(est, self.circ, optimizer=optimizer, gradient=grad, initial_point=self.init_point, callback=cb)
         result = vqe.compute_minimum_eigenvalue(operator=self.op)
         for i in range(reps-1):
             vqe.initial_point = np.random.rand(len(self.init_point)) - 0.5

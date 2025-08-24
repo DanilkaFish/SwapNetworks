@@ -53,7 +53,7 @@ def perturabation(n=n, a=0.01):
         k += 1
         yield a/k**0.3
     
-optimizers = [(L_BFGS_B(maxiter=250, ftol=0.00000001), 'L_BFGS_B')]
+optimizers = [(L_BFGS_B(maxiter=150, ftol=0.00000001), 'L_BFGS_B')]
 
 
 class vqeData:
@@ -136,7 +136,7 @@ def run_vqe(name: str, vqe_data: vqeData, data: dict, r:float=0):
     return result
 
 if __name__ == "__main__":
-    mult = [0.00001, 0.001, 0.01, 0.1, 1]
+    mult = [0.00001, 0.0005, 0.001, 0.005, 1][1:-1]
     # for noise in ["D", "X", "Y", "Z"]:
     for noise in ["sc", "ion", "D", "X","Y","Z"][1:2]:
     # for noise in ["D"]:
@@ -165,10 +165,7 @@ if __name__ == "__main__":
         # vqe_data.update_prov()
         procs = []
         for name in circ_names:
-            # if (name == "bk_lex" or name == "jw_lex"):
-                # procs.append(mp.Process(target=run_vqe, args=(name[0:2], vqe_data, data, r, True) ))
-            # else:
-            # run_vqe(name,vqe_data, data,r)
+
             procs.append(mp.Process(target=run_vqe, args=(name, vqe_data, data, r) ))
         for proc in procs:
             proc.start()
