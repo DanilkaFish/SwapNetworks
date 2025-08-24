@@ -5,7 +5,7 @@ import numpy as np
 from numpy import array
 
 from Ternary_Tree.qiskit_interface.circuit_provider import get_file_name, Circuits
-from my_utils.tikz_graph import * 
+from my_utils import * 
 from scipy.stats import linregress
 from copy import deepcopy as copy
 
@@ -63,15 +63,6 @@ def dn_add_axes(num, lines, noise, ne=2):
 
 
 def round_with_uncertainty(value, uncertainty):
-    # if uncertainty == 0 or np.isnan(uncertainty):
-    #     return f"{value}", f"{uncertainty}"
-    
-    # exponent = int(np.floor(np.log10(abs(uncertainty))))
-    # decimals = -exponent + 1 if exponent < 0 else 0
-    # if (uncertainty * (decimals << 1) < 30 ):
-    #     # print(uncertainty * (1 << decimals) )
-    #     # decimals -= 1
-    #     pass
     decimals = 0
     if decimals < 0:
         decimals = 0
@@ -80,29 +71,23 @@ def round_with_uncertainty(value, uncertainty):
 
     fmt = f"{{:.{decimals}f}}"
     return fmt.format(rounded_value) 
-    # return "$" + fmt.format(rounded_value) + " \pm " + fmt.format(rounded_uncertainty) + "$"
-s = '\n'.join([
-    ">{\\centering\\arraybackslash}m{5em}", 
-    ">{\\centering\\arraybackslash}m{4em}", 
-    ">{\\centering\\arraybackslash}m{4em}", 
-    ">{\\centering\\arraybackslash}m{4em}", 
-    ">{\\centering\\arraybackslash}m{4em}", 
-    ">{\\centering\\arraybackslash}m{6em}"
-]
-)
-s = s 
+
 def plot_table(mol_name, gates, ne=None):
-    table = Table("Noise susceptibility $\\chi$ for the H2, 8 qubits.", 
-                  ["Method", *noises, "\\# CX gates"], 
-                  align=s, bordered=False)
+    caption = "Noise susceptibility $\\chi$ for the H2, 8 qubits."
+    iterate = noises
+    col_names = ["Method", *iterate, "\\# CX gates"]
+    align_displ = [5, *[4 for i in iterate], 5]
+    table = Table(caption, 
+                  col_names, 
+                  align=align_displ,
+                  bordered=False,
+                  placement="hbtp!",
+                  float_format=2)
     pre_table = []
     for index, method in enumerate(methods[:]):
         B = []
         for mol_name in mol_names:
-            # if index == 5:
-                # mol_name = "data_planar" + mol_name[15:]
             for noise in noises:
-            # index = inde +  4
                 datas = get_attrs(get_file_name(mol_name, noise, method), ("ref_ener", "energy", "prob", "gate_count", "addition_res:"))
                 if ne is not None:
                     ar = np.array(datas["addition_res:"])
@@ -120,16 +105,11 @@ def plot_table(mol_name, gates, ne=None):
                         linex = 1 - np.sqrt(1 - (1 - linex))
                 liney = liney[-3:]
                 linex = linex[-3:]
-                # linex = np.log(linex[3:])
-                # liney = np.log(liney[3:])
 
-                # A,b = np.polyfit(linex, liney, 1)
                 result = linregress(linex, liney)
                 B.append(round_with_uncertainty(result.slope, result.stderr))
-                # B.append(round_with_uncertainty(result.intercept, result.intercept_stderr))
 
-        # pre_table.append([legends[index], *B, datas["gate_count"][0]["cx"]])
-        pre_table.append([legends[index], *B, gates[index]])
+        pre_table.append([legends[index], *B, datas["gate_count"][0]["cx"]])
 
     for j in range(1, len(pre_table[0])):
         coef = 2**18
@@ -143,7 +123,7 @@ def plot_table(mol_name, gates, ne=None):
     for index, method in enumerate(methods[:]):
         table.add_row(*pre_table[index])
 
-    print(table.generate_table())
+    print(table.generate_latex())
 
 def plot_cnot_depth(lines, qubits, depth, cnot, pauli_num):
     ax_depth = Axis(lines)

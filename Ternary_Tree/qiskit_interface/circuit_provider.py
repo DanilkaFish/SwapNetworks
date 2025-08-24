@@ -144,7 +144,7 @@ def eq_alpha_beta(qc, reps=1):
 
 def print_params(ansatz):
     print(ansatz.count_ops())
-    # print(ansatz.depth())
+    print(ansatz.depth())
     
 
 class CircuitProvider:
@@ -223,9 +223,6 @@ class CircuitProvider:
         return qc
 
     def optimize_circ(self, circ: QuantumCircuit, qubit_mapper):
-        # circ = HartreeFock(self.uccgsd.n_spatial, (self.uccgsd.n_alpha, self.uccgsd.n_beta), qubit_mapper)
-        # circ._build()
-        # qc = self.get_circ_via_mapping(qubit_mapper, init=False)
         nq = circ.num_qubits
         init = []
         pauli = []
@@ -250,12 +247,6 @@ class CircuitProvider:
                                                     resynth_clifford_method=1
                                                 ),
                                                 inplace=True)
-        
-        # if pass_manager is not None:
-        #     ansatz = pass_manager.run(qc)
-        # else:
-        #     ansatz = transpile(circ.decompose(reps=3), basis_gates=self.basis_gates, optimization_level=3).decompose(reps=3)
-        # print_params(ansatz)
         return circ
     
 
@@ -370,16 +361,10 @@ class CircSim:
                         instr_dur.append(("rzz", [i, j], td))
                         instr_dur.append(("cz", [i, j], td))
             if noise_type == "ion":
-                # Пример пайплайна:
-                # 1) обычный транспайл под бэкенд (маппинг, свопы, базис)
                 mapped = transpile(self.circ.decompose(reps=3),
                                    basis_gates=["cz", "rzz", "rx", "rz"],
                                    optimization_level=3)
-
-                # 2) сериализуем двухкубитные гейты барьерами
                 serialized = serialize_two_qubit_gates(mapped)
-
-                # 3) фиксим расписание без повторной оптимизации (барьеры сохранятся)
                 self.circ = transpile(serialized,
                                       basis_gates=["cz", "rzz", "rx", "rz"],
                                     optimization_level=1, 

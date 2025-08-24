@@ -1,15 +1,19 @@
 from __future__ import annotations
  
 from typing import Union, List, Dict
+import logging
 from abc import abstractmethod
+
+
 from numpy import pi
+import numpy as np
 import scipy
 
-import numpy as np
+
 from qiskit.circuit import Gate
 from qiskit.circuit import QuantumCircuit
 
-def ms_matrix(theta, phi):
+def iswap(theta, phi):
     # exp(-i θ/2 (cosφ XX + sinφ YY))
     xx = np.kron([[0,1],[1,0]], [[0,1],[1,0]])
     yy = np.kron([[0,-1j],[1j,0]], [[0,-1j],[1j,0]])
@@ -19,13 +23,13 @@ def ms_matrix(theta, phi):
 class MS2Gate(Gate):
     def __init__(self, theta, phi):
         super().__init__("ms2", 2, [theta, phi])
-    def _define(self):
-        # не разлагаем, чтобы оставался один гейт
-        return None
-    def to_matrix(self):
-        return ms_matrix(*self.params)
-    
 
+    def _define(self):
+        return None
+
+    def to_matrix(self):
+        return iswap(*self.params)
+    
 
 class LadExcImpl:
     @staticmethod
@@ -48,11 +52,8 @@ class LadExcImpl:
     
 from .utils import static_vars
 from .utils import Parameter as MyParameter
-
-
 from .pauli import Pauli, MajoranaContainer
 
-import logging
 
 logger = logging.getLogger(__name__)
 
@@ -172,7 +173,6 @@ class ExcitationImpl:
     @staticmethod
     def get_pauli_single_ex():
         return {"XY": 1, "YX": 1}
-
             
     @staticmethod
     def get_pauli_double_ex_12cnot():
@@ -212,7 +212,6 @@ class ExcitationImpl:
     @staticmethod
     def get_pauli_double_ex_short():
         return {'XXXY': 1, 'XXYX': 1, 'XYXX': -1, 'YXXX': -1, 'YYYX': -1, 'YYXY': -1, 'YXYY': 1, 'XYYY': 1}
-        # return  {"XXXY": 1, "XXYX": 1, "XYXX": -1, "YXXX": -1, "YYYX": -1, "YYXY": -1, "YXYY": 1, "XYYY": 1}
     
     @staticmethod
     def double_ex_short(circ,

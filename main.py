@@ -12,27 +12,16 @@ from Ternary_Tree.ucc.abstractucc import Molecule
 from Ternary_Tree.qiskit_interface.circuit_provider import *
 from my_utils import Timer
 import multiprocessing as mp
-# from Ternary_Tree import logger
-import sys
-# from pyscf import lib
 
 import logging
 
-# logger.setLevel(logging.INFO)
 
-# logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 handler = logging.StreamHandler()
 handler.setFormatter(logging.Formatter('%(levelname)s %(message)s'))
 logger.addHandler(handler)
 logger.setLevel(logging.INFO)
-# logger.info("hello")
-# logger.warning("warn hello")
-# log = lib.logger.Logger(sys.stdout, 4)
-# log.info('info level')
-# log.verbose = 3
-# log.info('info level')
-# log.note('note level')
+
 
 class H2_H2(Molecule):
     def __init__(self, R: float):
@@ -44,11 +33,11 @@ class H2_H2(Molecule):
     def set_distance(self, R: float):
         self.geometry = f'H 0 0 0; H 0 0 1.23; H {R} 0 0; H {R} 0 1.23'
         
+DH4 = H2_H2(1.23)
 H2_4 = Molecule(geometry='H 0 0 0; H 0 0 0.7349', num_electrons=(1,1), active_orbitals=[0,1], basis='sto-3g')
 H2_8 = Molecule(geometry='H 0 0 0; H 0 0 0.7349', num_electrons=(1,1), active_orbitals=[0,1,2,3], basis='6-31g')
 LiH_8 = Molecule(geometry='H 0 0 0; Li 0 0 1.5459', num_electrons=(2,2), active_orbitals=[0,1,2,5], basis='sto-3g')
 LiH_10 = Molecule(geometry='H 0 0 0; Li 0 0 1.5459', num_electrons=(2,2), active_orbitals=[0,1,2,3,5], basis='sto-3g')
-DH4 = H2_H2(1.23)
         
 
 n = 100
@@ -112,26 +101,13 @@ def eval_additional_observable(circuit: QuantumCircuit, parameters, estimator: E
 
 
 @Timer.attach_timer("thread_timer")
-def to_thread(namet, vqe_data: vqeData, r:float=0, is_rust=False):
+def to_thread(namet, vqe_data: vqeData, r:float=0):
     init_point = None
     probs = vqe_data.probs
     data = []
     name, circ, op_mapper = vqe_data.circ_prov.get_circ(namet)
-    mapper = JordanWignerMapper()
-    
-    if namet == Circuits.bk():
-        mapper = BravyiKitaevMapper()
-    if is_rust:
-        name = name + "_lex"
     for index, prob in enumerate(probs):
         circs = CircSim(circ, op_mapper[0], prob, vqe_data.noise_type, init_point)
-        # energy, parameters = circs.run_adapt_vqe(vqe_data.optimizer[0], 
-                                                #  vqe_data.device, 
-                                                #  reps=1, 
-                                                #  is_rust=is_rust, 
-                                                #  cp=vqe_data.circ_prov, 
-                                                #  mapper=mapper)
-
         energy, parameters, est, sim, cb = circs.run_qiskit_vqe(vqe_data.optimizer[0], vqe_data.device, reps=1)
         additional_res = eval_additional_observable(circs.circ, parameters, est, sim, op_mapper[1])
         logger.info(f"{energy:.5f} hf: {name=}, {noise=}, {index=}")
@@ -150,10 +126,8 @@ def to_thread(namet, vqe_data: vqeData, r:float=0, is_rust=False):
         })
     return data
         
-def run_vqe(name: str, vqe_data: vqeData, data: dict, r:float=0, is_rust=False):
-    result = to_thread(name, vqe_data, r, is_rust)
-    if is_rust:
-        name = name + "_lex"
+def run_vqe(name: str, vqe_data: vqeData, data: dict, r:float=0):
+    result = to_thread(name, vqe_data, r)
     if name + vqe_data.noise_type not in data:
         data.setdefault(name + vqe_data.noise_type, result)
     else:
@@ -166,12 +140,11 @@ if __name__ == "__main__":
     # for noise in ["D", "X", "Y", "Z"]:
     for noise in ["sc", "ion", "D", "X","Y","Z"][1:2]:
     # for noise in ["D"]:
-    # for noise in ["", ]:
+    # for noise in [""]:
         if noise in {"sc", "ion"}:
             probs = mult[:4]
         else:
             probs = 1 - np.flip(np.geomspace(0.000001, (0.0002), 5))
-            # probs = probs[:1]
         vqe_data=vqeData(
                 "data_last/H2_8",
                 H2_8,
@@ -187,8 +160,6 @@ if __name__ == "__main__":
         
         manager = mp.Manager()
         data = manager.dict()
-        # data = {}
-        # for r in R:
         r = 1.23
         # vqe_data.molecule.set_distance(r)
         # vqe_data.update_prov()
