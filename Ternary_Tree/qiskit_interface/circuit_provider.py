@@ -4,6 +4,9 @@ import logging
 from numpy.random import shuffle
 import numpy as np
 import pandas as pd
+import sys
+
+
 from qiskit_nature.second_q.mappers import JordanWignerMapper, BravyiKitaevMapper
 from qiskit_nature.second_q.operators import FermionicOp 
 from qiskit_nature.second_q.circuit.library import HartreeFock, UCC
@@ -14,6 +17,11 @@ from qiskit.transpiler import CouplingMap
 from qiskit.quantum_info import SparsePauliOp, Statevector, Operator
 from qiskit.circuit import Parameter, ParameterVector, Delay
 # from qiskit.circuit.parametervector import 
+from qiskit_algorithms.gradients import (
+    ParamShiftEstimatorGradient,      # analytic (parameter-shift), hardware-friendly
+    FiniteDiffEstimatorGradient,      # numeric finite difference
+    SPSAEstimatorGradient             # stochastic gradient for noisy hardware
+)
 from qiskit.circuit.library.standard_gates import IGate, XGate, ZGate, YGate, RZZGate ,CZGate
 from qiskit.circuit.library import PauliEvolutionGate
 from qiskit.synthesis.evolution import synth_pauli_network_rustiq
@@ -326,6 +334,19 @@ class CircuitProvider:
         for name in name_list:
             yield name, *self.get_circ_op(name)
 
+class Callback:
+    def __init__(self):
+        self._energy_array = []
+
+    def __call__(self, step: int, params: np.ndarray, energy: float, metadata: dict):
+        sys.stdout.write(f"\rProgress: {step}, Energy: {energy}%")
+        sys.stdout.flush()
+        self._energy_array.append(energy)
+
+    @property
+    def energy_array(self):
+        return self._energy_array
+    
 
 class CircSim:
     def __init__(self, circ: QiskitCirc, op: SparsePauliOp, noise_par=0.9999, noise_type="D",  init_point=None, s_basis=["u3"], d_basis=["cx"]):
@@ -341,10 +362,16 @@ class CircSim:
         logger.info("starting transpilation")
         instr_dur = []
 
-        if noise_type == "sc":
+        if noise_type in {"sc", "ion"}:
             instr_dur = []
-            td = 68
-            ts = 0
+            if noise_type == "ion":
+                td = 650000
+                ts = 63000
+                cp = None
+            else:
+                td = 68
+                ts = 0
+                cp = coupling_map_2xn(self.circ.num_qubits//2)
             for i in range(circ.num_qubits):
                 instr_dur.append(("rx", [i], ts))
                 instr_dur.append(("rz", [i], ts))
@@ -352,22 +379,42 @@ class CircSim:
                     if i != j:
                         instr_dur.append(("rzz", [i, j], td))
                         instr_dur.append(("cz", [i, j], td))
-            
-            self.circ = transpile(self.circ.decompose(reps=3), 
-                                  basis_gates=["cz", "rzz", "rx", "rz"], 
-                                  optimization_level=3, 
-                                  coupling_map=coupling_map_2xn(self.circ.num_qubits//2),
-                                  instruction_durations=instr_dur,
-                                  layout_method='trivial',  # or 'dense' if you prefer
+            if noise_type == "ion":
+                # Пример пайплайна:
+                # 1) обычный транспайл под бэкенд (маппинг, свопы, базис)
+                mapped = transpile(self.circ.decompose(reps=3),
+                                   basis_gates=["cz", "rzz", "rx", "rz"],
+                                   optimization_level=3)
+
+                # 2) сериализуем двухкубитные гейты барьерами
+                serialized = serialize_two_qubit_gates(mapped)
+
+                # 3) фиксим расписание без повторной оптимизации (барьеры сохранятся)
+                self.circ = transpile(serialized,
+                                      basis_gates=["cz", "rzz", "rx", "rz"],
+                                    optimization_level=1, 
+                                    coupling_map=cp,
+                                    instruction_durations=instr_dur,
+                                    layout_method='trivial',  # or 'dense' if you prefer
                                     routing_method='basic',
-                                #   dt=1,
-                                  scheduling_method="asap"
-                                  )
+                                    scheduling_method="asap")
+                logger.info(f"{self.circ}")
+            else:
+                self.circ = transpile(self.circ.decompose(reps=3), 
+                                    basis_gates=["cz", "rzz", "rx", "rz"],
+                                    optimization_level=3, 
+                                    coupling_map=cp,
+                                    instruction_durations=instr_dur,
+                                    layout_method='trivial',  # or 'dense' if you prefer
+                                    routing_method='basic',
+                                    scheduling_method="asap"
+                                    )
         else:
             self.circ = transpile(self.circ.decompose(reps=4), 
                               basis_gates=[*s_basis, *d_basis], 
                               optimization_level=2, 
                                 coupling_map=coupling_map_2xn(self.circ.num_qubits//2),
+                                # instruction_durations=instr_dur,
                                 layout_method='trivial',  # or 'dense' if you prefer
                                 routing_method='basic',
                                 seed_transpiler=42
@@ -383,6 +430,7 @@ class CircSim:
 
     
     def run_qiskit_vqe(self, optimizer, device="CPU", reps=1):
+        
         if self.noise_type == "":
             est = Estimator(
                 run_options={"seed": 170, "shots": None, },
@@ -391,14 +439,27 @@ class CircSim:
             )
         elif self.noise_type == "sc":
             est = get_noise_estiamtor_from_csv(self.noise_par, device, self.circ.num_qubits)
+            sim = get_noise_estiamtor_from_csv(self.noise_par, device, self.circ.num_qubits, sim=True)
+        elif self.noise_type == "ion":
+            est = get_ion_noise_estimator(self.noise_par, device, self.circ.num_qubits)
+            sim = get_ion_noise_estimator(self.noise_par, device, self.circ.num_qubits, sim=True)
         else:
             est = get_qiskit_device_noise_estimator(
                                                     noise_op=self.noise_type, 
                                                     prob=self.noise_par,
                                                     device=device
                                                     )
-        
-        vqe = VQE(est, self.circ, optimizer=optimizer, initial_point=self.init_point)
+            sim = get_qiskit_device_noise_estimator(
+                                                    noise_op=self.noise_type, 
+                                                    prob=self.noise_par,
+                                                    device=device,
+                                                    sim=True
+                                                    )
+        cb = Callback()
+        grad = ParamShiftEstimatorGradient(est)
+        grad = None
+        grad = FiniteDiffEstimatorGradient(est, method="forward", epsilon=1e-7)
+        vqe = VQE(est, self.circ, optimizer=optimizer, gradient=grad, initial_point=self.init_point, callback=cb)
         result = vqe.compute_minimum_eigenvalue(operator=self.op)
         for i in range(reps-1):
             vqe.initial_point = np.random.rand(len(self.init_point)) - 0.5
@@ -408,7 +469,7 @@ class CircSim:
                 result = _res
                 logger.info(f"{vqe.initial_point=}")
         # print(f"VQE on Aer qasm simulator (with noise): {result.eigenvalue.real:.5f}")
-        return result.eigenvalue.real, list(result.optimal_parameters.values()), est
+        return result.eigenvalue.real, list(result.optimal_parameters.values()), est, sim, cb
         
     def run_adapt_vqe(self, optimizer, device="CPU", reps=1, is_rust=False, cp: CircuitProvider=None, mapper=None):
         par_used = {par: np.random.random() - 0.5 for par in self.circ.parameters if par not in self.circ.excitation_pos}
@@ -422,6 +483,8 @@ class CircSim:
             )
         elif self.noise_type == "sc":
             est = get_noise_estiamtor_from_csv(self.noise_par, device)
+        elif self.noise_type == "ion":
+            est = get_ion_noise_estimator(self.noise_par, device)
         else:
             est = get_qiskit_device_noise_estimator(
                                                     noise_op=self.noise_type, 
@@ -504,7 +567,7 @@ def ucc_ham(fermionic_op, mtoq: MajoranaContainer):
     mapper = MajoranaMapper(mtoq)
     return mapper.map(fermionic_op), mapper
 
-def get_qiskit_device_noise_estimator(noise_op,  prob, device, s_basic=["u"], d_basis=["cx"], shots=None) ->Estimator:
+def get_qiskit_device_noise_estimator(noise_op,  prob, device, sim=False, s_basic=["u"], d_basis=["cx"], shots=None) ->Estimator:
     basis_gates = s_basic + d_basis
     noise_model = NoiseModel(basis_gates=basis_gates)
     if noise_op=="D":
@@ -540,8 +603,15 @@ def get_qiskit_device_noise_estimator(noise_op,  prob, device, s_basic=["u"], d_
                         },
             )
 
-    
-    return noisy_estimator
+    if sim:
+        return AerSimulator(
+                        noise_model=noise_model,
+                        basis_gates=basis_gates,
+                        method="density_matrix",
+                        device=device,
+                        )
+    else:
+        return noisy_estimator
 
 def numpy_energy(fermionic_op, ucc):
     numpy_solver = NumPyMinimumEigensolver()
@@ -582,8 +652,22 @@ def mean(df, name="CZ error"):
 
     return average_cz_error
 
-def get_noise_estiamtor_from_csv(mult, device, nq):
-    file_name = "/home/danilkaf/projects/SwapNetworks/Ternary_Tree/qiskit_interface/ibm_kingston_calibrations_2025-07-02T15_30_16Z.csv"
+def serialize_two_qubit_gates(circ: QuantumCircuit) -> QuantumCircuit:
+    qc = QuantumCircuit(*circ.qregs, *circ.cregs, name=circ.name)
+    for inst, qargs, cargs in circ.data:
+        if inst.num_qubits == 2 and inst.name != "barrier":
+            qc.barrier(*qc.qubits)              # не даём ничему “перепрыгнуть” вперёд
+            qc.append(inst, qargs, cargs)       # сам 2-кубитный гейт
+            qc.barrier(*qc.qubits)              # и не даём ничему встать рядом
+        else:
+            qc.append(inst, qargs, cargs)
+    return qc
+
+
+
+
+def get_noise_estiamtor_from_csv(mult, device, nq, sim=False):
+    file_name = "./Ternary_Tree/qiskit_interface/ibm_kingston_calibrations_2025-07-02T15_30_16Z.csv"
     basis_gates = ["cz", "rzz", "rx", "rz"]
     noise_model = NoiseModel(basis_gates=basis_gates)
     df = pd.read_csv(file_name)
@@ -622,8 +706,58 @@ def get_noise_estiamtor_from_csv(mult, device, nq):
                         "device": device,
                         },
             )
-    return noisy_estimator
+    if sim:
+        return AerSimulator(
+                        noise_model=noise_model,
+                        basis_gates=basis_gates,
+                        method="density_matrix",
+                        device=device,
+                        )
+    else:
+        return noisy_estimator
 
+def get_ion_noise_estimator(mult, device, nq, sim=False):
+    basis_gates = ["cz", "rzz", "rx", "rz"]
+    noise_model = NoiseModel(basis_gates=basis_gates)
+    T1 = 188/mult*1000000
+    T2 = 0.95/mult*1000000
+    logger.info(f"{T1=}")
+    logger.info(f"{T2=}")
+    CX = 0.0062*mult
+    U = 0.0002*mult
+    logger.info(f"real {CX=}")
+    error1 = depolarizing_error(4./3*(1 - (1-U)**2), 1)
+    error2 = depolarizing_error(16./15*(1 - (1-CX)**2), 2)
+    t1s = [T1 for prop in range(nq)]
+    t2s = [T2 for prop in range(nq)]
+    delay_pass = RelaxationNoisePass(
+        t1s=[np.inf if x is None else x*1000 for x in t1s],
+        t2s=[np.inf if x is None else x*1000 for x in t2s],
+        dt=1,
+        op_types=[Delay, CZGate, RZZGate],
+    )
+    noise_model._custom_noise_passes.append(delay_pass)
+    noise_model.add_all_qubit_quantum_error(error2, ["cz", "rzz"])
+    noise_model.add_all_qubit_quantum_error(error1, ["rz", "rx"])
+    noisy_estimator = Estimator(
+                run_options={"seed": 170, "shots": None, },
+                approximation=True,
+                backend_options={
+                        "noise_model": noise_model,
+                        "basis_gates": basis_gates,
+                        "method": "density_matrix",
+                        "device": device,
+                        },
+            )
+    if sim:
+        return AerSimulator(
+                        noise_model=noise_model,
+                        basis_gates=basis_gates,
+                        method="density_matrix",
+                        device=device,
+                        )
+    else:
+        return noisy_estimator
 
 def transpile_to_sc(circ):
     instr_dur = []

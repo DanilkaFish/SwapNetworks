@@ -58,8 +58,8 @@ class MajoranaMapper(FermionicMapper):  # pylint: disable=missing-class-docstrin
         times_annihilation_op = []
 
         for paulis, coef in self.pauli_table(nmodes):
-            real_part = SparsePauliOp(paulis[0], coeffs=coef[0])
-            imag_part = SparsePauliOp(paulis[1], coeffs=coef[1])
+            real_part = SparsePauliOp(paulis[0], coeffs=[coef[0]])
+            imag_part = SparsePauliOp(paulis[1], coeffs=[coef[1]])
 
             # The creation operator is given by 0.5*(X - 1j*Y)
             creation_op = real_part - imag_part

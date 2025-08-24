@@ -1,5 +1,5 @@
 {
-    "python.defaultInterpreterPath": "~/.venvs/sn312/bin/python3",
+    "python.defaultInterpreterPath": "~/pyvenvs/qiskit312/bin/python3",
     "editor.mouseWheelScrollSensitivity": 3,
     // "python.languageServer": "Pylance",
     // "terminal.integrated.scrollback": 50000
