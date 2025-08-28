@@ -338,8 +338,8 @@ class Callback:
         self._energy_array = []
 
     def __call__(self, step: int, params: np.ndarray, energy: float, metadata: dict):
-        # sys.stdout.write(f"\rProgress: {step}, Energy: {energy}%")
-        # sys.stdout.flush()
+        sys.stdout.write(f"\rProgress: {step}, Energy: {energy}%")
+        sys.stdout.flush()
         self._energy_array.append(energy)
 
     @property
@@ -627,32 +627,24 @@ def hf(ansatz, op):
     return energy
 
 def mean(df, name="CZ error"):
-    # Извлекаем и разбираем колонку "CZ error"
     cz_column = df[name].dropna()
-
-    # Список для хранения всех значений ошибок CZ
     cz_errors = []
-
-    # Парсинг строки формата "X:Y;Z:W" и извлечение только значений Y, W, ...
     for row in cz_column:
         pairs = row.split(';')
         for pair in pairs:
             if ':' in pair:
                 _, value = pair.split(':')
                 cz_errors.append(float(value))
-
-    # Рассчитываем среднее значение ошибок CZ
     average_cz_error = sum(cz_errors) / len(cz_errors)
-
     return average_cz_error
 
 def serialize_two_qubit_gates(circ: QuantumCircuit) -> QuantumCircuit:
     qc = QuantumCircuit(*circ.qregs, *circ.cregs, name=circ.name)
     for inst, qargs, cargs in circ.data:
         if inst.num_qubits == 2 and inst.name != "barrier":
-            qc.barrier(*qc.qubits)              # не даём ничему “перепрыгнуть” вперёд
-            qc.append(inst, qargs, cargs)       # сам 2-кубитный гейт
-            qc.barrier(*qc.qubits)              # и не даём ничему встать рядом
+            qc.barrier(*qc.qubits)              
+            qc.append(inst, qargs, cargs)
+            qc.barrier(*qc.qubits)              
         else:
             qc.append(inst, qargs, cargs)
     return qc
