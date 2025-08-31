@@ -147,17 +147,17 @@ if __name__ == "__main__":
             probs = 1 - np.flip(np.geomspace(0.000001, (0.0002), 5))
         vqe_data=vqeData(
                 "data_10/LiH_10",
-                H2_4,
+                LiH_10,
                 optimizers[0],
                 reps=1,
                 probs=probs,
                 noise_type=noise,
-                device="CPU",
+                device="GPU",
             )
 
-        circ_names = Circuits.get_circs_names()[2:] 
+        circ_names = Circuits.get_circs_names()[0:2] + Circuits.get_circs_names()[6:7]
         # + Circuits.get_circs_names()[6:7]
-        
+        print(circ_names) 
         # manager = mp.Manager()
         # data = manager.dict()
         data = {}
