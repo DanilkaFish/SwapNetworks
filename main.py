@@ -138,7 +138,7 @@ def run_vqe(name: str, vqe_data: vqeData, data: dict, r:float=0):
 if __name__ == "__main__":
     mult = [0.000005, 0.00001, 0.0005, 0.001, 1][0:-1]
     # for noise in ["D", "X", "Y", "Z"]:
-    for noise in ["sc", "ion", "D", "X","Y","Z"][1:2]:
+    for noise in ["sc", "ion", "D", "X","Y","Z"][0:1]:
     # for noise in ["D"]:
     # for noise in [""]:
         if noise in {"sc", "ion"}:
@@ -146,8 +146,8 @@ if __name__ == "__main__":
         else:
             probs = 1 - np.flip(np.geomspace(0.000001, (0.0002), 5))
         vqe_data=vqeData(
-                "data_10/LiH_10",
-                LiH_10,
+                "data_10/H2_8",
+                H2_8,
                 optimizers[0],
                 reps=1,
                 probs=probs,
@@ -155,7 +155,7 @@ if __name__ == "__main__":
                 device="GPU",
             )
 
-        circ_names = Circuits.get_circs_names()[0:2] + Circuits.get_circs_names()[6:7]
+        circ_names = Circuits.get_circs_names()[0:7]
         # + Circuits.get_circs_names()[6:7]
         print(circ_names) 
         # manager = mp.Manager()
