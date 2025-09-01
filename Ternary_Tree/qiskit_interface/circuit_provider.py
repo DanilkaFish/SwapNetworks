@@ -338,8 +338,8 @@ class Callback:
         self._energy_array = []
 
     def __call__(self, step: int, params: np.ndarray, energy: float, metadata: dict):
-        # sys.stdout.write(f"\rProgress: {step}, Energy: {energy}%")
-        # sys.stdout.flush()
+        sys.stdout.write(f"\rProgress: {step}, Energy: {energy}%")
+        sys.stdout.flush()
         self._energy_array.append(energy)
 
     @property
@@ -452,7 +452,7 @@ class CircSim:
         vqe = VQE(est, self.circ, optimizer=optimizer, initial_point=self.init_point, callback=cb)
         grad = ParamShiftEstimatorGradient(est)
         grad = None
-        grad = FiniteDiffEstimatorGradient(est, method="forward", epsilon=1e-7)
+        grad = FiniteDiffEstimatorGradient(est, method="forward", epsilon=1e-6)
         vqe = VQE(est, self.circ, optimizer=optimizer, gradient=grad, initial_point=self.init_point, callback=cb)
         result = vqe.compute_minimum_eigenvalue(operator=self.op)
         for i in range(reps-1):

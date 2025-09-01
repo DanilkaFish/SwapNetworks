@@ -136,7 +136,7 @@ def run_vqe(name: str, vqe_data: vqeData, data: dict, r:float=0):
     return result
 
 if __name__ == "__main__":
-    mult = [0.00001, 0.0005, 0.001, 0.005, 1][0:-1]
+    mult = [0.00001, 0.0005, 0.001, 0.005, 1]
     # for noise in ["D", "X", "Y", "Z"]:
     for noise in ["sc", "ion", "D", "X","Y","Z"][1:2]:
     # for noise in ["D"]:
@@ -155,25 +155,26 @@ if __name__ == "__main__":
                 device="CPU",
             )
 
-        circ_names = Circuits.get_circs_names()[0:4] 
+        circ_names = Circuits.get_circs_names()[0:7] 
         # + Circuits.get_circs_names()[6:7]
         
-        manager = mp.Manager()
-        data = manager.dict()
+        # manager = mp.Manager()
+        # data = manager.dict()
+        data = {}
         r = 1.23
         # vqe_data.molecule.set_distance(r)
         # vqe_data.update_prov()
-        procs = []
+        # procs = []
         for name in circ_names:
-
-            procs.append(mp.Process(target=run_vqe, args=(name, vqe_data, data, r) ))
-        for proc in procs:
-            proc.start()
-        for proc in procs:
-            proc.join()
-        for proc in procs:
-            proc.close()
+            run_vqe(name, vqe_data, data, r)
+            # procs.append(mp.Process(target=run_vqe, args=(name, vqe_data, data, r) ))
+        # for proc in procs:
+        #     proc.start()
+        # for proc in procs:
+        #     proc.join()
+        # for proc in procs:
+        #     proc.close()
             
-        for name in circ_names:
+            # for name in circ_names:
             with open(get_file_name(vqe_data.file_name, vqe_data.noise_type, name), 'w') as file:
                 json.dump(data[name + vqe_data.noise_type], file, indent=4)
