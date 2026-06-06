@@ -1,0 +1,28 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "swap-networks"
+version = "0.1.0"
+description = "Experiment code for swap-network quantum circuit comparisons."
+requires-python = ">=3.10,<3.13"
+dependencies = [
+    "numpy>=1.26,<2.0",
+    "scipy>=1.15,<2.0",
+    "pandas>=2.2,<3.0",
+    "pyscf>=2.8,<3.0",
+    "qiskit>=1.3,<2.0",
+    "qiskit-aer>=0.16,<0.17",
+    "qiskit-algorithms>=0.3,<0.4",
+    "qiskit-nature>=0.7,<0.8",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8.3,<9.0"]
+
+[tool.setuptools.packages.find]
+include = ["Ternary_Tree*", "utils*"]
+
+[tool.setuptools.package-data]
+"Ternary_Tree.qiskit_interface" = ["*.csv"]

@@ -1,14 +1,6 @@
-from dataclasses import dataclass, field
 from typing import Any, List, Optional, Sequence, Union
 import pathlib
 import re
-
-_LATEX_SPECIALS = {
-    '&': r'\&', '%': r'\%', '$': r'\$', '#': r'\#', '_': r'\_',
-    '{': r'\{', '}': r'\}', '~': r'\textasciitilde{}',
-    '^': r'\textasciicircum{}', '\\': r'\textbackslash{}',
-}
-
 
 def escape_latex(s: Any) -> str:
     if s is None:
@@ -17,8 +9,6 @@ def escape_latex(s: Any) -> str:
     if s.startswith("$") and s.endswith("$") and len(s) > 1:
         return s
     return "".join(s)
-
-    # return "".join(_LATEX_SPECIALS.get(ch, ch) for ch in s)
 
 
 def centered_m(width: str) -> str:
@@ -52,20 +42,30 @@ def _normalize_col_spec(spec: Union[str, Sequence[Union[str, float, int]]], ncol
     return normalized
 
 
-@dataclass
 class Table:
-    caption: str
-    column_names: List[str]
-    align: List[float] = "c"
-    bordered: bool = False
-    label: Optional[str] = None
-    placement: str = "h"
-    use_booktabs: bool = True
-    use_adjustbox: bool = True
-    rows: List[Sequence[Any]] = field(default_factory=list)
-    float_format: Optional[str] = None
-
-    def __post_init__(self):
+    def __init__(
+        self,
+        caption: str,
+        column_names: List[str],
+        align: Union[str, Sequence[Union[str, float, int]]] = "c",
+        bordered: bool = False,
+        label: Optional[str] = None,
+        placement: str = "h",
+        use_booktabs: bool = True,
+        use_adjustbox: bool = True,
+        rows: Optional[List[Sequence[Any]]] = None,
+        float_format: Optional[str] = None,
+    ):
+        self.caption = caption
+        self.column_names = column_names
+        self.align = align
+        self.bordered = bordered
+        self.label = label
+        self.placement = placement
+        self.use_booktabs = use_booktabs
+        self.use_adjustbox = use_adjustbox
+        self.rows = rows if rows is not None else []
+        self.float_format = float_format
         self.ncols = len(self.column_names)
         self.align_list = _normalize_col_spec(self.align, self.ncols)
 

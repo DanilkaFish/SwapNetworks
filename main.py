@@ -1,182 +1,257 @@
-from typing import List
-import numpy as np
-from copy import deepcopy
 import json
+import logging
+from pathlib import Path
 
-from qiskit.quantum_info import DensityMatrix
-from qiskit_algorithms.optimizers import CG, SLSQP, L_BFGS_B, COBYLA, SPSA
+import numpy as np
+from qiskit import QuantumCircuit
+from qiskit_aer import AerSimulator
+from qiskit_aer.primitives import Estimator
+from qiskit_algorithms.optimizers import L_BFGS_B
 from qiskit_nature.second_q.operators import FermionicOp
 
-from copy import deepcopy
+from Ternary_Tree.qiskit_interface.circuit_provider import (
+    CircSim,
+    CircuitProvider,
+    Circuits,
+    get_file_name,
+    numpy_energy,
+)
 from Ternary_Tree.ucc.abstractucc import Molecule
-from Ternary_Tree.qiskit_interface.circuit_provider import *
-from my_utils import Timer
-import multiprocessing as mp
-
-import logging
+from utils import Timer
 
 
 logger = logging.getLogger(__name__)
-handler = logging.StreamHandler()
-handler.setFormatter(logging.Formatter('%(levelname)s %(message)s'))
-logger.addHandler(handler)
+if not logger.handlers:
+    handler = logging.StreamHandler()
+    handler.setFormatter(logging.Formatter("%(levelname)s %(message)s"))
+    logger.addHandler(handler)
 logger.setLevel(logging.INFO)
 
 
-class H2_H2(Molecule):
-    def __init__(self, R: float):
-        super().__init__(geometry=f'H 0 0 0; H 0 0 1.23; H {R} 0 0; H {R} 0 1.23', 
-                         num_electrons=(2,2), 
-                         active_orbitals=[0,1,2,3], 
-                         basis='sto-3g')
-        
-    def set_distance(self, R: float):
-        self.geometry = f'H 0 0 0; H 0 0 1.23; H {R} 0 0; H {R} 0 1.23'
-        
-DH4 = H2_H2(1.23)
-H2_4 = Molecule(geometry='H 0 0 0; H 0 0 0.7349', num_electrons=(1,1), active_orbitals=[0,1], basis='sto-3g')
-H2_8 = Molecule(geometry='H 0 0 0; H 0 0 0.7349', num_electrons=(1,1), active_orbitals=[0,1,2,3], basis='6-31g')
-LiH_8 = Molecule(geometry='H 0 0 0; Li 0 0 1.5459', num_electrons=(2,2), active_orbitals=[0,1,2,5], basis='sto-3g')
-LiH_10 = Molecule(geometry='H 0 0 0; Li 0 0 1.5459', num_electrons=(2,2), active_orbitals=[0,1,2,3,5], basis='sto-3g')
-LiH_12 = Molecule(geometry='H 0 0 0; Li 0 0 1.5459', num_electrons=(2,2), active_orbitals=[0,1,2,3,4,5], basis='sto-3g')
-LiH_14 = Molecule(geometry='H 0 0 0; Li 0 0 1.5459', num_electrons=(2,2), active_orbitals=list(range(7)), basis='6-31g')
-        
+class H2H2(Molecule):
+    def __init__(self, distance: float):
+        super().__init__(
+            geometry=f"H 0 0 0; H 0 0 1.23; H {distance} 0 0; H {distance} 0 1.23",
+            num_electrons=(2, 2),
+            active_orbitals=[0, 1, 2, 3],
+            basis="sto-3g",
+        )
 
-n = 100
-def learning_rate(n=n, c=0.5):
-    k = 0
-    while k < n:
-        k += 1
-        yield c/k**0.3
-
-def perturabation(n=n, a=0.01):
-    k = 0
-    while k < n:
-        k += 1
-        yield a/k**0.3
-    
-optimizers = [(L_BFGS_B(maxiter=150, ftol=0.00000001), 'L_BFGS_B')]
+    def set_distance(self, distance: float):
+        self.geometry = f"H 0 0 0; H 0 0 1.23; H {distance} 0 0; H {distance} 0 1.23"
 
 
-class vqeData:
-    def __init__(self, 
-                 file_name_to_write: str,
-                  molecule: Molecule,
-                  optimizer: any,
-                  reps: int=1,
-                  noise_type: str="",
-                  probs: np.ndarray=1 - np.flip(np.geomspace(0.00002, (0.001), 15)),
-                  device: str="GPU",
-                  ):
-        self.file_name = file_name_to_write 
-        self.molecule = molecule 
-        self.optimizer = optimizer 
+DH4 = H2H2(1.23)
+H2_4 = Molecule(
+    geometry="H 0 0 0; H 0 0 0.7349",
+    num_electrons=(1, 1),
+    active_orbitals=[0, 1],
+    basis="sto-3g",
+)
+H2_8 = Molecule(
+    geometry="H 0 0 0; H 0 0 0.7349",
+    num_electrons=(1, 1),
+    active_orbitals=[0, 1, 2, 3],
+    basis="6-31g",
+)
+LiH_8 = Molecule(
+    geometry="H 0 0 0; Li 0 0 1.5459",
+    num_electrons=(2, 2),
+    active_orbitals=[0, 1, 2, 5],
+    basis="sto-3g",
+)
+LiH_10 = Molecule(
+    geometry="H 0 0 0; Li 0 0 1.5459",
+    num_electrons=(2, 2),
+    active_orbitals=[0, 1, 2, 3, 5],
+    basis="sto-3g",
+)
+LiH_12 = Molecule(
+    geometry="H 0 0 0; Li 0 0 1.5459",
+    num_electrons=(2, 2),
+    active_orbitals=[0, 1, 2, 3, 4, 5],
+    basis="sto-3g",
+)
+LiH_14 = Molecule(
+    geometry="H 0 0 0; Li 0 0 1.5459",
+    num_electrons=(2, 2),
+    active_orbitals=list(range(7)),
+    basis="6-31g",
+)
+
+
+OPTIMIZER = (L_BFGS_B(maxiter=150, ftol=0.00000001), "L_BFGS_B")
+EXPERIMENT_MOLECULE = LiH_12
+EXPERIMENT_NOISES = ("sc", "ion", "D", "X", "Y", "Z")
+EXPERIMENT_CIRCUITS = (Circuits.jw_lex(), Circuits.bk_lex())
+OUTPUT_PREFIX = "data_revised/LIH12"
+DEVICE = "GPU"
+REPS = 1
+DISTANCE = 1.23
+
+SC_ION_MULTIPLIERS = np.array([0.000005, 0.00001, 0.0005, 0.001])
+PAULI_PROBS = 1 - np.flip(np.geomspace(0.000001, 0.0002, 5))
+
+
+def learning_rate(n=100, c=0.5):
+    for k in range(1, n + 1):
+        yield c / k**0.3
+
+
+def perturbation(n=100, a=0.01):
+    for k in range(1, n + 1):
+        yield a / k**0.3
+
+
+class VQEData:
+    def __init__(
+        self,
+        file_name_to_write: str,
+        molecule: Molecule,
+        optimizer,
+        reps: int = 1,
+        noise_type: str = "",
+        probs=None,
+        device: str = "GPU",
+    ):
+        self.file_name = file_name_to_write
+        self.molecule = molecule
+        self.optimizer = optimizer
         self.reps = reps
-        self.noise_type = noise_type 
-        self.probs = probs 
+        self.noise_type = noise_type
+        self.probs = probs if probs is not None else 1 - np.flip(np.geomspace(0.00002, 0.001, 15))
         self.circ_prov = CircuitProvider(reps=self.reps, molecule=self.molecule)
         self.ref_value = numpy_energy(self.circ_prov.fermionic_op, self.circ_prov.uccgsd)
-        self.data = []
         self.device = device
-    
-    def update_prov(self):
+
+    def update_provider(self):
         self.circ_prov.update_molecule(self.molecule)
         self.ref_value = numpy_energy(self.circ_prov.fermionic_op, self.circ_prov.uccgsd)
 
-def eval_additional_observable(circuit: QuantumCircuit, parameters, estimator: Estimator,  sim: AerSimulator, mapper ):
-    num_spin_orbitals = circuit.num_qubits
-    def num_observable(num_spin_orbitals, mapper):
-        ferm_observable_N = FermionicOp(
-            {f"+_{i} -_{i}": 1 for i in range(num_spin_orbitals)},
-            num_spin_orbitals=num_spin_orbitals
-        )
-        return mapper.map(ferm_observable_N)
-    
+
+def build_probabilities(noise: str):
+    if noise in {"sc", "ion"}:
+        return SC_ION_MULTIPLIERS
+    return PAULI_PROBS
+
+
+def number_observable(num_spin_orbitals: int, mapper):
+    ferm_observable = FermionicOp(
+        {f"+_{i} -_{i}": 1 for i in range(num_spin_orbitals)},
+        num_spin_orbitals=num_spin_orbitals,
+    )
+    return mapper.map(ferm_observable)
+
+
+def eval_additional_observable(
+    circuit: QuantumCircuit,
+    parameters,
+    estimator: Estimator,
+    simulator: AerSimulator,
+    mapper,
+):
     circuit = circuit.assign_parameters(parameters)
-    circuit.save_density_matrix() 
-    n_obs = num_observable(num_spin_orbitals, mapper)
-    res = estimator.run([circuit]*2, observables=[n_obs, n_obs @ n_obs]).result()
-    result = sim.run(circuit).result()
-    rho = result.data(0)['density_matrix']
+    circuit.save_density_matrix()
+
+    n_obs = number_observable(circuit.num_qubits, mapper)
+    estimator_result = estimator.run([circuit] * 2, observables=[n_obs, n_obs @ n_obs]).result()
+    simulator_result = simulator.run(circuit).result()
+    rho = simulator_result.data(0)["density_matrix"]
     purity = (rho.data @ rho.data).trace().real
-    return list(res.values) + [res.values[1] - res.values[0]**2] + [purity]
+
+    n_mean = estimator_result.values[0]
+    n2_mean = estimator_result.values[1]
+    return [n_mean, n2_mean, n2_mean - n_mean**2, purity]
 
 
 @Timer.attach_timer("thread_timer")
-def to_thread(namet, vqe_data: vqeData, r:float=0):
-    init_point = None
-    probs = vqe_data.probs
+def evaluate_circuit(circuit_name: str, vqe_data: VQEData, distance: float = 0):
     data = []
-    name, circ, op_mapper = vqe_data.circ_prov.get_circ(namet)
-    for index, prob in enumerate(probs):
-        circs = CircSim(circ, op_mapper[0], prob, vqe_data.noise_type, init_point)
-        energy, parameters, est, sim, cb = circs.run_qiskit_vqe(vqe_data.optimizer[0], vqe_data.device, reps=1)
-        additional_res = eval_additional_observable(circs.circ, parameters, est, sim, op_mapper[1])
-        logger.info(f"{energy:.5f} hf: {name=}, {noise=}, {index=}")
-        data.append({
-            "name": name, 
-            "ref_ener": vqe_data.ref_value, 
-            "energy": energy, 
-            "energy_array": cb.energy_array,
-            "param": parameters, 
-            "addition_res:": additional_res,
-            "optimizer": vqe_data.optimizer[1],
-            "gate_count": circs.circ.count_ops(),
-            "dist": r,
-            "prob": prob,
-            "noise": vqe_data.noise_type
-        })
+    name, circuit, op_mapper = vqe_data.circ_prov.get_circ(circuit_name)
+    operator, mapper = op_mapper
+
+    for index, probability in enumerate(vqe_data.probs):
+        simulator = CircSim(circuit, operator, probability, vqe_data.noise_type)
+        energy, parameters, estimator, aer_simulator, callback = simulator.run_qiskit_vqe(
+            vqe_data.optimizer[0],
+            vqe_data.device,
+            reps=1,
+        )
+        additional_result = eval_additional_observable(
+            simulator.circ,
+            parameters,
+            estimator,
+            aer_simulator,
+            mapper,
+        )
+
+        logger.info(
+            "%.5f hf: name=%s, noise=%s, index=%s",
+            energy,
+            name,
+            vqe_data.noise_type,
+            index,
+        )
+        data.append(
+            {
+                "name": name,
+                "ref_ener": vqe_data.ref_value,
+                "energy": energy,
+                "energy_array": callback.energy_array,
+                "param": parameters,
+                "addition_res:": additional_result,
+                "optimizer": vqe_data.optimizer[1],
+                "gate_count": simulator.circ.count_ops(),
+                "dist": distance,
+                "prob": probability,
+                "noise": vqe_data.noise_type,
+            }
+        )
     return data
-        
-def run_vqe(name: str, vqe_data: vqeData, data: dict, r:float=0):
-    result = to_thread(name, vqe_data, r)
-    if name + vqe_data.noise_type not in data:
-        data.setdefault(name + vqe_data.noise_type, result)
-    else:
-        data[name + vqe_data.noise_type] = data[name + vqe_data.noise_type] + result
-    logger.info(f"thread_timer: {Timer.timers["thread_timer"]:.4f} sec")
+
+
+def json_default(value):
+    if isinstance(value, np.ndarray):
+        return value.tolist()
+    if isinstance(value, np.generic):
+        return value.item()
+    raise TypeError(f"Object of type {type(value).__name__} is not JSON serializable")
+
+
+def save_results(file_name: str, results):
+    path = Path(file_name)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with path.open("w") as file:
+        json.dump(results, file, indent=4, default=json_default)
+
+
+def run_vqe(circuit_name: str, vqe_data: VQEData, distance: float = 0):
+    result = evaluate_circuit(circuit_name, vqe_data, distance)
+    file_name = get_file_name(vqe_data.file_name, vqe_data.noise_type, circuit_name)
+    save_results(file_name, result)
+    logger.info("thread_timer: %.4f sec", Timer.timers["thread_timer"])
     return result
 
-if __name__ == "__main__":
-    mult = [0.000005, 0.00001, 0.0005, 0.001, 1][0:-1]
-    # for noise in ["D", "X", "Y", "Z"]:
-    for noise in ["sc", "ion", "D", "X","Y","Z"][:]:
-    # for noise in ["D"]:
-    # for noise in [""]:
-        if noise in {"sc", "ion"}:
-            probs = mult[:4]
-        else:
-            probs = 1 - np.flip(np.geomspace(0.000001, (0.0002), 5))
-        vqe_data=vqeData(
-                "data_revised/LIH12",
-                LiH_12,
-                optimizers[0],
-                reps=1,
-                probs=probs,
-                noise_type=noise,
-                device="GPU",
-            )
 
-        circ_names = Circuits.get_circs_names()[2:4]
-        # + Circuits.get_circs_names()[6:7]
-        print(circ_names) 
-        # manager = mp.Manager()
-        # data = manager.dict()
-        data = {}
-        r = 1.23
-        # vqe_data.molecule.set_distance(r)
-        # vqe_data.update_prov()
-        procs = []
-        for name in circ_names:
-            run_vqe(name, vqe_data, data, r)
-            # procs.append(mp.Process(target=run_vqe, args=(name, vqe_data, data, r) ))
-        # for proc in procs:
-        #     proc.start()
-        # for proc in procs:
-        #     proc.join()
-        # for proc in procs:
-        #     proc.close()
-            
-            # for name in circ_names:
-            with open(get_file_name(vqe_data.file_name, vqe_data.noise_type, name), 'w') as file:
-                json.dump(data[name + vqe_data.noise_type], file, indent=4)
+def build_experiment(noise: str):
+    return VQEData(
+        OUTPUT_PREFIX,
+        EXPERIMENT_MOLECULE,
+        OPTIMIZER,
+        reps=REPS,
+        probs=build_probabilities(noise),
+        noise_type=noise,
+        device=DEVICE,
+    )
+
+
+def run_configured_experiment():
+    for noise in EXPERIMENT_NOISES:
+        vqe_data = build_experiment(noise)
+        logger.info("Running circuits for noise=%s: %s", noise, ", ".join(EXPERIMENT_CIRCUITS))
+        for circuit_name in EXPERIMENT_CIRCUITS:
+            run_vqe(circuit_name, vqe_data, DISTANCE)
+
+
+if __name__ == "__main__":
+    run_configured_experiment()
