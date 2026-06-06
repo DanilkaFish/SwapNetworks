@@ -61,7 +61,7 @@ def res(angle):
     
 def scaleability():
     mol = Molecule(geometry='Li 0 0 0; Li 0 0 1.5459', num_electrons=(2,2), active_orbitals=[0,1,2,5], basis='6-311g')
-    circ_names = Circuits.get_circs_names()[5:6]
+    circ_names = Circuits.get_circs_names()[0:7]
     double = {circ: [] for circ in circ_names}
     single = {circ: [] for circ in circ_names}
     depth = {circ: [] for circ in circ_names}
@@ -80,7 +80,7 @@ def scaleability():
                 # print(circ.count_ops())
                 double[name].append(circ.count_ops()["cx"])
                 single[name].append(circ.count_ops()["u3"])
-                depth[name].append(circ.depth())
+                depth[name].append(circ.depth(lambda instr: len(instr.qubits) > 1))
                 pauli_num[name].append(i*(i-1)/2*12)
                 # pauli_num.append(2*i*(2*i-1)/2*10)
                 # print(name, ":", circ.count_ops())

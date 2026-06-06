@@ -38,6 +38,8 @@ H2_4 = Molecule(geometry='H 0 0 0; H 0 0 0.7349', num_electrons=(1,1), active_or
 H2_8 = Molecule(geometry='H 0 0 0; H 0 0 0.7349', num_electrons=(1,1), active_orbitals=[0,1,2,3], basis='6-31g')
 LiH_8 = Molecule(geometry='H 0 0 0; Li 0 0 1.5459', num_electrons=(2,2), active_orbitals=[0,1,2,5], basis='sto-3g')
 LiH_10 = Molecule(geometry='H 0 0 0; Li 0 0 1.5459', num_electrons=(2,2), active_orbitals=[0,1,2,3,5], basis='sto-3g')
+LiH_12 = Molecule(geometry='H 0 0 0; Li 0 0 1.5459', num_electrons=(2,2), active_orbitals=[0,1,2,3,4,5], basis='sto-3g')
+LiH_14 = Molecule(geometry='H 0 0 0; Li 0 0 1.5459', num_electrons=(2,2), active_orbitals=list(range(7)), basis='6-31g')
         
 
 n = 100
@@ -64,7 +66,7 @@ class vqeData:
                   reps: int=1,
                   noise_type: str="",
                   probs: np.ndarray=1 - np.flip(np.geomspace(0.00002, (0.001), 15)),
-                  device: str="CPU",
+                  device: str="GPU",
                   ):
         self.file_name = file_name_to_write 
         self.molecule = molecule 
@@ -138,7 +140,7 @@ def run_vqe(name: str, vqe_data: vqeData, data: dict, r:float=0):
 if __name__ == "__main__":
     mult = [0.000005, 0.00001, 0.0005, 0.001, 1][0:-1]
     # for noise in ["D", "X", "Y", "Z"]:
-    for noise in ["sc", "ion", "D", "X","Y","Z"][0:1]:
+    for noise in ["sc", "ion", "D", "X","Y","Z"][:]:
     # for noise in ["D"]:
     # for noise in [""]:
         if noise in {"sc", "ion"}:
@@ -146,8 +148,8 @@ if __name__ == "__main__":
         else:
             probs = 1 - np.flip(np.geomspace(0.000001, (0.0002), 5))
         vqe_data=vqeData(
-                "data_10/H2_8",
-                H2_8,
+                "data_revised/LIH12",
+                LiH_12,
                 optimizers[0],
                 reps=1,
                 probs=probs,
@@ -155,7 +157,7 @@ if __name__ == "__main__":
                 device="GPU",
             )
 
-        circ_names = Circuits.get_circs_names()[0:7]
+        circ_names = Circuits.get_circs_names()[2:4]
         # + Circuits.get_circs_names()[6:7]
         print(circ_names) 
         # manager = mp.Manager()
