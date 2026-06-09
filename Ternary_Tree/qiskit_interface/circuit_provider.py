@@ -13,12 +13,16 @@ from qiskit_nature.second_q.mappers.fermionic_mapper import FermionicMapper
 
 from qiskit import transpile, QuantumCircuit
 from qiskit.quantum_info import SparsePauliOp, Statevector
-from qiskit.circuit import Delay
 from qiskit_algorithms.gradients import FiniteDiffEstimatorGradient
-from qiskit.circuit.library.standard_gates import IGate, XGate, ZGate, YGate, RZZGate, CZGate
+from qiskit.circuit.library.standard_gates import IGate, XGate, ZGate, YGate
 from qiskit.synthesis.evolution import synth_pauli_network_rustiq
-from qiskit_aer.noise import (NoiseModel, QuantumError, kraus_error, RelaxationNoisePass,
-    depolarizing_error, thermal_relaxation_error)
+from qiskit_aer.noise import (
+    NoiseModel,
+    QuantumError,
+    depolarizing_error,
+    kraus_error,
+    thermal_relaxation_error,
+)
 from qiskit_aer import AerSimulator
 from qiskit_aer.primitives import Estimator
 from qiskit_algorithms import NumPyMinimumEigensolver
@@ -34,6 +38,10 @@ CALIBRATION_DIR = Path(__file__).resolve().parent
 
 
 NOISE_GATES = {"I": IGate(), "X": XGate(), "Y": YGate(), "Z": ZGate()}
+SC_SINGLE_QUBIT_DURATION = 0
+SC_TWO_QUBIT_DURATION = 68
+ION_SINGLE_QUBIT_DURATION = 63000
+ION_TWO_QUBIT_DURATION = 650000
 PAULI_MATRICES = {
     "X": np.array([[0, 1], [1, 0]]),
     "Y": np.array([[0, -1j], [1j, 0]]),
@@ -303,13 +311,10 @@ class CircSim:
     def __init__(self, circ: QiskitCirc, op: SparsePauliOp, noise_par=0.9999, noise_type="D", init_point=None, s_basis=None, d_basis=None):
         s_basis = ["u3"] if s_basis is None else s_basis
         d_basis = ["cx"] if d_basis is None else d_basis
+        source_parameters = list(circ.parameters)
         self.circ = circ
         self.op = op
         self.hf = hf(circ, op)
-        if init_point is None:
-            self.init_point = [0 for _ in circ.parameters]
-        else:
-            self.init_point = init_point
         self.noise_par = noise_par
         logger.info("starting transpilation")
         instr_dur = []
@@ -317,12 +322,12 @@ class CircSim:
         if noise_type in {"sc", "ion"}:
             instr_dur = []
             if noise_type == "ion":
-                td = 650000
-                ts = 63000
+                td = ION_TWO_QUBIT_DURATION
+                ts = ION_SINGLE_QUBIT_DURATION
                 cp = None
             else:
-                td = 68
-                ts = 0
+                td = SC_TWO_QUBIT_DURATION
+                ts = SC_SINGLE_QUBIT_DURATION
                 cp = coupling_map_2xn(self.circ.num_qubits//2)
             for i in range(circ.num_qubits):
                 instr_dur.append(("rx", [i], ts))
@@ -344,7 +349,6 @@ class CircSim:
                                     layout_method='trivial',
                                     routing_method='basic',
                                     scheduling_method="asap")
-                logger.info(f"{self.circ}")
             else:
                 self.circ = transpile(self.circ.decompose(reps=3), 
                                     basis_gates=["cz", "rzz", "rx", "rz"],
@@ -370,7 +374,36 @@ class CircSim:
             layout = self.circ.layout.final_index_layout()
             self.op = self.op.apply_layout(layout)
         self.noise_type = noise_type
+        self.init_point = self._initial_point(init_point, source_parameters)
 
+    def _initial_point(self, init_point, source_parameters):
+        target_parameters = list(self.circ.parameters)
+        if init_point is None:
+            return [0 for _ in target_parameters]
+        if isinstance(init_point, dict):
+            init_by_name = {getattr(key, "name", key): value for key, value in init_point.items()}
+            return [
+                init_point.get(parameter, init_by_name.get(parameter.name, 0))
+                for parameter in target_parameters
+            ]
+
+        values = list(init_point)
+        if len(values) != len(target_parameters):
+            raise ValueError(
+                f"Initial point has {len(values)} values, but circuit has {len(target_parameters)} parameters"
+            )
+        if source_parameters == target_parameters:
+            return values
+
+        values_by_parameter = dict(zip(source_parameters, values))
+        values_by_name = {parameter.name: value for parameter, value in values_by_parameter.items()}
+        return [
+            values_by_parameter.get(parameter, values_by_name.get(parameter.name, 0))
+            for parameter in target_parameters
+        ]
+
+    def parameter_map(self, values):
+        return dict(zip(self.circ.parameters, values))
     
     def run_qiskit_vqe(self, optimizer, device="CPU", reps=1):
         
@@ -410,7 +443,14 @@ class CircSim:
             if result.eigenvalue.real > _res.eigenvalue.real:
                 result = _res
                 logger.info(f"{vqe.initial_point=}")
-        return result.eigenvalue.real, list(result.optimal_parameters.values()), est, sim, cb
+        result_by_name = {parameter.name: value for parameter, value in result.optimal_parameters.items()}
+        parameters = []
+        for parameter in self.circ.parameters:
+            if parameter in result.optimal_parameters:
+                parameters.append(result.optimal_parameters[parameter])
+            else:
+                parameters.append(result_by_name[parameter.name])
+        return result.eigenvalue.real, parameters, est, sim, cb
         
     def run_adapt_vqe(self, optimizer, device="CPU", reps=1, is_rust=False, cp: CircuitProvider=None, mapper=None):
         par_used = {par: np.random.random() - 0.5 for par in self.circ.parameters if par not in self.circ.excitation_pos}
@@ -599,9 +639,8 @@ def get_noise_estimator_from_csv(mult, device, sim=False):
     CX = mean_gate_error(df) * mult
     logger.info(f"{CX=}")
 
-    td = 68
-    relax1q = thermal_relaxation_error(T1 * 1000, T2 * 1000, 0)
-    relax2q = thermal_relaxation_error(T1 * 1000, T2 * 1000, td)
+    relax1q = thermal_relaxation_error(T1 * 1000, T2 * 1000, SC_SINGLE_QUBIT_DURATION)
+    relax2q = thermal_relaxation_error(T1 * 1000, T2 * 1000, SC_TWO_QUBIT_DURATION)
     relax2q_both = relax2q.expand(relax2q)
 
     error1 = depolarizing_error(4./2 * U, 1).compose(relax1q)
@@ -632,6 +671,7 @@ def get_noise_estimator_from_csv(mult, device, sim=False):
 def get_ion_noise_estimator(mult, device, nq, sim=False):
     basis_gates = ["cz", "rzz", "rx", "rz"]
     noise_model = NoiseModel(basis_gates=basis_gates)
+    del nq
     T1 = 188/mult*1000000
     T2 = 0.95/mult*1000000
     logger.info(f"{T1=}")
@@ -639,18 +679,20 @@ def get_ion_noise_estimator(mult, device, nq, sim=False):
     CX = 0.0062*mult
     U = 0.0002*mult
     logger.info(f"real {CX=}")
-    error1 = depolarizing_error(4./2*U, 1)
-
-    error2 = depolarizing_error(4/3*CX, 2)
-    t1s = [T1 for prop in range(nq)]
-    t2s = [T2 for prop in range(nq)]
-    delay_pass = RelaxationNoisePass(
-        t1s=[np.inf if x is None else x*1000 for x in t1s],
-        t2s=[np.inf if x is None else x*1000 for x in t2s],
-        dt=1,
-        op_types=[Delay, CZGate, RZZGate],
+    relax1q = thermal_relaxation_error(
+        T1 * 1000,
+        T2 * 1000,
+        ION_SINGLE_QUBIT_DURATION,
     )
-    noise_model._custom_noise_passes.append(delay_pass)
+    relax2q = thermal_relaxation_error(
+        T1 * 1000,
+        T2 * 1000,
+        ION_TWO_QUBIT_DURATION,
+    )
+    relax2q_both = relax2q.expand(relax2q)
+
+    error1 = depolarizing_error(4./2*U, 1).compose(relax1q)
+    error2 = depolarizing_error(4/3*CX, 2).compose(relax2q_both)
     noise_model.add_all_qubit_quantum_error(error2, ["cz", "rzz"])
     noise_model.add_all_qubit_quantum_error(error1, ["rz", "rx"])
     noisy_estimator = Estimator(
@@ -675,8 +717,8 @@ def get_ion_noise_estimator(mult, device, nq, sim=False):
 
 def transpile_to_sc(circ):
     instr_dur = []
-    td = 68
-    ts = 0
+    td = SC_TWO_QUBIT_DURATION
+    ts = SC_SINGLE_QUBIT_DURATION
     for i in range(circ.num_qubits):
         instr_dur.append(("rx", [i], ts))
         instr_dur.append(("rz", [i], ts))

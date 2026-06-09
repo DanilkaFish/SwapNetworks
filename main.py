@@ -82,15 +82,21 @@ LiH_14 = Molecule(
 
 OPTIMIZER = (L_BFGS_B(maxiter=150, ftol=0.00000001), "L_BFGS_B")
 EXPERIMENT_MOLECULE = LiH_12
-EXPERIMENT_NOISES = ("sc", "ion", "D", "X", "Y", "Z")
-EXPERIMENT_CIRCUITS = (Circuits.jw_lex(), Circuits.bk_lex())
+EXPERIMENT_NOISES = ("sc", "ion", "D", "X", "Y", "Z")[1:2]
+EXPERIMENT_CIRCUITS = (Circuits.jw_lex(), Circuits.bk_lex(), Circuits.swap_2xn(),Circuits.swap_2xn_yor(),Circuits.swap_gen_yor())
 OUTPUT_PREFIX = "data_revised/LIH12"
 DEVICE = "GPU"
 REPS = 1
 DISTANCE = 1.23
+NOISY_INITIAL_POINT_MODE = "noiseless"  # "zero", "noiseless", or "previous-noise"
+NOISELESS_VQE_RESTARTS = 1
+NOISY_VQE_RESTARTS = 1
+CACHE_NOISELESS_INITIAL_POINTS = True
 
 SC_ION_MULTIPLIERS = np.array([0.000005, 0.00001, 0.0005, 0.001])
 PAULI_PROBS = 1 - np.flip(np.geomspace(0.000001, 0.0002, 5))
+INITIAL_POINT_MODES = {"zero", "noiseless", "previous-noise"}
+NOISELESS_INITIAL_POINT_CACHE = {}
 
 
 def learning_rate(n=100, c=0.5):
@@ -135,6 +141,14 @@ def build_probabilities(noise: str):
     return PAULI_PROBS
 
 
+def validate_initial_point_mode():
+    if NOISY_INITIAL_POINT_MODE not in INITIAL_POINT_MODES:
+        raise ValueError(
+            f"Unknown NOISY_INITIAL_POINT_MODE={NOISY_INITIAL_POINT_MODE!r}; "
+            f"expected one of {sorted(INITIAL_POINT_MODES)}"
+        )
+
+
 def number_observable(num_spin_orbitals: int, mapper):
     ferm_observable = FermionicOp(
         {f"+_{i} -_{i}": 1 for i in range(num_spin_orbitals)},
@@ -164,18 +178,65 @@ def eval_additional_observable(
     return [n_mean, n2_mean, n2_mean - n_mean**2, purity]
 
 
+def build_noiseless_initial_point(circuit_name: str, circuit: QuantumCircuit, operator, vqe_data: VQEData):
+    cache_key = (
+        vqe_data.file_name,
+        circuit_name,
+        vqe_data.reps,
+        vqe_data.optimizer[1],
+        vqe_data.device,
+    )
+    if CACHE_NOISELESS_INITIAL_POINTS and cache_key in NOISELESS_INITIAL_POINT_CACHE:
+        return NOISELESS_INITIAL_POINT_CACHE[cache_key]
+
+    logger.info("Finding noiseless initial point for %s", circuit_name)
+    simulator = CircSim(circuit, operator, noise_type="")
+    energy, parameters, _, _, callback = simulator.run_qiskit_vqe(
+        vqe_data.optimizer[0],
+        vqe_data.device,
+        reps=NOISELESS_VQE_RESTARTS,
+    )
+    logger.info("%.5f noiseless: name=%s", energy, circuit_name)
+    initial_point = simulator.parameter_map(parameters)
+    result = {
+        "energy": energy,
+        "energy_array": callback.energy_array,
+        "param": parameters,
+    }
+    if CACHE_NOISELESS_INITIAL_POINTS:
+        NOISELESS_INITIAL_POINT_CACHE[cache_key] = initial_point, result
+    return initial_point, result
+
+
 @Timer.attach_timer("thread_timer")
 def evaluate_circuit(circuit_name: str, vqe_data: VQEData, distance: float = 0):
+    validate_initial_point_mode()
     data = []
     name, circuit, op_mapper = vqe_data.circ_prov.get_circ(circuit_name)
     operator, mapper = op_mapper
+    initial_point = None
+    noiseless_result = None
+
+    if NOISY_INITIAL_POINT_MODE in {"noiseless", "previous-noise"}:
+        initial_point, noiseless_result = build_noiseless_initial_point(
+            name,
+            circuit,
+            operator,
+            vqe_data,
+        )
 
     for index, probability in enumerate(vqe_data.probs):
-        simulator = CircSim(circuit, operator, probability, vqe_data.noise_type)
+        simulator = CircSim(
+            circuit,
+            operator,
+            probability,
+            vqe_data.noise_type,
+            init_point=initial_point,
+        )
         energy, parameters, estimator, aer_simulator, callback = simulator.run_qiskit_vqe(
             vqe_data.optimizer[0],
             vqe_data.device,
-            reps=1,
+            reps=NOISY_VQE_RESTARTS,
         )
         additional_result = eval_additional_observable(
             simulator.circ,
@@ -199,6 +260,8 @@ def evaluate_circuit(circuit_name: str, vqe_data: VQEData, distance: float = 0):
                 "energy": energy,
                 "energy_array": callback.energy_array,
                 "param": parameters,
+                "initial_point_mode": NOISY_INITIAL_POINT_MODE,
+                "noiseless_result": noiseless_result,
                 "addition_res:": additional_result,
                 "optimizer": vqe_data.optimizer[1],
                 "gate_count": simulator.circ.count_ops(),
@@ -207,6 +270,8 @@ def evaluate_circuit(circuit_name: str, vqe_data: VQEData, distance: float = 0):
                 "noise": vqe_data.noise_type,
             }
         )
+        if NOISY_INITIAL_POINT_MODE == "previous-noise":
+            initial_point = simulator.parameter_map(parameters)
     return data
 
 
