@@ -53,7 +53,16 @@ SC_SINGLE_QUBIT_DURATION = 0
 SC_TWO_QUBIT_DURATION = 68
 ION_SINGLE_QUBIT_DURATION = 63000
 ION_TWO_QUBIT_DURATION = 650000
-SCHEDULED_NOISE_TYPES = {"sc_scheduled", "ion_scheduled"}
+SC_NOISE_TYPES = {"sc", "sc_scheduled", "sc_scheduled_1q2q", "sc_scheduled_2q"}
+ION_NOISE_TYPES = {"ion", "ion_scheduled", "ion_scheduled_1q2q", "ion_scheduled_2q"}
+SCHEDULED_NOISE_TYPES = {
+    "sc_scheduled",
+    "ion_scheduled",
+    "sc_scheduled_1q2q",
+    "ion_scheduled_1q2q",
+    "sc_scheduled_2q",
+    "ion_scheduled_2q",
+}
 HARDWARE_NOISE_TYPES = {"sc", "ion", *SCHEDULED_NOISE_TYPES}
 SCHEDULED_RELAXATION_OP_TYPES = [Delay, RXGate, RZGate, CZGate, RZZGate]
 PAULI_MATRICES = {
@@ -344,7 +353,7 @@ class CircSim:
         self.noise_par = noise_par
         logger.info("starting transpilation")
         if noise_type in HARDWARE_NOISE_TYPES:
-            if noise_type in {"ion", "ion_scheduled"}:
+            if noise_type in ION_NOISE_TYPES:
                 td = ION_TWO_QUBIT_DURATION
                 ts = ION_SINGLE_QUBIT_DURATION
                 cp = None
@@ -457,6 +466,32 @@ class CircSim:
                 scheduled=True,
                 num_qubits=self.circ.num_qubits,
             )
+        elif self.noise_type == "sc_scheduled_1q2q":
+            est = get_noise_estimator_from_csv(
+                self.noise_par,
+                device,
+                relaxation=False,
+            )
+            sim = get_noise_estimator_from_csv(
+                self.noise_par,
+                device,
+                sim=True,
+                relaxation=False,
+            )
+        elif self.noise_type == "sc_scheduled_2q":
+            est = get_noise_estimator_from_csv(
+                self.noise_par,
+                device,
+                single_qubit_depolarizing=False,
+                relaxation=False,
+            )
+            sim = get_noise_estimator_from_csv(
+                self.noise_par,
+                device,
+                sim=True,
+                single_qubit_depolarizing=False,
+                relaxation=False,
+            )
         elif self.noise_type == "ion":
             est = get_ion_noise_estimator(self.noise_par, device, self.circ.num_qubits)
             sim = get_ion_noise_estimator(self.noise_par, device, self.circ.num_qubits, sim=True)
@@ -473,6 +508,36 @@ class CircSim:
                 self.circ.num_qubits,
                 sim=True,
                 scheduled=True,
+            )
+        elif self.noise_type == "ion_scheduled_1q2q":
+            est = get_ion_noise_estimator(
+                self.noise_par,
+                device,
+                self.circ.num_qubits,
+                relaxation=False,
+            )
+            sim = get_ion_noise_estimator(
+                self.noise_par,
+                device,
+                self.circ.num_qubits,
+                sim=True,
+                relaxation=False,
+            )
+        elif self.noise_type == "ion_scheduled_2q":
+            est = get_ion_noise_estimator(
+                self.noise_par,
+                device,
+                self.circ.num_qubits,
+                single_qubit_depolarizing=False,
+                relaxation=False,
+            )
+            sim = get_ion_noise_estimator(
+                self.noise_par,
+                device,
+                self.circ.num_qubits,
+                sim=True,
+                single_qubit_depolarizing=False,
+                relaxation=False,
             )
         else:
             est = get_qiskit_device_noise_estimator(
@@ -707,7 +772,16 @@ def add_scheduled_relaxation(noise_model, t1_us, t2_us, num_qubits):
     )
 
 
-def get_noise_estimator_from_csv(mult, device, sim=False, scheduled=False, num_qubits=None):
+def get_noise_estimator_from_csv(
+    mult,
+    device,
+    sim=False,
+    scheduled=False,
+    num_qubits=None,
+    single_qubit_depolarizing=True,
+    two_qubit_depolarizing=True,
+    relaxation=True,
+):
     file_name = CALIBRATION_DIR / "ibm_kingston_calibrations_2025-07-02T15_30_16Z.csv"
     basis_gates = ["cz", "rzz", "rx", "rz"]
     noise_model = NoiseModel(basis_gates=basis_gates)
@@ -721,19 +795,25 @@ def get_noise_estimator_from_csv(mult, device, sim=False, scheduled=False, num_q
     CX = mean_gate_error(df) * mult
     logger.info(f"{CX=}")
 
-    error1 = depolarizing_error(4./2 * U, 1)
-    error2 = depolarizing_error(4./3 * CX, 2)
-    if scheduled:
+    if scheduled and relaxation:
         add_scheduled_relaxation(noise_model, T1, T2, num_qubits)
-    else:
+    elif relaxation:
+        error1 = depolarizing_error(4./2 * U, 1)
+        error2 = depolarizing_error(4./3 * CX, 2)
         relax1q = thermal_relaxation_error(T1 * 1000, T2 * 1000, SC_SINGLE_QUBIT_DURATION)
         relax2q = thermal_relaxation_error(T1 * 1000, T2 * 1000, SC_TWO_QUBIT_DURATION)
         relax2q_both = relax2q.expand(relax2q)
         error1 = error1.compose(relax1q)
         error2 = error2.compose(relax2q_both)
+        noise_model.add_all_qubit_quantum_error(error1, ["rz", "rx"])
+        noise_model.add_all_qubit_quantum_error(error2, ["cz", "rzz"])
+        single_qubit_depolarizing = False
+        two_qubit_depolarizing = False
 
-    noise_model.add_all_qubit_quantum_error(error2, ["cz", "rzz"])
-    noise_model.add_all_qubit_quantum_error(error1, ["rz", "rx"])
+    if two_qubit_depolarizing:
+        noise_model.add_all_qubit_quantum_error(depolarizing_error(4./3 * CX, 2), ["cz", "rzz"])
+    if single_qubit_depolarizing:
+        noise_model.add_all_qubit_quantum_error(depolarizing_error(4./2 * U, 1), ["rz", "rx"])
     noisy_estimator = Estimator(
                 run_options={"seed": 170, "shots": None, },
                 approximation=True,
@@ -755,7 +835,16 @@ def get_noise_estimator_from_csv(mult, device, sim=False, scheduled=False, num_q
         return noisy_estimator
 
 
-def get_ion_noise_estimator(mult, device, nq, sim=False, scheduled=False):
+def get_ion_noise_estimator(
+    mult,
+    device,
+    nq,
+    sim=False,
+    scheduled=False,
+    single_qubit_depolarizing=True,
+    two_qubit_depolarizing=True,
+    relaxation=True,
+):
     basis_gates = ["cz", "rzz", "rx", "rz"]
     noise_model = NoiseModel(basis_gates=basis_gates)
     T1 = 188/mult*1000000
@@ -765,11 +854,11 @@ def get_ion_noise_estimator(mult, device, nq, sim=False, scheduled=False):
     CX = 0.0062*mult
     U = 0.0002*mult
     logger.info(f"real {CX=}")
-    error1 = depolarizing_error(4./2*U, 1)
-    error2 = depolarizing_error(4/3*CX, 2)
-    if scheduled:
+    if scheduled and relaxation:
         add_scheduled_relaxation(noise_model, T1, T2, nq)
-    else:
+    elif relaxation:
+        error1 = depolarizing_error(4./2*U, 1)
+        error2 = depolarizing_error(4/3*CX, 2)
         relax1q = thermal_relaxation_error(
             T1 * 1000,
             T2 * 1000,
@@ -783,8 +872,14 @@ def get_ion_noise_estimator(mult, device, nq, sim=False, scheduled=False):
         relax2q_both = relax2q.expand(relax2q)
         error1 = error1.compose(relax1q)
         error2 = error2.compose(relax2q_both)
-    noise_model.add_all_qubit_quantum_error(error2, ["cz", "rzz"])
-    noise_model.add_all_qubit_quantum_error(error1, ["rz", "rx"])
+        noise_model.add_all_qubit_quantum_error(error1, ["rz", "rx"])
+        noise_model.add_all_qubit_quantum_error(error2, ["cz", "rzz"])
+        single_qubit_depolarizing = False
+        two_qubit_depolarizing = False
+    if two_qubit_depolarizing:
+        noise_model.add_all_qubit_quantum_error(depolarizing_error(4/3*CX, 2), ["cz", "rzz"])
+    if single_qubit_depolarizing:
+        noise_model.add_all_qubit_quantum_error(depolarizing_error(4./2*U, 1), ["rz", "rx"])
     noisy_estimator = Estimator(
                 run_options={"seed": 170, "shots": None, },
                 approximation=True,

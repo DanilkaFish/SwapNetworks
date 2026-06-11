@@ -82,8 +82,21 @@ LiH_14 = Molecule(
 
 OPTIMIZER = (L_BFGS_B(maxiter=150, ftol=0.00000001), "L_BFGS_B")
 EXPERIMENT_MOLECULE = LiH_14
-AVAILABLE_NOISES = ("sc", "sc_scheduled", "ion", "ion_scheduled", "D", "X", "Y", "Z")
-EXPERIMENT_NOISES = AVAILABLE_NOISES[4:]
+AVAILABLE_NOISES = (
+    "sc",
+    "sc_scheduled",
+    "sc_scheduled_1q2q",
+    "sc_scheduled_2q",
+    "ion",
+    "ion_scheduled",
+    "ion_scheduled_1q2q",
+    "ion_scheduled_2q",
+    "D",
+    "X",
+    "Y",
+    "Z",
+)
+EXPERIMENT_NOISES = ("D", "X", "Y", "Z")
 EXPERIMENT_CIRCUITS = (Circuits.jw_lex(), Circuits.bk_lex(), Circuits.swap_2xn(),Circuits.swap_2xn_yor(),Circuits.swap_gen_yor())[2:]
 OUTPUT_PREFIX = "data_revised/LIH14"
 DEVICE = "GPU"
@@ -137,7 +150,7 @@ class VQEData:
 
 
 def build_probabilities(noise: str):
-    if noise in {"sc", "ion", "sc_scheduled", "ion_scheduled"}:
+    if noise.startswith(("sc", "ion")):
         return SC_ION_MULTIPLIERS
     return PAULI_PROBS
 
