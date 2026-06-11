@@ -81,10 +81,11 @@ LiH_14 = Molecule(
 
 
 OPTIMIZER = (L_BFGS_B(maxiter=150, ftol=0.00000001), "L_BFGS_B")
-EXPERIMENT_MOLECULE = LiH_12
-EXPERIMENT_NOISES = ("sc", "ion", "D", "X", "Y", "Z")[1:2]
-EXPERIMENT_CIRCUITS = (Circuits.jw_lex(), Circuits.bk_lex(), Circuits.swap_2xn(),Circuits.swap_2xn_yor(),Circuits.swap_gen_yor())
-OUTPUT_PREFIX = "data_revised/LIH12"
+EXPERIMENT_MOLECULE = LiH_14
+AVAILABLE_NOISES = ("sc", "sc_scheduled", "ion", "ion_scheduled", "D", "X", "Y", "Z")
+EXPERIMENT_NOISES = AVAILABLE_NOISES[4:]
+EXPERIMENT_CIRCUITS = (Circuits.jw_lex(), Circuits.bk_lex(), Circuits.swap_2xn(),Circuits.swap_2xn_yor(),Circuits.swap_gen_yor())[2:]
+OUTPUT_PREFIX = "data_revised/LIH14"
 DEVICE = "GPU"
 REPS = 1
 DISTANCE = 1.23
@@ -94,7 +95,7 @@ NOISY_VQE_RESTARTS = 1
 CACHE_NOISELESS_INITIAL_POINTS = True
 
 SC_ION_MULTIPLIERS = np.array([0.000005, 0.00001, 0.0005, 0.001])
-PAULI_PROBS = 1 - np.flip(np.geomspace(0.000001, 0.0002, 5))
+PAULI_PROBS = 1 - np.flip(np.geomspace(0.0000001, 0.00002, 5))
 INITIAL_POINT_MODES = {"zero", "noiseless", "previous-noise"}
 NOISELESS_INITIAL_POINT_CACHE = {}
 
@@ -136,7 +137,7 @@ class VQEData:
 
 
 def build_probabilities(noise: str):
-    if noise in {"sc", "ion"}:
+    if noise in {"sc", "ion", "sc_scheduled", "ion_scheduled"}:
         return SC_ION_MULTIPLIERS
     return PAULI_PROBS
 

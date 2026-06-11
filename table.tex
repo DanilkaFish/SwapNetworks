@@ -1,0 +1,268 @@
+\subsubsection{Comparison across Pauli noise channels}
+
+{ In Tables~I--V, boldface marks the lowest susceptibility in each column, while
+italics mark the second-lowest value; ties can occur after rounding.
+
+
+  } \begin{table}[tbp]
+    \centering
+    \caption{Noise susceptibility $\chi$ for H2, 4 qubits.}
+    \begin{adjustbox}{max width=\linewidth}
+    \begin{tabular*}{\linewidth}{@{\extracolsep{\fill}} l c c c c c @{}}
+    \toprule
+    \textbf{Method} & \textbf{D} & \textbf{X} & \textbf{Y} & \textbf{Z} & \textbf{\# CX gates} \\
+    \midrule
+    JW & $49.1$ & $21.6$ & $40.2$ & $46.7$ & $49$ \\
+    BK & $38.1$ & $34.3$ & $30.9$ & $31.0$ & $35$ \\
+    JW GdBM & $24.2$ & $\mathit{16.4}$ & $23.2$ & $19.0$ & $21$ \\
+    BK GdBM & $19.1$ & $19.6$ & $19.7$ & $\mathbf{0.7}$ & $\mathbf{15}$ \\
+    FSN a-t-a & $\mathbf{14.9}$ & $\mathit{17.2}$ & $15.1$ & $\mathit{7.9}$ & $15$ \\
+    FSN $2\times N$ & $19.5$ & $21.1$ & $18.9$ & $10.8$ & $21$ \\
+    \midrule
+    MSN $2\times N$ & $\mathit{18.3}$ & $\mathbf{13.9}$ & $\mathbf{7.3}$ & $13.6$ & $16$ \\
+    \bottomrule
+    \end{tabular*}
+    \end{adjustbox}
+    \end{table}
+
+
+    \begin{table}[tbp]
+    \centering
+    \caption{Noise susceptibility $\chi$ for H2, 8 qubits.}
+    \begin{adjustbox}{max width=\linewidth}
+    \begin{tabular*}{\linewidth}{@{\extracolsep{\fill}} l c c c c c @{}}
+    \toprule 
+    \textbf{Method} & \textbf{D} & \textbf{X} & \textbf{Y} & \textbf{Z} & \textbf{\# CX gates} \\
+    \midrule
+    JW & $715$ & $297$ & $612$ & $555$ & $417$ \\
+    BK & $902$ & $567$ & $796$ & $735$ & $394$ \\
+    JW GdBM & $487$ & $394$ & $452$ & $400$ & $151$ \\
+    BK GdBM & $460$ & $369$ & $385$ & $278$ & $\mathit{132}$ \\
+    FSN a-t-a & $217$ & $\mathit{255}$ & $\mathit{218}$ & $\mathbf{109}$ & $170$ \\
+    FSN $2\times N$ & $\mathit{267}$ & $305$ & $254$ & $135$ & $\mathbf{96}$ \\
+    \midrule
+    MSN $2\times N$ & $\mathbf{171}$ & $\mathbf{126}$ & $\mathbf{103}$ & $\mathit{124}$ & $134$ \\
+    \bottomrule
+    \end{tabular*}
+    \end{adjustbox}
+    \end{table}
+    \begin{table}[tbp]
+    \centering
+    \caption{Noise susceptibility $\chi$ for LiH, 8 qubits.}
+    \begin{adjustbox}{max width=\linewidth}
+    \begin{tabular*}{\linewidth}{@{\extracolsep{\fill}} l c c c c c @{}}
+    \toprule 
+    \textbf{Method} & \textbf{D} & \textbf{X} & \textbf{Y} & \textbf{Z} & \textbf{\# CX gates} \\
+    \midrule
+    JW & $634$ & $220$ & $531$ & $616$ & $417$ \\
+    BK & $696$ & $409$ & $591$ & $610$ & $394$ \\
+    JW GdBM & $539$ & $386$ & $477$ & $464$ & $151$ \\
+    BK GdBM & $494$ & $369$ & $427$ & $309$ & $\mathit{132}$ \\
+    FSN a-t-a & $\mathit{230}$ & $\mathit{293}$ & $\mathit{230}$ & $\mathbf{96}$ & $170$ \\
+    FSN $2\times N$ & $282$ & $346$ & $269$ & $\mathit{125}$ & $134$ \\
+    \midrule
+    MSN $2\times N$ & $\mathbf{205}$ & $\mathbf{149}$ & $\mathbf{123}$ & $146$ & $\mathbf{96}$ \\
+    \bottomrule
+    \end{tabular*}
+    \end{adjustbox}
+    \end{table}
+
+    \begin{table}[tbp]
+    \centering
+    \caption{Noise susceptibility $\chi$ for LiH, 10 qubits.}
+    \begin{adjustbox}{max width=\linewidth}
+    \begin{tabular*}{\linewidth}{@{\extracolsep{\fill}} l c c c c c @{}}
+    \toprule 
+    \textbf{Method} & \textbf{D} & \textbf{X} & \textbf{Y} & \textbf{Z} & \textbf{\# CX gates} \\
+    \midrule
+    JW & $1022$ & $\mathit{344}$ & $866$ & $917$ & $749$ \\
+    BK & $1484$ & $825$ & $1269$ & $1184$ & $898$ \\
+    JW GdBM & $1632$ & $1258$ & $1377$ & $1368$ & $434$ \\
+    BK GdBM & $1773$ & $1462$ & $1578$ & $1162$ & $463$ \\
+    FSN a-t-a & $\mathit{318}$ & $408$ & $\mathit{334}$ & $\mathbf{114}$ & $\mathit{216}$ \\
+    FSN $2\times N$ & $393$ & $484$ & $387$ & $\mathit{155}$ & $276$ \\
+    \midrule
+    MSN $2\times N$ & $\mathbf{293}$ & $\mathbf{209}$ & $\mathbf{142}$ & $206$ & $\mathbf{160}$ \\
+    \bottomrule
+    \end{tabular*}
+    \end{adjustbox}
+    \end{table}
+
+
+    \begin{table}[tbp]
+    \centering
+    \caption{Noise susceptibility $\chi$ for LiH, 12 qubits.}
+    \begin{adjustbox}{max width=\linewidth}
+    \begin{tabular*}{\linewidth}{@{\extracolsep{\fill}} l c c c c c @{}}
+    \toprule 
+    \textbf{Method} & \textbf{D} & \textbf{X} & \textbf{Y} & \textbf{Z} & \textbf{\# CX gates} \\
+    \midrule
+    JW & -- & -- & -- & -- & -- \\
+    BK & -- & -- & -- & -- & -- \\
+    JW GdBM & $1504$ & $1231$ & $1265$ & -- & $403$ \\
+    BK GdBM & $1669$ & $1206$ & -- & -- & $425$ \\
+    FSN a-t-a & $\mathit{426}$ & $\mathit{554}$ & $\mathit{429}$ & $\mathbf{159}$ & $321$ \\
+    FSN $2\times N$ & $525$ & $653$ & $502$ & $\mathit{212}$ & $411$ \\
+    \midrule
+    MSN $2\times N$ & $\mathbf{393}$ & $\mathbf{276}$ & $\mathbf{192}$ & $273$ & $\mathbf{240}$ \\
+    \bottomrule
+    \end{tabular*}
+    \end{adjustbox}
+    \end{table}
+
+
+The results in Tables~I--V show that MSN circuits on $2\times N$ architectures generally exhibit
+the lowest overall noise susceptibility, although they are not optimal across all error
+channels.
+
+Notice that for the $4$-qubit ansatz (H$_2$ molecule), performance is divided among methods: MSN
+circuits show the strongest suppression of $X$- and $Y$-type noise, FSN circuits perform best
+under $Z$-noise, while BK GdBM unexpectedly exhibits very low susceptibility to $Z$ errors.
+However, as the number of qubits increases, the advantage of MSN becomes more pronounced: they
+consistently achieve the lowest $\chi$ values for $X$ and $Y$ errors. Interestingly, ladder JW
+circuits, although generally the noisiest, display comparatively reduced susceptibility to
+$X$-type noise --- sometimes approaching the performance of significantly smaller MSN circuits.
+At the same time, FSN retains an advantage for $Z$-noise.
+
+These observations suggest that different circuit constructions naturally specialize in
+mitigating different types of errors. This can be explained by the stabilizing action of certain
+noise processes on specific decompositions. For instance, in the $4$-qubit BK GdBM circuit, $Z$
+errors effectively stabilize the reference state, i.e. with zero excitation angles. Therefore,
+for small excitations, such errors induce only minor changes in the purity of the state. A
+similar stabilizing effect of $Z$ errors on the reference state can also be observed for ladder
+decompositions in JW mapping.
+
+\subsubsection{Phenomenological model for superconducting and ion devices}
+
+
+\begin{table}[tbp]
+    \centering
+    \caption{\label{tab:super}Noise susceptibility for molecules in superconducting noise model.}
+    \begin{adjustbox}{max width=\linewidth}
+    \begin{tabular*}{\linewidth}{@{\extracolsep{\fill}} l c c c c c @{}}
+    \toprule 
+    \textbf{Method} & H$_2$, 4q & H$_2$, 8q & LiH, 8q & LiH, 10q & LiH, 12q\\
+    \midrule
+    JW & $0.37$ & $6.40$ & $5.33$ & $9.09$ & -- \\
+    BK & $0.32$ & $7.76$ & $5.82$ & $13.28$ & -- \\
+    JW GdBM & $0.20$ & $4.64$ & $4.00$ & $7.62$ & -- \\
+    BK GdBM & $\mathbf{0.15}$ & $4.41$ & $4.08$ & $8.74$ & $9.91$ \\
+    FSN $2\times N$ & $0.16$ & $2.20$ & $2.33$ & $3.24$ & $2.86$ \\
+    \midrule
+    MSN $2\times N$ & $0.17$ & $\mathbf{1.69}$ & $\mathbf{1.88}$ & $\mathbf{2.70}$ & $\mathbf{2.40}$ \\
+    \bottomrule
+    \end{tabular*}
+    \end{adjustbox}
+\end{table}
+
+
+\begin{table}[tbp]
+    \centering
+    \caption{\label{tab:ion}Noise susceptibility for {the} molecules in trapped ion
+    noise model.}
+    \begin{adjustbox}{max width=\linewidth}
+    \begin{tabular*}{\linewidth}{@{\extracolsep{\fill}} l c c c c c @{}}
+    \toprule 
+    \textbf{Method} & H$_2$, 4q & H$_2$, 8q & LiH, 8q & LiH, 10q & LiH, 12q \\
+    \midrule
+    JW & $0.36$ & $6.55$ & $5.47$ & $9.52$ & -- \\
+    BK & $0.30$ & $8.02$ & $5.97$ & $14.06$ & -- \\
+    JW GdBM & $0.19$ & $4.74$ & $3.91$ & $7.71$ & $7.79$ \\
+    BK GdBM & $0.14$ & $4.33$ & $4.00$ & $8.83$ & $8.70$ \\
+    FSN a-t-a & $\mathbf{0.12}$ & $1.72$ & $1.81$ & $2.49$ & $2.62$ \\
+    % FSN $2\times N$ & $0.15$ & $2.08$ & $2.18$ & $3.01$ \\
+\midrule
+    MSN a-t-a & $0.15$ & $\mathbf{1.51}$ & $\mathbf{1.68}$ & $\mathbf{2.41}$ & $\mathbf{2.19}$ \\
+    \bottomrule
+    \end{tabular*}
+    \end{adjustbox}
+\end{table}
+For noise analysis we use the noise susceptibility with respect to the parameter $\lambda$:
+\begin{equation}
+    \chi = \left.\frac{d E}{d\lambda}\right|_{\lambda = 0},
+\end{equation}
+
+The tables \ref{tab:super} and \ref{tab:ion} show a clear and consistent ranking: MSN/FSN give
+the lowest noise susceptibility across most instances, with GdBM variants outperforming plain
+JW/BK. Superconducting and ion models agree on the qualitative ordering, though absolute values
+differ due to platform-specific error budgets and connectivity; notably, the ion-optimized FSN
+variant (``FSN a-t-a'') attains the best value for H$_2$ (4q) thanks to effective all-to-all
+coupling.
+
+
+\subsection{Error sources in VQE}
+
+We quantify the sensitivity of the VQE energy to small noise amplitudes via the susceptibility
+\(\chi\).
+Results are reported for two phenomenological hardware models—superconducting (left parts, sc)
+and trapped-ion (right parts, ion)—and for three noise partitions:
+\textbf{Full} (complete model),
+\textbf{1q}$\&$\textbf{2q} (single- and two-qubit depolarization only; transverse relaxation \(T_2\) omitted),
+and \textbf{2q} (two-qubit depolarization only). Boldface marks the minimum \(\chi\) in each column.
+
+\begin{table}[tbp]
+\centering
+\caption{Noise susceptibility $\chi$ for H2, 8 qubits.}
+\begin{adjustbox}{max width=\linewidth}
+% \begin{tabular}{>{\centering\arraybackslash}p{5em}
+%                 >{\centering\arraybackslash}p{4em}
+%                 >{\centering\arraybackslash}p{4em}
+%                 >{\centering\arraybackslash}p{4em}|
+%                 >{\centering\arraybackslash}p{4em}
+%                 >{\centering\arraybackslash}p{4em}
+%                 >{\centering\arraybackslash}p{4em}}
+\begin{tabular*}{\linewidth}{@{\extracolsep{\fill}} l c c c | c c c@{}}
+\toprule 
+\textbf{Method} & \textbf{sc Full} & \textbf{1q}$\&$\textbf{2q} & \textbf{2q} & \textbf{ion Full} & \textbf{1q}$\&$\textbf{2q} & \textbf{2q} \\
+\midrule
+JW & $6.40$ & $5.65$ & $4.41$ & $6.60$ & $5.52$ & $4.95$ \\
+BK & $7.76$ & $6.70$ & $5.25$ & $8.11$ & $6.56$ & $5.90$ \\
+JW GdBM & $4.64$ & $4.05$ & $3.01$ & $5.08$ & $3.85$ & $3.38$ \\
+BK GdBM & $4.41$ & $3.90$ & $2.94$ & $4.61$ & $3.73$ & $3.30$ \\
+FSN  & $2.20$ & $2.09$ & $1.50$ & $1.72$ & $1.61$ & $1.37$ \\
+\midrule
+MSN  & $\mathbf{1.69}$ & $\mathbf{1.59}$ & $\mathbf{1.02}$ & $\mathbf{1.69}$ & $\mathbf{1.40}$ & $\mathbf{1.14}$ \\
+\bottomrule
+\end{tabular*}
+\end{adjustbox}
+\end{table}
+
+\begin{table}[tbp]
+\centering
+\caption{Noise susceptibility $\chi$ for LiH, 8 qubits.}
+\begin{adjustbox}{max width=\linewidth}
+\begin{tabular*}{\linewidth}{@{\extracolsep{\fill}} l c c c | c c c@{}}
+\toprule 
+\textbf{Method} & \textbf{sc Full} & \textbf{1q}$\&$\textbf{2q} & \textbf{2q} & \textbf{ion Full} & \textbf{1q}$\&$\textbf{2q} & \textbf{2q} \\
+\midrule
+JW & $5.33$ & $4.60$ & $3.53$ & $5.53$ & $4.45$ & $3.97$ \\
+BK & $5.82$ & $5.00$ & $3.86$ & $6.05$ & $4.85$ & $4.34$ \\
+JW GdBM & $4.00$ & $3.60$ & $2.61$ & $4.15$ & $3.38$ & $2.93$ \\
+BK GdBM & $4.08$ & $3.71$ & $2.73$ & $4.19$ & $3.51$ & $3.07$ \\
+FSN & $2.33$ & $2.19$ & $1.57$ & $1.81$ & $1.69$ & $1.43$ \\
+\midrule
+MSN  & $\mathbf{1.88}$ & $\mathbf{1.77}$ & $\mathbf{1.13}$ & $\mathbf{1.84}$ & $\mathbf{1.56}$ & $\mathbf{1.27}$ \\
+\bottomrule
+\end{tabular*}
+\end{adjustbox}
+\end{table}
+
+\begin{table}[tbp]
+\centering
+\caption{Noise susceptibility $\chi$ for LiH, 10 qubits.}
+\begin{adjustbox}{max width=\linewidth}
+\begin{tabular*}{\linewidth}{@{\extracolsep{\fill}} l c c c | c c c@{}}
+\toprule 
+\textbf{Method} & \textbf{sc Full} & \textbf{1q}$\&$\textbf{2q} & \textbf{2q} & \textbf{ion Full} & \textbf{1q}$\&$\textbf{2q} & \textbf{2q} \\
+\midrule
+JW & $9.09$ & $7.62$ & $5.92$ & $9.52$ & $7.42$ & $6.65$ \\
+BK & $13.28$ & $11.00$ & $8.76$ & $14.06$ & $10.85$ & $9.84$ \\
+JW GdBM & $7.62$ & $6.62$ & $4.96$ & $7.71$ & $6.32$ & $5.57$ \\
+BK GdBM & $8.74$ & $7.53$ & $5.83$ & $8.83$ & $7.32$ & $6.55$ \\
+FSN & $3.24$ & $3.06$ & $2.18$  & $2.49$ & $2.34$ & $1.99$  \\
+\midrule
+MSN  & $\mathbf{2.70}$ & $\mathbf{2.55}$ & $\mathbf{1.63}$ & $\mathbf{2.41}$ & $\mathbf{2.24}$ & $\mathbf{1.83}$ \\
+\bottomrule
+\end{tabular*}
+\end{adjustbox}
+\end{table}
