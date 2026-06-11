@@ -13,12 +13,23 @@ from qiskit_nature.second_q.mappers.fermionic_mapper import FermionicMapper
 
 from qiskit import transpile, QuantumCircuit
 from qiskit.quantum_info import SparsePauliOp, Statevector
+from qiskit.circuit import Delay
 from qiskit_algorithms.gradients import FiniteDiffEstimatorGradient
-from qiskit.circuit.library.standard_gates import IGate, XGate, ZGate, YGate
+from qiskit.circuit.library.standard_gates import (
+    CZGate,
+    IGate,
+    RXGate,
+    RZGate,
+    RZZGate,
+    XGate,
+    YGate,
+    ZGate,
+)
 from qiskit.synthesis.evolution import synth_pauli_network_rustiq
 from qiskit_aer.noise import (
     NoiseModel,
     QuantumError,
+    RelaxationNoisePass,
     depolarizing_error,
     kraus_error,
     thermal_relaxation_error,
@@ -42,6 +53,9 @@ SC_SINGLE_QUBIT_DURATION = 0
 SC_TWO_QUBIT_DURATION = 68
 ION_SINGLE_QUBIT_DURATION = 63000
 ION_TWO_QUBIT_DURATION = 650000
+SCHEDULED_NOISE_TYPES = {"sc_scheduled", "ion_scheduled"}
+HARDWARE_NOISE_TYPES = {"sc", "ion", *SCHEDULED_NOISE_TYPES}
+SCHEDULED_RELAXATION_OP_TYPES = [Delay, RXGate, RZGate, CZGate, RZZGate]
 PAULI_MATRICES = {
     "X": np.array([[0, 1], [1, 0]]),
     "Y": np.array([[0, -1j], [1j, 0]]),
@@ -307,6 +321,18 @@ class Callback:
         return self._energy_array
     
 
+def hardware_instruction_durations(num_qubits, single_qubit_duration, two_qubit_duration):
+    instr_dur = []
+    for i in range(num_qubits):
+        instr_dur.append(("rx", [i], single_qubit_duration))
+        instr_dur.append(("rz", [i], single_qubit_duration))
+        for j in range(num_qubits):
+            if i != j:
+                instr_dur.append(("rzz", [i, j], two_qubit_duration))
+                instr_dur.append(("cz", [i, j], two_qubit_duration))
+    return instr_dur
+
+
 class CircSim:
     def __init__(self, circ: QiskitCirc, op: SparsePauliOp, noise_par=0.9999, noise_type="D", init_point=None, s_basis=None, d_basis=None):
         s_basis = ["u3"] if s_basis is None else s_basis
@@ -317,11 +343,8 @@ class CircSim:
         self.hf = hf(circ, op)
         self.noise_par = noise_par
         logger.info("starting transpilation")
-        instr_dur = []
-
-        if noise_type in {"sc", "ion"}:
-            instr_dur = []
-            if noise_type == "ion":
+        if noise_type in HARDWARE_NOISE_TYPES:
+            if noise_type in {"ion", "ion_scheduled"}:
                 td = ION_TWO_QUBIT_DURATION
                 ts = ION_SINGLE_QUBIT_DURATION
                 cp = None
@@ -329,20 +352,16 @@ class CircSim:
                 td = SC_TWO_QUBIT_DURATION
                 ts = SC_SINGLE_QUBIT_DURATION
                 cp = coupling_map_2xn(self.circ.num_qubits//2)
-            for i in range(circ.num_qubits):
-                instr_dur.append(("rx", [i], ts))
-                instr_dur.append(("rz", [i], ts))
-                for j in range( circ.num_qubits):
-                    if i != j:
-                        instr_dur.append(("rzz", [i, j], td))
-                        instr_dur.append(("cz", [i, j], td))
+            instr_dur = hardware_instruction_durations(circ.num_qubits, ts, td)
+            hardware_basis_gates = ["cz", "rzz", "rx", "rz"]
+            decomposed = self.circ.decompose(reps=3)
             if noise_type == "ion":
-                mapped = transpile(self.circ.decompose(reps=3),
-                                   basis_gates=["cz", "rzz", "rx", "rz"],
+                mapped = transpile(decomposed,
+                                   basis_gates=hardware_basis_gates,
                                    optimization_level=3)
                 serialized = serialize_two_qubit_gates(mapped)
                 self.circ = transpile(serialized,
-                                      basis_gates=["cz", "rzz", "rx", "rz"],
+                                      basis_gates=hardware_basis_gates,
                                     optimization_level=1, 
                                     coupling_map=cp,
                                     instruction_durations=instr_dur,
@@ -350,9 +369,16 @@ class CircSim:
                                     routing_method='basic',
                                     scheduling_method="asap")
             else:
-                self.circ = transpile(self.circ.decompose(reps=3), 
-                                    basis_gates=["cz", "rzz", "rx", "rz"],
-                                    optimization_level=3, 
+                mapped = transpile(decomposed,
+                                    basis_gates=hardware_basis_gates,
+                                    optimization_level=3,
+                                    coupling_map=cp,
+                                    layout_method='trivial',
+                                    routing_method='basic',
+                                    )
+                self.circ = transpile(mapped,
+                                    basis_gates=hardware_basis_gates,
+                                    optimization_level=0,
                                     coupling_map=cp,
                                     instruction_durations=instr_dur,
                                     layout_method='trivial',
@@ -417,9 +443,37 @@ class CircSim:
         elif self.noise_type == "sc":
             est = get_noise_estimator_from_csv(self.noise_par, device)
             sim = get_noise_estimator_from_csv(self.noise_par, device, sim=True)
+        elif self.noise_type == "sc_scheduled":
+            est = get_noise_estimator_from_csv(
+                self.noise_par,
+                device,
+                scheduled=True,
+                num_qubits=self.circ.num_qubits,
+            )
+            sim = get_noise_estimator_from_csv(
+                self.noise_par,
+                device,
+                sim=True,
+                scheduled=True,
+                num_qubits=self.circ.num_qubits,
+            )
         elif self.noise_type == "ion":
             est = get_ion_noise_estimator(self.noise_par, device, self.circ.num_qubits)
             sim = get_ion_noise_estimator(self.noise_par, device, self.circ.num_qubits, sim=True)
+        elif self.noise_type == "ion_scheduled":
+            est = get_ion_noise_estimator(
+                self.noise_par,
+                device,
+                self.circ.num_qubits,
+                scheduled=True,
+            )
+            sim = get_ion_noise_estimator(
+                self.noise_par,
+                device,
+                self.circ.num_qubits,
+                sim=True,
+                scheduled=True,
+            )
         else:
             est = get_qiskit_device_noise_estimator(
                                                     noise_op=self.noise_type, 
@@ -463,8 +517,22 @@ class CircSim:
             )
         elif self.noise_type == "sc":
             est = get_noise_estimator_from_csv(self.noise_par, device)
+        elif self.noise_type == "sc_scheduled":
+            est = get_noise_estimator_from_csv(
+                self.noise_par,
+                device,
+                scheduled=True,
+                num_qubits=self.circ.num_qubits,
+            )
         elif self.noise_type == "ion":
             est = get_ion_noise_estimator(self.noise_par, device, self.circ.num_qubits)
+        elif self.noise_type == "ion_scheduled":
+            est = get_ion_noise_estimator(
+                self.noise_par,
+                device,
+                self.circ.num_qubits,
+                scheduled=True,
+            )
         else:
             est = get_qiskit_device_noise_estimator(
                                                     noise_op=self.noise_type, 
@@ -501,7 +569,7 @@ class CircSim:
             init_point = [par_used[par] for par in qc.parameters]
             if is_rust:
                 qc = cp.optimize_circ(qc, qubit_mapper=mapper)
-            if self.noise_type == "sc":
+            if self.noise_type in {"sc", "sc_scheduled"}:
                 qc = transpile_to_sc(qc)
             vqe = VQE(est, qc, optimizer=optimizer, initial_point=init_point)
             result = vqe.compute_minimum_eigenvalue(operator=self.op)
@@ -625,7 +693,21 @@ def serialize_two_qubit_gates(circ: QuantumCircuit) -> QuantumCircuit:
     return qc
 
 
-def get_noise_estimator_from_csv(mult, device, sim=False):
+def add_scheduled_relaxation(noise_model, t1_us, t2_us, num_qubits):
+    if num_qubits is None:
+        raise ValueError("num_qubits is required for scheduled relaxation noise")
+
+    noise_model._custom_noise_passes.append(
+        RelaxationNoisePass(
+            t1s=[t1_us * 1e-6 for _ in range(num_qubits)],
+            t2s=[t2_us * 1e-6 for _ in range(num_qubits)],
+            dt=1e-9,
+            op_types=SCHEDULED_RELAXATION_OP_TYPES,
+        )
+    )
+
+
+def get_noise_estimator_from_csv(mult, device, sim=False, scheduled=False, num_qubits=None):
     file_name = CALIBRATION_DIR / "ibm_kingston_calibrations_2025-07-02T15_30_16Z.csv"
     basis_gates = ["cz", "rzz", "rx", "rz"]
     noise_model = NoiseModel(basis_gates=basis_gates)
@@ -639,12 +721,16 @@ def get_noise_estimator_from_csv(mult, device, sim=False):
     CX = mean_gate_error(df) * mult
     logger.info(f"{CX=}")
 
-    relax1q = thermal_relaxation_error(T1 * 1000, T2 * 1000, SC_SINGLE_QUBIT_DURATION)
-    relax2q = thermal_relaxation_error(T1 * 1000, T2 * 1000, SC_TWO_QUBIT_DURATION)
-    relax2q_both = relax2q.expand(relax2q)
-
-    error1 = depolarizing_error(4./2 * U, 1).compose(relax1q)
-    error2 = depolarizing_error(4./3 * CX, 2).compose(relax2q_both)
+    error1 = depolarizing_error(4./2 * U, 1)
+    error2 = depolarizing_error(4./3 * CX, 2)
+    if scheduled:
+        add_scheduled_relaxation(noise_model, T1, T2, num_qubits)
+    else:
+        relax1q = thermal_relaxation_error(T1 * 1000, T2 * 1000, SC_SINGLE_QUBIT_DURATION)
+        relax2q = thermal_relaxation_error(T1 * 1000, T2 * 1000, SC_TWO_QUBIT_DURATION)
+        relax2q_both = relax2q.expand(relax2q)
+        error1 = error1.compose(relax1q)
+        error2 = error2.compose(relax2q_both)
 
     noise_model.add_all_qubit_quantum_error(error2, ["cz", "rzz"])
     noise_model.add_all_qubit_quantum_error(error1, ["rz", "rx"])
@@ -668,10 +754,10 @@ def get_noise_estimator_from_csv(mult, device, sim=False):
     else:
         return noisy_estimator
 
-def get_ion_noise_estimator(mult, device, nq, sim=False):
+
+def get_ion_noise_estimator(mult, device, nq, sim=False, scheduled=False):
     basis_gates = ["cz", "rzz", "rx", "rz"]
     noise_model = NoiseModel(basis_gates=basis_gates)
-    del nq
     T1 = 188/mult*1000000
     T2 = 0.95/mult*1000000
     logger.info(f"{T1=}")
@@ -679,20 +765,24 @@ def get_ion_noise_estimator(mult, device, nq, sim=False):
     CX = 0.0062*mult
     U = 0.0002*mult
     logger.info(f"real {CX=}")
-    relax1q = thermal_relaxation_error(
-        T1 * 1000,
-        T2 * 1000,
-        ION_SINGLE_QUBIT_DURATION,
-    )
-    relax2q = thermal_relaxation_error(
-        T1 * 1000,
-        T2 * 1000,
-        ION_TWO_QUBIT_DURATION,
-    )
-    relax2q_both = relax2q.expand(relax2q)
-
-    error1 = depolarizing_error(4./2*U, 1).compose(relax1q)
-    error2 = depolarizing_error(4/3*CX, 2).compose(relax2q_both)
+    error1 = depolarizing_error(4./2*U, 1)
+    error2 = depolarizing_error(4/3*CX, 2)
+    if scheduled:
+        add_scheduled_relaxation(noise_model, T1, T2, nq)
+    else:
+        relax1q = thermal_relaxation_error(
+            T1 * 1000,
+            T2 * 1000,
+            ION_SINGLE_QUBIT_DURATION,
+        )
+        relax2q = thermal_relaxation_error(
+            T1 * 1000,
+            T2 * 1000,
+            ION_TWO_QUBIT_DURATION,
+        )
+        relax2q_both = relax2q.expand(relax2q)
+        error1 = error1.compose(relax1q)
+        error2 = error2.compose(relax2q_both)
     noise_model.add_all_qubit_quantum_error(error2, ["cz", "rzz"])
     noise_model.add_all_qubit_quantum_error(error1, ["rz", "rx"])
     noisy_estimator = Estimator(
@@ -716,19 +806,19 @@ def get_ion_noise_estimator(mult, device, nq, sim=False):
         return noisy_estimator
 
 def transpile_to_sc(circ):
-    instr_dur = []
-    td = SC_TWO_QUBIT_DURATION
-    ts = SC_SINGLE_QUBIT_DURATION
-    for i in range(circ.num_qubits):
-        instr_dur.append(("rx", [i], ts))
-        instr_dur.append(("rz", [i], ts))
-        for j in range( circ.num_qubits):
-            if i != j:
-                instr_dur.append(("rzz", [i, j], td))
-                instr_dur.append(("cz", [i, j], td))
-    qc = transpile(circ, 
-                    basis_gates=["cz", "rzz", "rx", "rz"], 
-                    optimization_level=3, 
+    instr_dur = hardware_instruction_durations(
+        circ.num_qubits,
+        SC_SINGLE_QUBIT_DURATION,
+        SC_TWO_QUBIT_DURATION,
+    )
+    hardware_basis_gates = ["cz", "rzz", "rx", "rz"]
+    mapped = transpile(circ,
+                    basis_gates=hardware_basis_gates,
+                    optimization_level=3,
+                    )
+    qc = transpile(mapped,
+                    basis_gates=hardware_basis_gates,
+                    optimization_level=0,
                     instruction_durations=instr_dur,
                     scheduling_method="asap"
                     )
